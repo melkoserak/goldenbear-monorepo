@@ -1,7 +1,5 @@
 "use client"; 
 
-// --- ADICIONE ESTA LINHA ---
-export const dynamic = 'force-dynamic';
 
 import { SimulatorForm } from "@/components/simulator/SimulatorForm";
 import Image from 'next/image';

@@ -1,14 +1,25 @@
-// src/components/simulator/steps/Step4.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic'; // 1. IMPORTE O DYNAMIC
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore } from '@/stores/useCoverageStore';
 import { getSimulation } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { CoverageCard } from './step4/CoverageCard';
+// import { CoverageCard } from './step4/CoverageCard'; // 2. REMOVA A IMPORTAÇÃO ESTÁTICA
 import { SummaryBar } from './step4/SummaryBar';
-import { NavigationButtons } from '../NavigationButtons'; // 1. Importe os botões
+import { NavigationButtons } from '../NavigationButtons';
+
+// 3. ADICIONE A IMPORTAÇÃO DINÂMICA COM SSR: FALSE
+const CoverageCard = dynamic(
+  () => import('./step4/CoverageCard').then((mod) => mod.CoverageCard),
+  { 
+    ssr: false, // Esta é a linha mais importante
+    // Opcional: Mostra um "esqueleto" enquanto o componente carrega
+    loading: () => <div className="border rounded-lg p-6 mb-4 h-[150px] bg-gray-50 animate-pulse"></div> 
+  }
+);
+// --- FIM DA ALTERAÇÃO ---
 
 
 const LoadingState = () => (
