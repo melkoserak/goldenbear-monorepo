@@ -1,0 +1,16 @@
+{
+  "name": "@goldenbear/tailwind-config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "tailwind.config.ts",
+  
+  "type": "module",
+
+  "dependencies": {
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "tailwindcss": "^3.4.18"
+  }
+}

@@ -1,0 +1,33 @@
+# Arquivo: C:\dev\goldenbear-monorepo\.gitignore
+
+# --- Arquivos Sensíveis (O MAIS IMPORTANTE) ---
+# Ignora todos os arquivos de ambiente, incluindo .env.local
+#
+.env.*
+!.env.example
+
+# --- Dependências (RESOLVE O SEU PROBLEMA) ---
+# Ignora TODOS os node_modules em todo o monorepo (na raiz, em apps/*, em packages/*)
+node_modules/
+.pnpm-store/
+
+# --- Arquivos de Build do Next.js (RESOLVE O SEU PROBLEMA) ---
+# Ignora os builds de 'simulador' e 'institucional'
+.next/
+out/
+build/
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# --- Arquivos de IDE e Sistema Operacional ---
+.DS_Store
+Thumbs.db
+*.desktop
+.idea/
+.vscode/settings.json
+*.swp

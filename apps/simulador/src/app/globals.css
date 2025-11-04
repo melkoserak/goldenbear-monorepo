@@ -1,0 +1,30 @@
+/* 1. Importa as diretivas do Tailwind PRIMEIRO */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. Aplica suas variáveis de cor e estilos base */
+@layer base {
+  /* Importa as variáveis de cor compartilhadas */
+  @import "@goldenbear/tailwind-config/tailwind-base.css";
+
+  /* * Adiciona o resto dos seus estilos base
+   * (Isso foi copiado do seu arquivo globals.css original) 
+   */
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  }
+}

@@ -1,0 +1,14 @@
+/* 1. Importa as diretivas do Tailwind PRIMEIRO */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. Aplica suas variáveis de cor e estilos base DENTRO de @layer base */
+@layer base {
+  /* Importa as variáveis de cor compartilhadas 
+    (Isto inclui o bloco html.dark { ... } que faz o modo escuro funcionar)
+  */
+  @import "@goldenbear/tailwind-config/tailwind-base.css";
+}
+
+/* Estilos específicos do INSTITUCIONAL podem vir aqui */
