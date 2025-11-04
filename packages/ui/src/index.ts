@@ -15,3 +15,4 @@ export * from "./components/tooltip";
 // Exporta seus utils
 export * from "./lib/utils";
 export * from "./hooks/useDebounce"; // <-- ADICIONE ESTA LINHA
+export * from "./lib/html-utils"; // <-- ADICIONE ESTA LINHA

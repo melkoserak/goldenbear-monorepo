@@ -1,97 +1,206 @@
 import Link from 'next/link';
 import Image from 'next/image';
-// --- IMPORTAÇÃO DE ÍCONES (PERFORMANCE) ---
-import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Youtube,
+} from 'lucide-react';
+import { cn } from '@goldenbear/ui/lib/utils';
 
 export const Footer = () => {
-  const logoUrl = '/imagens/logo-golden-bear.svg'; // Logo é <Image>
+  const currentYear = new Date().getFullYear();
+  const logoUrl = '/imagens/logo-golden-bear.svg'; // Seu logo
 
   return (
-    <footer id="colophon" className="site-footer bg-light-gray-color py-20 text-text-light">
-      <div className="container mx-auto max-w-[1280px] px-6">
-        {/* Grid de 5 colunas do footer.php */}
-        <div className="footer-grid mb-10 grid grid-cols-1 gap-10 md:grid-cols-5 md:gap-8">
+    // Fundo escuro (cor principal de texto) e texto claro
+    <footer className="bg-primary-foreground text-primary-foreground/80">
+      <div className="container py-12"> {/* Container de 1280px */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           
-          {/* Coluna 1: Logo e Tagline */}
-          <div className="footer-widget-1 md:col-span-1.5">
-            <div className="site-branding footer-branding mb-4">
+          {/* 1. Sobre (Com seu logo) */}
+          <div>
+            <div className="mb-4">
               <Link href="/" rel="home">
-                <Image src={logoUrl} alt="Golden Bear Logo" width={160} height={35} className="max-h-[45px] w-auto" />
+                <Image
+                  src={logoUrl}
+                  alt="Golden Bear Logo"
+                  width={160}
+                  height={35}
+                  className="max-h-[45px] w-auto"
+                />
               </Link>
             </div>
-            <p className="footer-tagline mt-4 text-base font-bold leading-snug text-primary">
-              A proteção dos militares e da sua família
+            <p className="text-sm mb-4">
+              Especialistas em seguros de vida para militares das Forças
+              Armadas. Parceiros oficiais da Mag Seguros.
             </p>
+            <div className="flex gap-3">
+              <a
+                href="#"
+                aria-label="Facebook"
+                className={cn(
+                  // --- CORREÇÃO APLICADA AQUI ---
+                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
+                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
+                )}
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                aria-label="Instagram"
+                className={cn(
+                  // --- CORREÇÃO APLICADA AQUI ---
+                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
+                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
+                )}
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                aria-label="LinkedIn"
+                className={cn(
+                  // --- CORREÇÃO APLICADA AQUI ---
+                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
+                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
+                )}
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                aria-label="Youtube"
+                className={cn(
+                  // --- CORREÇÃO APLICADA AQUI ---
+                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
+                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
+                )}
+              >
+                <Youtube className="w-5 h-5" />
+              </a>
+            </div>
           </div>
 
-          {/* Coluna 2: Coberturas */}
-          <div className="footer-widget-2">
-            <h4 className="widget-title mb-5 text-base font-bold text-text-color">Coberturas</h4>
-            <ul className="space-y-2.5">
-              <li><Link href="#" className="font-normal text-text-light hover:text-primary hover:underline">Seguro de Vida</Link></li>
-              <li><Link href="#" className="font-normal text-text-light hover:text-primary hover:underline">Doenças Graves</Link></li>
-              <li><Link href="#" className="font-normal text-text-light hover:text-primary hover:underline">Invalidez Total</Link></li>
-              <li><Link href="#" className="font-normal text-text-light hover:text-primary hover:underline">Assistência Funeral</Link></li>
+          {/* 2. Links Rápidos */}
+          <div>
+            <h3 className="text font-bold mb-4">
+              Links Rápidos
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/quem-somos"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Sobre Nós
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/seguro-militar"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Nossos Planos
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/simulador"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Fazer Simulação
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/faq"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Perguntas Frequentes
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Coluna 3: Golden Bear */}
-          <div className="footer-widget-3">
-            <h4 className="widget-title mb-5 text-base font-bold text-text-color">Golden Bear</h4>
-            <ul className="space-y-2.5">
-              <li><Link href="/quem-somos" className="font-normal text-text-light hover:text-primary hover:underline">Sobre</Link></li>
-              <li><Link href="/blog" className="font-normal text-text-light hover:text-primary hover:underline">Blog</Link></li>
-              <li><Link href="/contato" className="font-normal text-text-light hover:text-primary hover:underline">Contato</Link></li>
+          {/* 3. Para Militares */}
+          <div>
+            <h3 className="text font-bold mb-4">
+              Para Militares
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href="/seguro-militar"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Exército
+                </Link>
+              </li>
+              {/* Você pode adicionar mais links aqui */}
             </ul>
           </div>
 
-          {/* Coluna 4: Suporte */}
-          <div className="footer-widget-4">
-            <h4 className="widget-title mb-5 text-base font-bold text-text-color">Suporte</h4>
-            <ul className="space-y-2.5">
-              <li><Link href="/faq" className="font-normal text-text-light hover:text-primary hover:underline">Perguntas Frequentes</Link></li>
-              <li><Link href="/politica-de-privacidade" className="font-normal text-text-light hover:text-primary hover:underline">Política de Privacidade</Link></li>
-              <li><Link href="#" className="font-normal text-text-light hover:text-primary hover:underline">Termos de Uso</Link></li>
-            </ul>
-          </div>
-
-          {/* Coluna 5: Redes Sociais */}
-          <div className="footer-widget-5">
-            <h4 className="widget-title mb-5 text-base font-bold text-text">Rede Sociais</h4>
-            {/* --- ÍCONES DE ALTA PERFORMANCE --- */}
-            <ul className="social-links flex flex-wrap gap-4">
-              <li>
-                <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-70 transition-opacity hover:opacity-100">
-                  <Facebook className="h-6 w-6" />
-                </a>
+          {/* 4. Contato */}
+          <div>
+            <h3 className="text-primary-foreground font-bold mb-4">Contato</h3>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <Phone className="w-5 h-5 text flex-shrink-0" />
+                <div>
+                  <div>(11) 9999-9999</div>
+                  <div className="text-xs text-primary-foreground/60">
+                    WhatsApp disponível
+                  </div>
+                </div>
               </li>
-              <li>
-                <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="opacity-70 transition-opacity hover:opacity-100">
-                  <Instagram className="h-6 w-6" />
-                </a>
+              <li className="flex items-start gap-2">
+                <Mail className="w-5 h-5 text-secondary flex-shrink-0" />
+                <div>contato@goldenbear.com.br</div>
               </li>
-              <li>
-                <a href="#" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="opacity-70 transition-opacity hover:opacity-100">
-                  <Linkedin className="h-6 w-6" />
-                </a>
-              </li>
-              <li>
-                <a href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-70 transition-opacity hover:opacity-100">
-                  <Youtube className="h-6 w-6" />
-                </a>
+              <li className="flex items-start gap-2">
+                <MapPin className="w-5 h-5 text-secondary flex-shrink-0" />
+                <div>
+                  São Paulo - SP
+                  <br />
+                  Atendimento em todo Brasil
+                </div>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="site-info mt-8 border-t border-border-color pt-8 text-center text-sm">
-          Copyright &copy; {new Date().getFullYear()} Golden Bear. Todos os direitos reservados.
-          <span className="sep mx-2 hidden md:inline">|</span>
-          <br className="md:hidden" />
-          <Link href="/politica-de-privacidade" className="font-normal text-text-light underline hover:text-primary">
-            Política de Privacidade
-          </Link>
+        {/* Barra Inferior */}
+        <div className="border-t border-primary/50 pt-8 mt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+            <div className="text-center md:text-left">
+              <p>
+                © {currentYear} Golden Bear - Especialistas em Seguros para Militares
+              </p>
+              <p className="text-xs text-primary-foreground/60 mt-1">
+                Todos os direitos reservados. CNPJ: XX.XXX.XXX/XXXX-XX | SUSEP:
+                XXXXX.XXXXXX/XXXX-XX
+              </p>
+            </div>
+            <div className="flex gap-6 text-xs">
+              <Link
+                href="/politica-de-privacidade"
+                className="hover:text-secondary transition-colors"
+              >
+                Política de Privacidade
+              </Link>
+              <Link
+                href="#"
+                className="hover:text-secondary transition-colors"
+              >
+                Termos de Uso
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

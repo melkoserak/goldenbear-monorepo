@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { AccessibilityController } from "@/components/layout/AccessibilityController";
 import { Popover, PopoverContent, PopoverTrigger } from "@goldenbear/ui/components/popover";
 import { Button } from "@goldenbear/ui/components/button";
-import { UniversalAccess } from "lucide-react";
+import { Accessibility } from "lucide-react";
 
 // Remova o 'force-static' daqui também
 // export const dynamic = 'force-static';
@@ -30,7 +30,7 @@ export default function SimulatorPage() {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Opções de acessibilidade">
-              <UniversalAccess className="h-5 w-5 text-text-light" />
+              <Accessibility className="h-5 w-5 text-text-light" /> {/* <-- Correto */}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-0">

@@ -1,73 +1,75 @@
+// packages/config-tailwind/tailwind.config.ts
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate"; // <-- CORREÇÃO 1: Importe aqui
 
-// Este é o seu arquivo original, agora com as variáveis do style.css
 const config: Config = {
     // --- ADICIONE ESTA LINHA ---
     darkMode: "class",
-    content: [
-      // O 'content' será definido nos projetos (apps) que usarem este config
-    ],
+    content: [],
     theme: {
       extend: {
-        // Tradução direta das suas variáveis do style.css
+        // Tradução direta das suas variáveis DO 'tailwind-base.css'
         colors: {
-          border: "var(--border, #e0e0e0)",       // --border-color
+          border: "var(--border)", // Use a variável correta
           input: "var(--input)",
-          ring: "var(--ring, #0266e8)",
-          background: "var(--white-color, #ffffff)", // --white-color
-          foreground: "var(--text-color, #252525)",   // --text-color
+          ring: "var(--ring)",
+          background: "var(--background)", // <-- CORRIGIDO
+          foreground: "var(--foreground)", // <-- CORRIGIDO
           primary: {
-            DEFAULT: "var(--primary-color, #0266e8)", // --primary-color
-            dark: "var(--bluedark-color, #004aac)",    // --bluedark-color
-            foreground: "var(--white-color, #ffffff)",
+            DEFAULT: "var(--primary)", // <-- CORRIGIDO
+            // 'dark' aqui é um tom, não o modo. 
+            // Você nomeou 'bluedark-color' no config antigo, mas não está no CSS.
+            // Removi por enquanto, a menos que você adicione ao CSS.
+            // dark: "var(--bluedark-color, #004aac)", 
+            foreground: "var(--primary-foreground)", // <-- CORRIGIDO
           },
           secondary: {
-            DEFAULT: "var(--secondary-color, #efb700)", // --secondary-color
-            foreground: "var(--text-color, #252525)",
+            DEFAULT: "var(--secondary)", // <-- CORRIGIDO
+            foreground: "var(--secondary-foreground)", // <-- CORRIGIDO
           },
           destructive: {
-            DEFAULT: "hsl(var(--destructive))",
-            foreground: "hsl(var(--destructive-foreground))",
+            DEFAULT: "var(--destructive)", // <-- CORRIGIDO
+            foreground: "var(--destructive-foreground)", // <-- CORRIGIDO
           },
           muted: {
-            DEFAULT: "hsl(var(--muted))",
-            foreground: "var(--text-light, #555555)", // --text-light
+            DEFAULT: "var(--muted)", // <-- CORRIGIDO
+            foreground: "var(--muted-foreground)", // <-- CORRIGIDO
           },
           accent: {
-            DEFAULT: "var(--light-gray-color, #f6f6f6)", // --light-gray-color
-            foreground: "var(--text-light, #555555)",
+            DEFAULT: "var(--accent)", // <-- CORRIGIDO
+            foreground: "var(--accent-foreground)", // <-- CORRIGIDO
           },
           popover: {
-            DEFAULT: "var(--white-color, #ffffff)",
-            foreground: "var(--text-color, #252525)",
+            DEFAULT: "var(--popover)", // <-- CORRIGIDO
+            foreground: "var(--popover-foreground)", // <-- CORRIGIDO
           },
           card: {
-            DEFAULT: "var(--white-color, #ffffff)",
-            foreground: "var(--text-color, #252525)",
+            DEFAULT: "var(--card)", // <-- CORRIGIDO
+            foreground: "var(--card-foreground)", // <-- CORRIGIDO
           },
-          // Adicionando as cores de texto restantes
-          "text-color": "var(--text-color, #252525)",
-          "text-light": "var(--text-light, #555555)",
+          // Essas duas são redundantes se você já mapeou foreground e muted-foreground
+          // "text-color": "var(--foreground)",
+          // "text-light": "var(--muted-foreground)",
         },
         fontFamily: {
-          sans: ["var(--font-noto-sans)", "Noto Sans", "sans-serif"], // --font-primary
+          sans: ["var(--font-noto-sans)", "Noto Sans", "sans-serif"],
         },
         container: {
            center: true,
-           padding: "var(--gutter-width, 1.5rem)", // 24px
+           padding: "var(--gutter-width, 1.5rem)",
            screens: {
-             DEFAULT: "1280px", // --container-max-width
-             header: "1600px",  // --container-header-max-width
+             DEFAULT: "1280px",
+             header: "1600px",
            },
         },
         borderRadius: {
-          lg: "var(--border-radius, 5px)", // --border-radius
-          md: "calc(var(--border-radius, 5px) - 2px)",
-          sm: "calc(var(--border-radius, 5px) - 4px)",
+          lg: "var(--radius)", // Use a variável de 'tailwind-base.css'
+          md: "calc(var(--radius) - 2px)",
+          sm: "calc(var(--radius) - 4px)",
         },
       },
     },
-    plugins: [require("tailwindcss-animate")],
+    plugins: [tailwindcssAnimate], // <-- CORREÇÃO 2: Use a variável importada
 };
 
 export default config;

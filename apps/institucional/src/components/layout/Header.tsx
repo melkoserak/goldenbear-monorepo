@@ -24,10 +24,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@goldenbear/ui/components/accordion";
-import { User, Menu, X, ChevronDown, Accessibility } from 'lucide-react';
+// --- CORREÇÃO 1: Removido 'User' e 'Accessibility', adicionado 'UniversalAccess' ---
+import { Menu, X, ChevronDown, Accessibility } from 'lucide-react';
 
 // 1. Importe o NOVO componente "inteligente"
-import { AccessibilityController } from './AccessibilityController'; 
+import { AccessibilityController } from './AccessibilityController';
 
 // ... (const navLinks, const logoUrl, const MobileNavLink) ...
 const navLinks = [
@@ -80,7 +81,8 @@ export const Header = () => {
         isHidden ? "-translate-y-full" : "translate-y-0"
       )}
     >
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between px-6">
+      {/* --- CORREÇÃO 2: Aplicada a classe 'container' (1280px) --- */}
+      <div className="container flex flex-wrap items-center justify-between">
         {/* Branding (logo) */}
         <div className="site-branding mr-6 flex-shrink-0">
           <Link href="/" rel="home">
@@ -141,6 +143,7 @@ export const Header = () => {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Opções de acessibilidade">
+                {/* --- CORREÇÃO 3: Ícone trocado --- */}
                 <Accessibility className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
@@ -150,12 +153,8 @@ export const Header = () => {
             </PopoverContent>
           </Popover>
 
-          <Button asChild variant="ghost">
-            <Link href="/api/auth/login">
-              <User className="h-5 w-5" aria-hidden="true" />
-              Entrar
-            </Link>
-          </Button>
+          {/* --- CORREÇÃO 4: Botão "Entrar" removido --- */}
+
           <Button asChild>
             <Link href="/simulador">Faça a sua simulação</Link>
           </Button>
@@ -222,13 +221,6 @@ export const Header = () => {
 
               {/* Ações (Login e CTA) - Mobile */}
               <div className="border-t p-4 space-y-3">
-                {/* ... (botões de Entrar e Simulação - sem alteração) ... */}
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/api/auth/login">
-                    <User className="h-5 w-5" aria-hidden="true" />
-                    Entrar
-                  </Link>
-                </Button>
                 <Button asChild className="w-full">
                   <Link href="/simulador">Faça a sua simulação</Link>
                 </Button>

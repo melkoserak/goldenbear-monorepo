@@ -8,7 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@goldenbear/ui/components/sheet";
-import { sanitizeHtml } from "@goldenbear/ui//lib/utils"; // 1. Importe a nova função
+import { sanitizeHtml } from "@goldenbear/ui/lib/html-utils"; // 1. Importe do novo arquivo
 
 interface Props {
   title: string;
@@ -31,7 +31,7 @@ export const CoverageDetailsSheet = ({ title, htmlContent, children }: Props) =>
         </SheetHeader>
         <div
           className="prose prose-sm max-w-none text-muted-foreground mt-4"
-          // 2. Aplique a função de sanitização aqui
+          // 2. Esta parte continua igual
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
         />
       </SheetContent>
