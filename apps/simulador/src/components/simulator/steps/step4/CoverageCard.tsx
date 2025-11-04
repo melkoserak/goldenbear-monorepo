@@ -3,7 +3,8 @@
 import { useCoverageStore, Coverage } from '@/stores/useCoverageStore';
 import { Switch } from '@goldenbear/ui/components/switch';
 import { Slider } from '@goldenbear/ui/components/slider';
-import { formatCurrency, stripHtml } from '@goldenbear/ui/lib/utils';
+import { formatCurrency } from '@goldenbear/ui/lib/utils';
+import { stripHtml } from '@goldenbear/ui/lib/html-utils';
 import { Button } from '@goldenbear/ui/components/button';
 import { ChevronRight } from 'lucide-react';
 import { CoverageDetailsSheet } from './CoverageDetailsSheet'; // 1. Importe o novo componente
