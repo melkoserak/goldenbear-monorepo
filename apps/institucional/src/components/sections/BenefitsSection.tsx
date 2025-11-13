@@ -1,150 +1,120 @@
-import {
-  Check,
-  Shield,
-  Heart,
-  Plane,
-  GraduationCap,
-  Home,
-  DollarSign,
-} from 'lucide-react';
-import Image from 'next/image';
+import React from 'react';
+import Link from 'next/link';
+import { Button } from '@goldenbear/ui/components/button';
 import { cn } from '@goldenbear/ui/lib/utils';
+import { ArrowRight, Shield, HeartPulse, ShieldAlert, ShieldCheck } from 'lucide-react'; // Ícones do Design System
 
-// Lista de benefícios principais
-const mainBenefits = [
-  {
-    icon: DollarSign,
-    title: 'Condições Especiais',
-    description:
-      'Valores e coberturas exclusivas para militares ativos e da reserva',
-  },
+// Dados dos cards de benefícios
+const benefits = [
   {
     icon: Shield,
-    title: 'Cobertura Ampliada',
-    description:
-      'Proteção contra acidentes em serviço e situações de risco',
+    title: "Morte",
+    description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais."
   },
   {
-    icon: Heart,
-    title: 'Assistência Funeral',
-    description: 'Cobertura completa de despesas para você e sua família',
+    icon: HeartPulse,
+    title: "Doenças Graves",
+    description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais."
   },
   {
-    icon: Home,
-    title: 'Proteção Familiar',
-    description: 'Benefícios estendidos para cônjuge e filhos',
+    icon: ShieldAlert,
+    title: "Acidente",
+    description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais."
   },
   {
-    icon: Plane,
-    title: 'Cobertura Internacional',
-    description: 'Proteção válida em missões e viagens ao exterior',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Auxílio Educação',
-    description: 'Garantia de continuidade dos estudos dos seus filhos',
-  },
+    icon: ShieldCheck,
+    title: "Assistência Funeral",
+    description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais."
+  }
 ];
 
-// Lista de benefícios adicionais
-const additionalBenefits = [
-  'Indenização por invalidez permanente',
-  'Assistência médica 24h',
-  'Sorteios mensais de até R$ 50 mil',
-  'Desconto em folha de pagamento',
-  'Sem carência para acidentes',
-  'Renovação automática garantida',
-  'Portabilidade facilitada',
-  'Isenção de IOF',
-];
 
 export const BenefitsSection = () => {
   return (
-    <section className="py-20 bg-background"> {/* Cor de fundo padrão */}
-      <div className="container"> {/* Container de 1280px */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Esquerda - Imagem */}
-          <div className="relative order-2 lg:order-1">
-            <div className="relative">
-              <Image
-                src="/imagens/imagem-familia-call-out.png" // Imagem local
-                alt="Família feliz e protegida"
-                width={800}
-                height={700}
-                className="rounded-2xl shadow-2xl"
-              />
-
-              {/* Badge Flutuante (usando cores do tema) */}
-              <div className="absolute -top-4 -right-4 bg-secondary text-secondary-foreground p-6 rounded-xl shadow-xl">
-                <div className="text-center">
-                  <div className="text-3xl font-bold mb-1">R$ 1M</div>
-                  <div className="text-sm opacity-90">de cobertura</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Decoração (usando cores do tema) */}
-            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-primary/10 rounded-full -z-10 opacity-50"></div>
-            <div className="absolute -top-8 -left-4 w-24 h-24 bg-secondary/10 rounded-full -z-10 opacity-50"></div>
-          </div>
-
-          {/* Direita - Conteúdo */}
-          <div className="order-1 lg:order-2">
-            {/* Badge (recriado com div e cores do tema) */}
-            <div className="inline-block bg-green-500/10 text-green-700 px-4 py-2 rounded-full mb-4 font-medium">
-              Benefícios Exclusivos
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Benefícios Pensados para Quem Protege o País
+    // Seção principal com padding
+    <section className="flex flex-col items-center pt-20 pb-32 relative bg-background">
+      {/* Container de 1280px */}
+      <div className="container flex flex-col justify-start items-center gap-20 px-6">
+        
+        {/* Cabeçalho */}
+        <div className="self-stretch inline-flex flex-col md:flex-row justify-start items-center gap-6">
+          <div className="flex-1 inline-flex flex-col justify-start items-start gap-6">
+            <h2 className="self-stretch text-primary text-3xl font-bold leading-8 tracking-wide">
+              Quais são os principais <br/>tipos de seguro
             </h2>
-
-            <p className="text-xl text-muted-foreground mb-8">
-              Oferecemos muito mais do que um seguro de vida tradicional.
-              Nossos planos são especialmente desenvolvidos para atender as
-              necessidades únicas dos militares e suas famílias.
+            <p className="self-stretch text-foreground text-xl font-medium leading-7 tracking-wide">
+              seus beneficários recebam algum valor<br/>em caso de
             </p>
-
-            {/* Benefícios Principais */}
-            <div className="grid sm:grid-cols-2 gap-4 mb-8">
-              {mainBenefits.map((benefit, index) => {
-                const Icon = benefit.icon;
-                return (
-                  <div key={index} className="flex gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-primary" />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="font-bold text-foreground mb-1">
-                        {benefit.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {benefit.description}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Benefícios Adicionais */}
-            <div className="bg-accent rounded-xl p-6">
-              <h3 className="text-xl font-bold text-foreground mb-4">
-                E ainda mais benefícios:
-              </h3>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {additionalBenefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
+          <p className="w-full md:w-80 justify-start text-muted-foreground text-base font-medium leading-5 tracking-wide">
+            Te explicamos tudo passo a passo!
+          </p>
         </div>
+
+        {/* Grid de Cards (2 colunas) */}
+        <div className="self-stretch grid grid-cols-1 md:grid-cols-2 justify-start items-start gap-10">
+          
+          {/* Card 1 e 2 */}
+          {benefits.slice(0, 2).map((benefit) => {
+            const Icon = benefit.icon;
+            return (
+              <div key={benefit.title} className="flex-1 self-stretch p-10 bg-accent rounded-lg border-t-4 border-primary inline-flex flex-col justify-start items-start gap-6">
+                <div className="size- p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-primary text-xl font-medium leading-7 tracking-wide">
+                  {benefit.title}
+                </h3>
+                <p className="self-stretch text-muted-foreground text-base font-normal leading-6 tracking-wide">
+                  {benefit.description}
+                </p>
+                <Button variant="link" asChild className="p-0 h-auto text-zinc-700">
+                  <Link href="#">
+                    Saiba mais
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Grid de Cards (2 colunas) */}
+        <div className="self-stretch grid grid-cols-1 md:grid-cols-2 justify-start items-start gap-10">
+          {benefits.slice(2, 4).map((benefit) => {
+            const Icon = benefit.icon;
+            return (
+              <div key={benefit.title} className="flex-1 self-stretch p-10 bg-accent rounded-lg border-t-4 border-primary inline-flex flex-col justify-start items-start gap-6">
+                <div className="size- p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-primary text-xl font-medium leading-7 tracking-wide">
+                  {benefit.title}
+                </h3>
+                <p className="self-stretch text-muted-foreground text-base font-normal leading-6 tracking-wide">
+                  {benefit.description}
+                </p>
+                <Button variant="link" asChild className="p-0 h-auto text-zinc-700">
+                  <Link href="#">
+                    Saiba mais
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Botão Final */}
+        <Button
+          asChild
+          variant="default" // Azul
+          size="hero" // Padding px-6 py-5
+        >
+          <Link href="/simulador">
+            Simulação Gratuita e Rápida
+          </Link>
+        </Button>
       </div>
     </section>
   );

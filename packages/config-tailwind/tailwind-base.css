@@ -9,17 +9,19 @@
   --popover: #FFFFFF;
   --popover-foreground: #252525;
 
-  --primary: #0266e8; /* Seu Azul Primário */
+--primary: #0266e8; /* Seu Azul Primário */
+  --primary-hover: #095BC5; /* <-- ADICIONADO: Novo hover 'blue dark' */
   --primary-foreground: #FFFFFF; /* Branco para textos sobre o azul */
 
-  --secondary: #efb700; /* Seu Amarelo Secundário */
+  --secondary: #FFCE2D; /* <-- ATUALIZADO: Novo Amarelo */
+  --secondary-hover: #FED44D; /* <-- ADICIONADO: Novo hover amarelo */
   --secondary-foreground: #252525; /* Cor de texto para o amarelo */
 
   --muted: #E9EBF0;
   --muted-foreground: #71717A;
 
   /* Esta é a cor que corrigimos para o hover */
-  --accent: #E9EBF0;
+  --accent: #F6F6F6;
   --accent-foreground: #3F3F46;
 
   --destructive: #DC2626;
@@ -48,9 +50,11 @@ html.dark {
   /* Cores primária e secundária podem ser as mesmas
      ou você pode ajustá-las para melhor contraste no escuro */
   --primary: #0266e8;
+  --primary-hover: #095BC5; /* <-- ADICIONADO */
   --primary-foreground: #FFFFFF;
 
-  --secondary: #efb700;
+  --secondary: #FFCE2D; /* <-- ATUALIZADO */
+  --secondary-hover: #FED44D; /* <-- ADICIONADO */
   --secondary-foreground: #252525;
 
   --muted: #3f3f46;

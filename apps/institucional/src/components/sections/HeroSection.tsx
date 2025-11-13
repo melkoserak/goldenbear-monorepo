@@ -1,123 +1,128 @@
+import React from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@goldenbear/ui/components/button';
-import { Shield, Award } from 'lucide-react';
-import { cn } from '@goldenbear/ui/lib/utils'; // Importe o cn
+import { Award, Shield, ClipboardCheck } from 'lucide-react'; // 1. Ícones do Design System
+import { cn } from '@goldenbear/ui/lib/utils';
 
-// O componente agora é um Server Component (melhor performance)
-// e usa as props do seu tema (primary, secondary)
 export const HeroSection = () => {
   return (
-    <section
-      id="hero"
-      className="relative overflow-hidden bg-primary text-primary-foreground"
-    >
-      {/* Background overlay e pattern da sua referência */}
-      <div className="absolute inset-0"></div>
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              'linear-gradient(30deg, transparent 40%, rgba(255,255,255,.1) 40%, rgba(255,255,255,.1) 60%, transparent 60%)',
-            backgroundSize: '100px 100px',
-          }}
-        ></div>
-      </div>
-
-      {/* Conteúdo centralizado (1280px) */}
-      <div className="container relative z-10 py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Conteúdo da Esquerda */}
-          <div className="z-10">
-            <div className="inline-flex items-center gap-2 bg-white border border-secondary/30 rounded-full px-4 py-2 mb-6">
-              <Award className="w-4 h-4" />
-              <span className="text-sm font-medium text-secondary">
-                Especialistas em Seguros para Militares
-              </span>
-            </div>
-
-            <h1 className="text-4xl font-bold leading-tight text-primary-foreground md:text-5xl mb-6">
-              Seguro de Vida Exclusivo para Militares
-            </h1>
-
-            <p className="text-xl text-primary-foreground/90 mb-8">
-              Proteja quem você ama com as melhores condições do mercado. Somos
-              especialistas da <span className="text-secondary">Mag Seguros</span>{' '}
-              com atendimento personalizado para os militares.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button size="lg" asChild className={cn(
-                // Botão de Destaque (Amarelo)
-                "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-              )}>
-                <Link href="/simulador">
-                  Fazer Simulação Gratuita
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                asChild
-                className={cn(
-                  // Botão Vazado (Branco)
-                  "border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
-                )}
-              >
-                <Link href="/contato">
-                  Falar com Especialista
-                </Link>
-              </Button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6">
-              <div className="border-l-4 border-secondary pl-4">
-                <div className="text-3xl font-bold mb-1">+15</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Anos de Experiência
-                </div>
-              </div>
-              <div className="border-l-4 border-secondary pl-4">
-                <div className="text-3xl font-bold mb-1">+5mil</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Militares Atendidos
-                </div>
-              </div>
-              <div className="border-l-4 border-secondary pl-4">
-                <div className="text-3xl font-bold mb-1">100%</div>
-                <div className="text-sm text-primary-foreground/80">
-                  Satisfação
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Conteúdo da Direita - Imagem */}
-          <div className="relative hidden lg:block">
-            <div className="relative z-10">
-              <Image
-                src="/imagens/foto-militar-exercito.png" // Imagem local
-                alt="Militar profissional das Forças Armadas"
-                width={800}
-                height={700}
-                className="rounded-lg shadow-2xl"
-                priority
+    <section className={cn(
+      "flex flex-col items-center justify-center gap-2.5 relative w-full overflow-hidden",
+      "text-white", // Cor de texto base para a seção
+      // 2. Background radial aplicado
+      "[background:radial-gradient(50%_50%_at_65%_52%,rgba(2,102,232,1)_0%,rgba(0,74,172,1)_100%)]"
+    )}>
+      {/* 3. Container centralizado (max-w-screen-xl e px-6) */}
+      <div className="flex flex-col lg:flex-row max-w-screen-xl w-full items-center lg:items-end gap-20 px-6">
+        
+        {/* Coluna da Esquerda */}
+        <div className="inline-flex flex-col items-start justify-center gap-10 py-[88px] relative self-stretch">
+          
+          <header className="flex flex-col items-start gap-6 relative self-stretch w-full">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 relative bg-neutral-700 rounded-[100px]">
+              {/* Ícone 'Award' (prêmio) com a cor amarela (secondary) do tema */}
+              <Award
+                className="!relative !w-4 !h-4 !aspect-[1] text-secondary"
+                aria-hidden="true"
               />
+              <p className="relative w-fit text-sm font-normal leading-5 tracking-wide whitespace-nowrap">
+                Especialistas em Seguros para Militares
+              </p>
             </div>
+            
+            {/* Título */}
+            <h1 className="relative self-stretch font-bold text-white text-5xl tracking-[0] leading-[48px]">
+              Seguro de vida exclusivo para Militares
+            </h1>
+          </header>
 
-            {/* Card Flutuante */}
-            <div className="absolute -bottom-6 -left-6 bg-background text-primary p-6 rounded-lg shadow-xl max-w-xs z-20">
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="w-8 h-8 text-secondary" />
-                <div>
-                  <div className="text-sm text-muted-foreground">Cobertura até</div>
-                  <div className="text-2xl font-bold">R$ 1 Milhão</div>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Com condições especiais para militares
+          {/* Parágrafo */}
+          <p className="relative self-stretch font-normal text-white text-base tracking-[0.48px] leading-6 max-w-lg">
+            <span className="font-semibold">
+              Proteja quem você ama com as melhores condições do mercado.
+            </span>
+            <span> Somos </span>
+            <span className="font-bold">
+              especialistas da Mag Seguros
+            </span>
+            <span>
+               com atendimento personalizado para os militares.
+            </span>
+          </p>
+
+          {/* Botões */}
+          <div className="inline-flex flex-col sm:flex-row items-start gap-4 relative">
+            
+            {/* Botão 1: Usando variant="secondary" e size="hero" do Design System */}
+            <Button
+              asChild
+              variant="secondary"
+              size="hero"
+            >
+              <Link href="/simulador">
+                <span className="relative w-fit font-semibold text-base tracking-[0.48px] leading-[19.2px] whitespace-nowrap">
+                  Simulação Gratuita e Rápida
+                </span>
+              </Link>
+            </Button>
+            
+            {/* Botão 2: Usando variant="outline-hero" e size="hero" do Design System */}
+            <Button
+              asChild
+              variant="outline-hero"
+              size="hero"
+            >
+              <Link href="/contato">
+                <span className="relative w-fit font-semibold text-base tracking-[0.48px] leading-[19.2px] whitespace-nowrap">
+                  Falar com especialista
+                </span>
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Coluna da Direita (Imagem) */}
+        <div
+          className="relative w-full lg:w-[100%] hidden lg:block"
+          role="img"
+          aria-label="Militar protegido com seguro de vida"
+        >
+          {/* Imagem principal (do seu projeto) */}
+          <Image
+            className="w-[100%] object-cover rounded-lg"
+            alt="Militar profissional das Forças Armadas"
+            src="/imagens/foto-banner-casal-escudo.png"
+            width={598}
+            height={494}
+            priority
+          />
+
+          {/* Card Flutuante */}
+          <div className={cn(
+            "inline-flex items-start gap-2 p-4 absolute top-[113px] left-[-50px]",
+            "rounded-2xl border border-solid shadow-lg",
+            "bg-background border-primary" // Cores do tema: Fundo branco, borda azul
+          )}>
+            {/* Ícone 'Shield' (escudo) com cor azul (primary) do tema */}
+            <ClipboardCheck
+              className="!relative !w-6 !h-6 text-primary flex-shrink-0"
+              aria-hidden="true"
+            />
+            <div className="flex w-[148px] items-center gap-2.5 relative">
+              <p className="relative w-[148px] font-normal text-primary text-sm tracking-[0.42px] leading-[19.6px]">
+                <span className="font-normal">
+                  Cobertura{" "}
+                </span>
+                <span className="font-semibold">
+                  até <br />
+                  R$ 1 Milhão Com condições especiais
+                </span>
+                <span className="font-normal">
+                  {" "}
+                  para militares
+                </span>
               </p>
             </div>
           </div>

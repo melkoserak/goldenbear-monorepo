@@ -1,134 +1,151 @@
-import {
-  Shield,
-  Award,
-  HeartHandshake,
-  Phone,
-  FileCheck,
-  Clock,
-} from 'lucide-react';
-import { cn } from '@goldenbear/ui/lib/utils'; // Importe o cn
+import React from "react";
+import Link from 'next/link';
+import { Button } from '@goldenbear/ui/components/button';
+import { cn } from '@goldenbear/ui/lib/utils';
 
-// Lista de features da sua referência
+// --- ATUALIZAÇÃO AQUI ---
+// O array de features agora usa strings simples, sem <span>s.
+// A estilização de "negrito" será controlada pelo Tailwind.
 const features = [
-  {
-    icon: Shield,
-    title: 'Especialistas em Militares',
-    description:
-      'Entendemos as necessidades específicas das Forças Armadas e oferecemos soluções personalizadas.',
-    color: 'text-primary bg-primary/10', // Adaptado para seu tema
-  },
-  {
-    icon: Award,
-    title: 'Parceiros da Mag Seguros',
-    description:
-      'Representantes credenciados de uma das maiores seguradoras do Brasil, garantindo segurança e confiabilidade.',
-    color: 'text-secondary bg-secondary/10', // Adaptado para seu tema
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Atendimento Personalizado',
-    description:
-      'Cada militar tem necessidades únicas. Nosso time está pronto para criar a melhor solução para você.',
-    color: 'text-green-600 bg-green-500/10', // Mantido verde para variedade
-  },
-  {
-    icon: Phone,
-    title: 'Suporte 24/7',
-    description:
-      'Estamos disponíveis para você e sua família a qualquer momento, inclusive em emergências.',
-    color: 'text-purple-600 bg-purple-500/10', // Mantido roxo
-  },
-  {
-    icon: FileCheck,
-    title: 'Processo Simplificado',
-    description:
-      'Contratação rápida e descomplicada, sem burocracia. Tudo pensado para facilitar sua vida.',
-    color: 'text-destructive bg-destructive/10', // Adaptado para seu tema
-  },
-  {
-    icon: Clock,
-    title: 'Aprovação Rápida',
-    description:
-      'Análise e aprovação em até 48 horas. Proteção para sua família sem espera.',
-    color: 'text-indigo-600 bg-indigo-500/10', // Mantido indigo
-  },
+    {
+      id: 1,
+      title: "Especialistas em Militares",
+      description: (
+        <p>
+          Entendemos as <span className="font-semibold">necessidades específicas</span> das 
+          Forças Armadas e oferecemos soluções personalizadas.
+        </p>
+      ),
+      backgroundColor: "bg-card", // Traduzido de bg-white
+      titleBreak: false,
+    },
+    {
+      id: 2,
+      title: "Processo Simplificado",
+      description: (
+        <p>
+          Contratação rápida e descomplicada, sem burocracia.{" "}
+          <span className="font-semibold">Tudo pensado para facilitar sua vida.</span>
+        </p>
+      ),
+      backgroundColor: "bg-card", // Traduzido de bg-gray-light-background
+      titleBreak: false,
+    },
+    {
+      id: 3,
+      title: "Aprovação Rápida",
+      description: (
+        <p>
+          <span className="font-semibold">Análise e aprovação em até 48 horas.</span> Proteção para sua família sem espera.
+        </p>
+      ),
+      backgroundColor: "bg-card", // Traduzido de bg-white
+      titleBreak: true,
+    },
+    {
+      id: 4,
+      title: "Atendimento Personalizado",
+      description: (
+        <p>
+          Cada militar tem necessidades únicas. Nosso time está pronto para criar a{" "}
+          <span className="font-semibold">melhor solução para você.</span>
+        </p>
+      ),
+      backgroundColor: "bg-card", // Traduzido de bg-white
+      titleBreak: false,
+    },
+    {
+      id: 5,
+      title: "Parceiros da Mag Seguros",
+      description: (
+        <p>
+          Representantes{" "}
+          <span className="font-semibold">credenciados de uma das maiores seguradoras do Brasil</span>
+          , garantindo segurança e confiabilidade.
+        </p>
+      ),
+      backgroundColor: "bg-card", // Traduzido de bg-white
+      titleBreak: false,
+    },
 ];
 
 export const FeaturesSection = () => {
   return (
-    <section className="py-20 bg-accent"> {/* Usa a cor de fundo 'accent' do seu tema */}
-      <div className="container"> {/* Usa a classe 'container' (1280px) */}
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full mb-4 font-medium">
-            Por que escolher a gente?
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Especialistas Mag Seguros para Militares
-          </h2>
-          <p className="text-xl text-muted-foreground">
-            Somos especialistas certificados pela Mag Seguros com foco total em
-            atender as necessidades específicas dos militares e suas famílias.
-          </p>
+    // Seção principal com fundo 'accent' (cinza) e padding vertical
+    <section className="flex w-full justify-center bg-white py-20 lg:py-28">
+      {/* Container (1280px, centralizado) com layout flexível */}
+      <div className="container flex flex-col lg:flex-row items-start gap-12 lg:gap-20 px-6">
+        
+        {/* --- Coluna da Esquerda (Sticky) --- */}
+        <div className="inline-flex flex-col items-start gap-12 relative lg:w-[474px] lg:flex-shrink-0 lg:sticky lg:top-32 lg:self-start">
+          
+          <header className="inline-flex flex-col items-start gap-2 relative self-stretch w-full">
+            {/* Título (com classes do Design System) */}
+            <h2 className="relative w-fit mt-[-1.00px] font-bold text-primary text-3xl md:text-3xl tracking-tight leading-tight">
+              Por que escolher a gente?
+            </h2>
+            {/* Descrição (com classes do Design System) */}
+            <p className="relative w-full text-base text-foreground leading-relaxed">
+              Somos especialistas certificados pela Mag Seguros com foco total em
+              atender as necessidades específicas dos militares e suas famílias.
+            </p>
+          </header>
+
+          {/* Botão (com componente e variantes do Design System) */}
+          <Button
+            asChild
+            variant="default" // Cor azul (primary)
+            size="hero"      // Padding px-6 py-5
+            className="w-full sm:w-auto" // Responsivo
+          >
+            <Link href="/simulador">
+              <span className="relative w-fit font-semibold text-base tracking-[0.48px] leading-[19.2px] whitespace-nowrap">
+                Simulação Gratuita e Rápida
+              </span>
+            </Link>
+          </Button>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              // Componente <Card> recriado com <div> e classes do seu tema
+        {/* --- Coluna da Direita (Scroll) --- */}
+        <div className="flex flex-col items-start justify-center gap-10 relative flex-1 w-full">
+          {features.map((feature) => (
+            <article
+              key={feature.id}
+              className={cn(
+                "flex  items-stretch gap-0 relative self-stretch w-full rounded-lg overflow-hidden border",
+                "border-border", // Cor da borda do Design System
+                feature.backgroundColor // bg-card ou bg-accent
+              )}
+            >
+              {/* Bloco de Título (Azul) */}
               <div
-                key={index}
-                className="bg-card text-card-foreground rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+                className={cn(
+                  "inline-flex items-center justify-center gap-2.5 px-6 py-10 relative",
+                  "bg-primary text-primary-foreground", // Cores do Design System
+                  feature.titleBreak ? "h-[118px]" : "" // Altura condicional
+                )}
               >
-                <div className="p-6">
-                  <div
-                    className={cn(
-                      'w-12 h-12 rounded-lg flex items-center justify-center mb-4',
-                      feature.color
-                    )}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
+                <h3 className="relative w-52 font-medium text-xl tracking-[0.60px] leading-[24.0px]">
+                  {feature.titleBreak ? (
+                    <>Aprovação <br /> Rápida</>
+                  ) : (
+                    feature.title
+                  )}
+                </h3>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Trust section */}
-        <div className="mt-16 bg-primary rounded-2xl p-8 md:p-12 text-primary-foreground text-center">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">
-            Parceiros Oficiais Mag Seguros
-          </h3>
-          <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto mb-6">
-            A Mag Seguros é uma das seguradoras mais respeitadas do Brasil, e
-            somos especialistas credenciados com foco exclusivo em atender
-            militares das Forças Armadas.
-          </p>
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16 mt-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">A+</div>
-              <div className="text-primary-foreground/80">Rating S&P</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">60+</div>
-              <div className="text-primary-foreground/80">Anos no Mercado</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold mb-2">Top 5</div>
-              <div className="text-primary-foreground/80">
-                Seguradoras do Brasil
+              {/* Bloco de Descrição (Branco ou Cinza) */}
+              <div className="flex-1 p-6 flex items-center">
+                
+                {/* --- A CORREÇÃO ESTÁ AQUI --- */}
+                {/* Trocamos o <p> por <div> para evitar o erro de <p> dentro de <p> */}
+                <div className="relative font-normal text-foreground text-base tracking-[0.48px] leading-[22.4px]">
+                  {feature.description}
+                </div>
+
               </div>
-            </div>
-          </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

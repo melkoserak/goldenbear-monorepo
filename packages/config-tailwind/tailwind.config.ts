@@ -16,16 +16,14 @@ const config: Config = {
           background: "var(--background)", // <-- CORRIGIDO
           foreground: "var(--foreground)", // <-- CORRIGIDO
           primary: {
-            DEFAULT: "var(--primary)", // <-- CORRIGIDO
-            // 'dark' aqui é um tom, não o modo. 
-            // Você nomeou 'bluedark-color' no config antigo, mas não está no CSS.
-            // Removi por enquanto, a menos que você adicione ao CSS.
-            // dark: "var(--bluedark-color, #004aac)", 
-            foreground: "var(--primary-foreground)", // <-- CORRIGIDO
+            DEFAULT: "var(--primary)", 
+            hover: "var(--primary-hover)", // <-- ADICIONADO
+            foreground: "var(--primary-foreground)", 
           },
           secondary: {
-            DEFAULT: "var(--secondary)", // <-- CORRIGIDO
-            foreground: "var(--secondary-foreground)", // <-- CORRIGIDO
+            DEFAULT: "var(--secondary)", 
+            hover: "var(--secondary-hover)", // <-- ADICIONADO
+            foreground: "var(--secondary-foreground)", 
           },
           destructive: {
             DEFAULT: "var(--destructive)", // <-- CORRIGIDO
@@ -59,7 +57,7 @@ const config: Config = {
            padding: "var(--gutter-width, 1.5rem)",
            screens: {
              DEFAULT: "1280px",
-             header: "1600px",
+             header: "1280px",
            },
         },
         borderRadius: {
