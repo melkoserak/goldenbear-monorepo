@@ -16,8 +16,38 @@ import { BlogSection } from '@/components/sections/BlogSection';
 
 
 export default function HomePage() {
-  return (
-    <>
+  const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'InsuranceAgency',
+  name: 'Golden Bear Seguros',
+  image: 'https://www.goldenbearseguros.com.br/imagens/logo-golden-bear.svg',
+  description: 'Especialistas em seguros de vida para militares',
+  url: 'https://www.goldenbearseguros.com.br',
+  telephone: '+551199999999', // Seu telefone
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'São Paulo',
+    addressRegion: 'SP',
+    addressCountry: 'BR',
+  },
+  priceRange: '$$',
+  openingHoursSpecification: [
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      opens: '09:00',
+      closes: '18:00',
+    },
+  ],
+};
+
+ return (
+  <>
+    {/* Adicione o Script JSON-LD */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
       <HeroSection />
 
         <StatsSection />
@@ -30,7 +60,7 @@ export default function HomePage() {
       <FadeInOnScroll>
         <HowToSection />
       </FadeInOnScroll>
-      
+
 
       <FadeInOnScroll>
         <BenefitsSection />
@@ -66,19 +96,12 @@ export default function HomePage() {
 
       
 
-      {/* O restante das seções (ex: Blog) viriam aqui... */}
-      
-      {/* Container para a FAQ */}
-      <div id="content-faq" className="site-content">
-        <div className="container mx-auto max-w-[1280px] px-6">
-          <main id="primary-faq" className="site-main">
+    
             <FadeInOnScroll>
               <FaqSection />
             </FadeInOnScroll>
-          </main>
-        </div>
-      </div>
-      {/* ... */}
+          
+     
     </>
   );
 }

@@ -2,117 +2,103 @@ import React from "react";
 import Link from 'next/link';
 import { Button } from '@goldenbear/ui/components/button';
 import { cn } from '@goldenbear/ui/lib/utils';
+import { Section } from '@goldenbear/ui/components/section';
+import { Container } from '@goldenbear/ui/components/container';
+import { Typography } from '@goldenbear/ui/components/typography';
 
-// Array de "steps" do seu novo código
 const steps = [
     {
       number: "1",
-        title: "Simule",
-        description: (
-            <p>
+      title: "Simule",
+      description: (
+        <>
           Use nosso simulador online para{" "}
-          <span className="font-semibold">
-          encontrar o plano ideal</span>{" "} para suas necessidades.
- </p>
- ),
- },
-    {
-      number: "2",
-      title: "Personalize",
-      description: (
-        <p>
-          <span className="font-semibold">
-            Ajuste as coberturas e valores</span>{" "}para que o seguro se encaixe perfeitamente em seu orçamento.
-        </p>
-      ),
-    },
-    {
-      number: "3",
-      title: "Contrate",
-      description: (
-        <p>
-       Finalize a contratação de forma 100% digital,{" "} <span className="font-semibold"> com segurança e sem burocracia.
-          </span>
-        </p>
-      ),
-    },
+          <span className="font-semibold">encontrar o plano ideal</span>{" "}
+          para suas necessidades.
+        </>
+      ),
+    },
+    {
+      number: "2",
+      title: "Personalize",
+      description: (
+        <>
+          <span className="font-semibold">Ajuste as coberturas e valores</span>{" "}
+          para que o seguro se encaixe perfeitamente em seu orçamento.
+        </>
+      ),
+    },
+    {
+      number: "3",
+      title: "Contrate",
+      description: (
+        <>
+          Finalize a contratação de forma 100% digital,{" "}
+          <span className="font-semibold">com segurança e sem burocracia.</span>
+        </>
+      ),
+    },
 ];
 
 export const HowToSection = () => {
   return (
-    // Seção principal com fundo azul (primary)
-    <section className="flex flex-col items-center gap-20 pt-20 pb-[124px] px-6 relative bg-primary text-primary-foreground">
-      {/* Container de 1280px */}
-      <div className="flex flex-col container items-center gap-20 relative w-full">
+    <Section variant="primary">
+      <Container className="flex flex-col items-center gap-10 lg:gap-20">
         
-        {/* Cabeçalho */}
-        <header className="flex flex-col md:flex-row items-center gap-6 relative self-stretch w-full">
-          <div className="flex flex-col flex-1 items-start gap-6 relative">
-            {/* Título (com classes do Design System) */}
-            <h1 className="relative w-fit mt-[-1.00px] font-bold text-3xl md:text-3xl tracking-tight leading-tight whitespace-nowrap">
+        <header className="flex flex-col md:flex-row items-center gap-6 relative self-stretch w-full text-primary-foreground">
+          <div className="flex flex-col flex-1 items-start gap-6 w-full relative">
+            <Typography variant="h2" color="white" className="mt-[-1.00px]">
               Simples, rápido e digital
-            </h1>
-            {/* Subtítulo (com classes do Design System) */}
-            <p className="relative self-stretch text-xm md:text-2xl leading-snug">
-              Contratar seu seguro de vida nunca
-              foi tão fácil.
-            </p>
+            </Typography>
+            <Typography variant="h3" as="p" color="white" className="font-normal leading-snug">
+              Contratar seu seguro de vida nunca foi tão fácil.
+            </Typography>
           </div>
           
-          {/* Texto auxiliar (com classes do Design System) */}
-          <p className="relative w-full md:w-[318px] text-base text-primary-foreground/80">
+          <Typography variant="body" color="white" className="w-full md:w-[318px] opacity-80">
             Siga os passos e garanta sua proteção
-          </p>
+          </Typography>
         </header>
 
-        {/* Grid de 3 Colunas (Cards) */}
         <div className="flex flex-col md:flex-row items-start gap-10 relative self-stretch w-full">
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <article
               key={step.number}
               className={cn(
                 "flex flex-col items-start gap-6 p-6 relative flex-1 w-full",
-                "bg-card rounded-lg border-2 border-dashed border-secondary" // Cores do Design System
+                // CORREÇÃO: Adicionado 'text-card-foreground' para garantir contraste no card branco
+                "bg-card text-card-foreground", 
+                "rounded-lg border-2 border-dashed border-secondary"
               )}
             >
               <div className="inline-flex flex-col items-start gap-4 relative">
-                {/* Círculo do número (com cores do Design System) */}
                 <div
                   className="inline-flex items-center justify-center w-12 h-12 p-4 relative rounded-full bg-primary"
                   aria-label={`Passo ${step.number}`}
                 >
-                  <div className="relative font-bold text-primary-foreground text-2xl">
+                  <Typography variant="h3" color="white">
                     {step.number}
-                  </div>
+                  </Typography>
                 </div>
                 
-                {/* Título do Card (com cores do Design System) */}
-                <h2 className="relative w-fit font-bold text-primary text-2xl whitespace-nowrap">
+                <Typography variant="h3" color="primary" className="whitespace-nowrap">
                   {step.title}
-                </h2>
+                </Typography>
               </div>
               
-              {/* Descrição do Card (com cores do Design System) */}
-              <div className="relative self-stretch font-normal text-foreground text-base leading-[22.4px]">
+              <Typography variant="body">
                 {step.description}
-              </div>
+              </Typography>
             </article>
           ))}
         </div>
 
-        {/* Botão Final (usando Design System) */}
-        <Button
-          asChild
-          variant="secondary" // Amarelo
-          size="hero" // Padding customizado
-        >
+        <Button asChild variant="secondary" size="hero" className="w-full sm:w-auto">
           <Link href="/simulador">
-            <span className="relative w-fit mt-[-1.00px] font-semibold text-base tracking-[0.48px] leading-[19.2px] whitespace-nowrap">
-              Simulação Gratuita e Rápida
-            </span>
+            Simulação Gratuita e Rápida
           </Link>
         </Button>
-      </div>
-    </section>
+      </Container>
+    </Section>
   );
 };

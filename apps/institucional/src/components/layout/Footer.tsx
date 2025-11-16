@@ -10,18 +10,23 @@ import {
   Youtube,
 } from 'lucide-react';
 import { cn } from '@goldenbear/ui/lib/utils';
+import { Section } from '@goldenbear/ui/components/section';
+import { Container } from '@goldenbear/ui/components/container';
+import { Typography } from '@goldenbear/ui/components/typography';
+import { Button } from '@goldenbear/ui/components/button';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const logoUrl = '/imagens/logo-golden-bear.svg'; // Seu logo
+  const logoUrl = '/imagens/logo-golden-bear.svg';
 
   return (
-    // Fundo escuro (cor principal de texto) e texto claro
-    <footer className="bg-primary-foreground text-primary-foreground/80">
-      <div className="container py-12"> {/* Container de 1280px */}
+    // 1. Usando o componente <Section> com a variante 'primary' (fundo azul)
+    <Section as="footer" variant="accent">
+      {/* 2. Usando o componente <Container> */}
+      <Container>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           
-          {/* 1. Sobre (Com seu logo) */}
+          {/* 1. Sobre */}
           <div>
             <div className="mb-4">
               <Link href="/" rel="home">
@@ -34,93 +39,60 @@ export const Footer = () => {
                 />
               </Link>
             </div>
-            <p className="text-sm mb-4">
+            {/* 3. Usando <Typography> para parágrafos */}
+            <Typography variant="small" color="default" className="mb-4 opacity-80">
               Especialistas em seguros de vida para militares das Forças
               Armadas. Parceiros oficiais da Mag Seguros.
-            </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                aria-label="Facebook"
-                className={cn(
-                  // --- CORREÇÃO APLICADA AQUI ---
-                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
-                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
-                )}
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                aria-label="Instagram"
-                className={cn(
-                  // --- CORREÇÃO APLICADA AQUI ---
-                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
-                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
-                )}
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                aria-label="LinkedIn"
-                className={cn(
-                  // --- CORREÇÃO APLICADA AQUI ---
-                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
-                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
-                )}
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                aria-label="Youtube"
-                className={cn(
-                  // --- CORREÇÃO APLICADA AQUI ---
-                  'w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center', 
-                  'hover:bg-secondary hover:text-secondary-foreground transition-colors'
-                )}
-              >
-                <Youtube className="w-5 h-5" />
-              </a>
+            </Typography>
+            <div className="flex gap-3 pt-4">
+              {/* 4. Usando <Button> para ícones sociais com estilo unificado */}
+              <Button asChild variant="ghost" size="icon" className="text-white bg-foreground hover:bg-primary hover:text-primary-foreground rounded-4">
+                <a href="#" aria-label="Facebook">
+                  <Facebook className="w-6 h-6" />
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className="text-white bg-foreground hover:bg-primary hover:text-primary-foreground rounded-4">
+                <a href="#" aria-label="Instagram">
+                  <Instagram className="w-5 h-5" />
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className="text-white bg-foreground hover:bg-primary hover:text-primary-foreground rounded-4">
+                <a href="#" aria-label="LinkedIn">
+                  <Linkedin className="w-5 h-5" />
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="icon" className="text-white bg-foreground hover:bg-primary hover:text-primary-foreground rounded-4">
+                <a href="#" aria-label="Youtube">
+                  <Youtube className="w-5 h-5" />
+                </a>
+              </Button>
             </div>
           </div>
 
           {/* 2. Links Rápidos */}
           <div>
-            <h3 className="text font-bold mb-4">
+            {/* 5. Usando <Typography> para títulos de coluna */}
+            <Typography variant="h4" color="default" className="mb-4 font-bold">
               Links Rápidos
-            </h3>
+            </Typography>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  href="/quem-somos"
-                  className="hover:text-secondary transition-colors"
-                >
+                <Link href="/quem-somos" className="hover:underline">
                   Sobre Nós
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/seguro-militar"
-                  className="hover:text-secondary transition-colors"
-                >
+                <Link href="/seguro-militar" className="hover:underline">
                   Nossos Planos
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/simulador"
-                  className="hover:text-secondary transition-colors"
-                >
+                <Link href="/simulador" className="hover:underline">
                   Fazer Simulação
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/faq"
-                  className="hover:text-secondary transition-colors"
-                >
+                <Link href="/#faq" className="hover:underline">
                   Perguntas Frequentes
                 </Link>
               </li>
@@ -129,42 +101,41 @@ export const Footer = () => {
 
           {/* 3. Para Militares */}
           <div>
-            <h3 className="text font-bold mb-4">
+            <Typography variant="h4" color="default" className="mb-4 font-bold">
               Para Militares
-            </h3>
+            </Typography>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  href="/seguro-militar"
-                  className="hover:text-secondary transition-colors"
-                >
+                <Link href="/seguro-militar" className="hover:underline">
                   Exército
                 </Link>
               </li>
-              {/* Você pode adicionar mais links aqui */}
+              {/* ... (outros links) ... */}
             </ul>
           </div>
 
           {/* 4. Contato */}
           <div>
-            <h3 className="text-primary-foreground font-bold mb-4">Contato</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <Phone className="w-5 h-5 text flex-shrink-0" />
+            <Typography variant="h4" color="default" className="mb-4 font-bold">
+              Contato
+            </Typography>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-primary flex-shrink-0" />
                 <div>
                   <div>(11) 9999-9999</div>
-                  <div className="text-xs text-primary-foreground/60">
+                  <Typography variant="small" color="default" className="hover:underline">
                     WhatsApp disponível
-                  </div>
+                  </Typography>
                 </div>
               </li>
-              <li className="flex items-start gap-2">
-                <Mail className="w-5 h-5 text-secondary flex-shrink-0" />
-                <div>contato@goldenbear.com.br</div>
+              <li className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-primary flex-shrink-0" />
+                <div className="hover:underline">contato@goldenbear.com.br</div>
               </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-secondary flex-shrink-0" />
-                <div>
+              <li className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
+                <div className="hover:underline">
                   São Paulo - SP
                   <br />
                   Atendimento em todo Brasil
@@ -175,34 +146,29 @@ export const Footer = () => {
         </div>
 
         {/* Barra Inferior */}
-        <div className="border-t border-primary/50 pt-8 mt-8">
+        {/* 6. Corrigida a cor da borda para usar 'primary-foreground' (branco) */}
+        <div className="border-t border-foreground/20 pt-8 mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
             <div className="text-center md:text-left">
-              <p>
-                © {currentYear} Golden Bear - Especialistas em Seguros para Militares
-              </p>
-              <p className="text-xs text-primary-foreground/60 mt-1">
+              <Typography variant="small" color="default" className="opacity-100">
+                © {currentYear} Golden Bear - Especialistas em Seguros para Militares<br></br>
+              </Typography>
+              <Typography variant="small" color="default" className="opacity-100 mt-1">
                 Todos os direitos reservados. CNPJ: XX.XXX.XXX/XXXX-XX | SUSEP:
                 XXXXX.XXXXXX/XXXX-XX
-              </p>
+              </Typography>
             </div>
-            <div className="flex gap-6 text-xs">
-              <Link
-                href="/politica-de-privacidade"
-                className="hover:text-secondary transition-colors"
-              >
+            <div className="flex flex-row  gap-6">
+              <Link href="/politica-de-privacidade" className="text-xs text-foreground hover:underline transition-colors">
                 Política de Privacidade
               </Link>
-              <Link
-                href="#"
-                className="hover:text-secondary transition-colors"
-              >
+              <Link href="#" className="text-xs text-foreground hover:underline transition-colors">
                 Termos de Uso
               </Link>
             </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </Container>
+    </Section>
   );
 };

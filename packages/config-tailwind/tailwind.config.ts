@@ -1,6 +1,7 @@
 // packages/config-tailwind/tailwind.config.ts
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate"; // <-- CORREÇÃO 1: Importe aqui
+import typography from "@tailwindcss/typography";
 
 const config: Config = {
     // --- ADICIONE ESTA LINHA ---
@@ -67,7 +68,8 @@ const config: Config = {
         },
       },
     },
-    plugins: [tailwindcssAnimate], // <-- CORREÇÃO 2: Use a variável importada
+    // 2. Adicione 'typography' na lista de plugins
+    plugins: [tailwindcssAnimate, typography],
 };
 
 export default config;

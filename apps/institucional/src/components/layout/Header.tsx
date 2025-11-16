@@ -24,24 +24,42 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@goldenbear/ui/components/accordion";
-// --- CORREÇÃO 1: Removido 'User' e 'Accessibility', adicionado 'UniversalAccess' ---
-import { Menu, X, ChevronDown, Accessibility } from 'lucide-react';
+import { Menu, ChevronDown } from 'lucide-react';
 
-// 1. Importe o NOVO componente "inteligente"
-import { AccessibilityController } from './AccessibilityController';
-
-// ... (const navLinks, const logoUrl, const MobileNavLink) ...
+// --- CORREÇÃO DA ESTRUTURA DE NAVEGAÇÃO ---
+// Ordem atualizada e remoção de 'isHighlighted'
 const navLinks = [
   { href: "/quem-somos", label: "Sobre" },
   {
-    label: "Seguro Militar",
+    label: "Produtos", // Renomeado
     subLinks: [
-      { href: "/seguro-militar", label: "Seguro Exército" },
+      { href: "/seguro-militar#morte", label: "Seguro de Vida (Morte)" },
+      { href: "/seguro-militar#doencas", label: "Doenças Graves" },
+      { href: "/seguro-militar#acidente", label: "Invalidez por Acidente" },
+      { href: "/seguro-militar#funeral", label: "Assistência Funeral" },
     ],
   },
-  { href: "/contato", label: "Contato" },
-  { href: "/blog", label: "Blog" },
+  {
+    label: "Para Militares",
+    subLinks: [
+      { href: "/seguro-militar", label: "Exército" },
+      { href: "/seguro-militar#marinha", label: "Marinha" },
+      { href: "/seguro-militar#aeronautica", label: "Aeronáutica" },
+      { href: "/seguro-militar#policia-militar", label: "Policiais Militares" },
+      { href: "/seguro-militar#bombeiros", label: "Bombeiros" },
+    ],
+  },
+  {
+    label: "Veja Mais", // Renomeado
+    subLinks: [
+      { href: "/blog", label: "Blog" },
+      { href: "/#faq", label: "Dúvidas Frequentes" },
+    ],
+  },
+  { href: "/contato", label: "Contato" }, // Adicionado
 ];
+// --- FIM DA CORREÇÃO ---
+
 const logoUrl = '/imagens/logo-golden-bear.svg';
 const MobileNavLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
   <SheetClose asChild>
@@ -52,7 +70,6 @@ const MobileNavLink = ({ href, children }: { href: string, children: React.React
 );
 
 export const Header = () => {
-  // ... (toda a lógica de state e useEffect do Header) ...
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [lastScrollTop, setLastScrollTop] = useState(0);
@@ -77,13 +94,11 @@ export const Header = () => {
     <header 
       id="masthead" 
       className={cn(
-        "site-header sticky top-0 z-50 w-full border-b border-border bg-background py-4 transition-transform duration-300 ease-in-out",
+        "site-header sticky top-0 z-50 w-full border-b border-border bg-background py-2 md:py-4 transition-transform duration-300 ease-in-out",
         isHidden ? "-translate-y-full" : "translate-y-0"
       )}
     >
-      {/* --- CORREÇÃO 2: Aplicada a classe 'container' (1280px) --- */}
       <div className="container flex flex-wrap items-center justify-between">
-        {/* Branding (logo) */}
         <div className="site-branding mr-6 flex-shrink-0">
           <Link href="/" rel="home">
             <Image 
@@ -97,10 +112,9 @@ export const Header = () => {
           </Link>
         </div>
 
-        {/* Navegação Desktop (usa Popover para dropdowns) */}
+        {/* Navegação Desktop */}
         <nav id="site-navigation" className="main-navigation hidden flex-grow justify-center md:flex">
-          {/* ... (código do .map dos navLinks - sem alteração) ... */}
-          <ul id="primary-menu" className="flex flex-wrap justify-start">
+          <ul id="primary-menu" className="flex flex-wrap justify-start items-center">
             {navLinks.map((link) => (
               <li key={link.label} className="mx-1">
                 {!link.subLinks ? (
@@ -112,6 +126,7 @@ export const Header = () => {
                 ) : (
                   <Popover>
                     <PopoverTrigger asChild>
+                      {/* --- CORREÇÃO: Todos os botões usam variant="ghost" --- */}
                       <Button variant="ghost">
                         {link.label}
                         <ChevronDown className="ml-1 h-4 w-4" aria-hidden="true" />
@@ -137,25 +152,11 @@ export const Header = () => {
           </ul>
         </nav>
 
-        {/* Ações (Login e CTA) - Desktop */}
+       {/* Ações (CTA) - Desktop */}
         <div className="header-actions ml-5 hidden flex-shrink-0 items-center gap-2 md:flex">
-          {/* 2. Adicione o Popover de Acessibilidade (Desktop) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Opções de acessibilidade">
-                {/* --- CORREÇÃO 3: Ícone trocado --- */}
-                <Accessibility className="h-5 w-5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0">
-              {/* 3. Renderize o Controller "inteligente" */}
-              <AccessibilityController />
-            </PopoverContent>
-          </Popover>
-
-          {/* --- CORREÇÃO 4: Botão "Entrar" removido --- */}
-
-          <Button asChild>
+          
+          {/* --- CORREÇÃO: CTA principal de volta para "default" (azul) --- */}
+          <Button asChild variant="default">
             <Link href="/simulador">Faça a sua simulação</Link>
           </Button>
         </div>
@@ -181,9 +182,7 @@ export const Header = () => {
                 </SheetTitle>
               </SheetHeader>
               
-              {/* Navegação Mobile (Accordion) */}
               <nav className="flex-grow overflow-y-auto p-4">
-                {/* ... (código do .map dos navLinks no mobile - sem alteração) ... */}
                 <Accordion type="single" collapsible className="w-full">
                   {navLinks.map((link) => (
                     <div key={link.label}>
@@ -193,7 +192,10 @@ export const Header = () => {
                         </MobileNavLink>
                       ) : (
                         <AccordionItem value={link.label} className="border-none">
-                          <AccordionTrigger className="px-4 py-3 text-base font-medium text-text-light transition-colors hover:text-primary hover:no-underline">
+                          {/* --- CORREÇÃO: Removido o destaque condicional --- */}
+                          <AccordionTrigger className={cn(
+                            "px-4 py-3 text-base font-medium text-text-light transition-colors hover:text-primary hover:no-underline"
+                          )}>
                             {link.label}
                           </AccordionTrigger>
                           <AccordionContent className="pb-0">
@@ -214,14 +216,9 @@ export const Header = () => {
                 </Accordion>
               </nav>
 
-              {/* 4. Adicione os controles de Acessibilidade (Mobile) */}
-              <div className="border-t">
-                <AccessibilityController />
-              </div>
-
-              {/* Ações (Login e CTA) - Mobile */}
+        {/* --- CORREÇÃO: CTA principal de volta para "default" (azul) --- */}
               <div className="border-t p-4 space-y-3">
-                <Button asChild className="w-full">
+                <Button asChild className="w-full" variant="default">
                   <Link href="/simulador">Faça a sua simulação</Link>
                 </Button>
               </div>

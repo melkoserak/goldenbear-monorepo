@@ -1,11 +1,8 @@
 import Image from 'next/image';
-// Importa o Accordion do pacote de UI, não de um arquivo local
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@goldenbear/ui/components/accordion'; // <-- CORREÇÃO: Importa do pacote
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@goldenbear/ui/components/accordion';
+import { Section } from '@goldenbear/ui/components/section';
+import { Container } from '@goldenbear/ui/components/container';
+import { Typography } from '@goldenbear/ui/components/typography';
 
 // Seus dados do front-page.php
 const faqs = [
@@ -26,33 +23,34 @@ const faqs = [
 
 export const FaqSection = () => {
   return (
-    <section className="faq-section py-16 md:py-32">
-      <div className="faq-layout grid grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Coluna do Título */}
+    <Section id="faq" variant="default">
+      <Container className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="faq-intro">
-          <div className="faq-icon mb-4 text-primary"> {/* Usa cor do Tailwind */}
+          <div className="faq-icon mb-4 text-primary">
             <Image src="/imagens/icon-info-circle.svg" alt="" width={32} height={32} />
           </div>
-          <h2 className="faq-title text-3xl font-bold text-text">
+          <Typography variant="h2">
             Perguntas frequentes
-          </h2>
+          </Typography>
         </div>
         
-        {/* Coluna do Acordeão */}
         <div className="faq-accordion md:col-span-2">
-          {/* O componente Accordion agora vem do seu Design System */}
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((faq, index) => (
               <AccordionItem value={`item-${index}`} key={index}>
-                <AccordionTrigger>{faq.q}</AccordionTrigger>
+                {/* AccordionTrigger e Content provavelmente já estilizam o texto internamente, 
+                    mas podemos garantir que o conteúdo seja tipografado corretamente */}
+                <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
                 <AccordionContent>
-                  <p>{faq.a}</p>
+                  <Typography variant="body" color="muted">
+                    {faq.a}
+                  </Typography>
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
         </div>
-      </div>
-    </section>
+      </Container>
+    </Section>
   );
 };
