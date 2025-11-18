@@ -9,12 +9,11 @@ const Textarea = React.forwardRef<
   return (
     <textarea
       className={cn(
-        // Estilos exatos do Input.tsx para consistência
-        "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
+        // ADICIONE: 'transition-all duration-200'
+        "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-all duration-200",
         "placeholder:text-muted-foreground",
         "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        // Altura mínima padrão para um campo de mensagem
         "min-h-[120px]",
         className
       )}

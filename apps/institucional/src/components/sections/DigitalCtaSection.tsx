@@ -18,7 +18,9 @@ export const DigitalCtaSection = () => {
             alt="Contratação digital do seguro"
             width={680}
             height={696}
-          />
+          // ADICIONE ISTO:
+              sizes="(max-width: 1024px) 100vw, 680px"
+            />
         </div>
 
         <div className="flex-1 inline-flex flex-col justify-center items-start gap-10">

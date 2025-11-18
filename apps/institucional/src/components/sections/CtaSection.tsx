@@ -19,6 +19,8 @@ export const CtaSection = () => {
             alt="Contratação digital do seguro"
             width={393}
             height={614}
+                    // ADICIONE ISTO: Diz ao navegador: "Em mobile é 100% da tela, em desktop é fixo ~480px"
+            sizes="(max-width: 1024px) 100vw, 480px"
           />
         </div>
         

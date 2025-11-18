@@ -5,60 +5,52 @@ import React, { useEffect, useState, useRef } from 'react';
 import IframeResizer from 'iframe-resizer-react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore } from '@/stores/useCoverageStore';
-import { getPaymentToken } from '@/services/apiService';
+//import { getPaymentToken } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, CreditCard, Landmark } from 'lucide-react';
 import { NavigationButtons } from '../NavigationButtons';
 import { cn } from '@goldenbear/ui/lib/utils';
 
 export const Step10 = () => {
-  const { formData } = useSimulatorStore();
-  const { paymentMethod, paymentPreAuthCode, cpf } = formData;
+  // --- 2. LER OS DADOS DO ESTADO ---
+  const { paymentMethod, paymentPreAuthCode, cpf, paymentToken } = useSimulatorStore((state) => state.formData);
   const { setFormData, nextStep } = useSimulatorStore((state) => state.actions);
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Apenas para o Iframe, não para o token
   const [error, setError] = useState<string | null>(null);
   const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
-  const [paymentToken, setPaymentToken] = useState<string | null>(null); // 1. Novo estado para o token
+  // const [paymentToken, setPaymentToken] = useState<string | null>(null); // <-- REMOVIDO
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
     track('step_view', { step: 10, step_name: 'Pagamento' });
   }, []);
   
+  // --- 3. LÓGICA DE 'useEffect' ATUALIZADA ---
   useEffect(() => {
-    // Limpa o widget se o método de pagamento for trocado
     setWidgetUrl(null);
-    setPaymentToken(null);
     setError(null);
     setFormData({ paymentPreAuthCode: undefined });
 
     if (paymentMethod === 'credit') {
-      const initializeWidget = async () => {
-        setIsLoading(true);
-        try {
-          // 2. Buscamos o token e o guardamos no estado
-          const { token } = await getPaymentToken();
-          setPaymentToken(token);
-          
-          const totalValue = totalPremium.toFixed(2);
-          const cleanedCpf = cpf.replace(/\D/g, '');
-          
-          const url = `https://widgetshmg.mongeralaegon.com.br/widget-cartao-credito/v3/?cnpj=33608308000173&acao=PreAutorizacao&valorCompra=${totalValue}&chave=cpf&valor=${cleanedCpf}&chave=ModeloProposta&valor=EIS`;
-          // 3. Apenas definimos a URL para renderizar o iframe
-          setWidgetUrl(url);
-
-        } catch (err) {
-  const error = err as Error;
-  setError(error.message || 'Ocorreu um erro inesperado.');
-  track('simulation_error', { error_message: error.message });
-          setIsLoading(false);
-        }
-      };
-
-      initializeWidget();
-
+      // Verifica se o token (do prefetch) já está disponível
+      if (paymentToken) {
+        console.log("[Step10] Payment Token (Prefetched) encontrado!");
+        setIsLoading(true); // Ativa o loading do *iframe*
+        
+        const totalValue = totalPremium.toFixed(2);
+        const cleanedCpf = cpf.replace(/\D/g, '');
+        
+        const url = `https://widgetshmg.mongeralaegon.com.br/widget-cartao-credito/v3/?cnpj=33608308000173&acao=PreAutorizacao&valorCompra=${totalValue}&chave=cpf&valor=${cleanedCpf}&chave=ModeloProposta&valor=EIS`;
+        setWidgetUrl(url);
+        // O setIsLoading(false) será chamado no onLoad do IframeResizer
+      } else {
+        // Fallback (se o utilizador recarregar a página aqui ou o prefetch falhar)
+        console.warn("[Step10] Payment Token não encontrado no prefetch. A executar fallback.");
+        setError("Não foi possível carregar o módulo de pagamento. Por favor, tente recarregar a página.");
+        setIsLoading(false);
+      }
     } else if (paymentMethod === 'debit') {
       setError("Opção de Débito em Conta ainda não disponível.");
     }
@@ -79,7 +71,7 @@ export const Step10 = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
 
-  }, [paymentMethod, totalPremium, cpf, setFormData]);
+  }, [paymentMethod, totalPremium, cpf, setFormData, paymentToken]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,10 +120,15 @@ export const Step10 = () => {
               checkOrigin={false}
               style={{ width: '1px', minWidth: '100%', border: 0, height: '100%', paddingTop: '48px' }}
               onLoad={() => {
+                // --- 5. LÓGICA ONLOAD ATUALIZADA ---
+                // O 'paymentToken' é lido diretamente do estado (que foi pre-fetched)
                 if (iframeRef.current && paymentToken) {
                   iframeRef.current.contentWindow?.postMessage({ event: 'notify', property: 'Auth', value: paymentToken }, 'https://widgetshmg.mongeralaegon.com.br');
+                } else {
+                  console.error("[Step10] Iframe carregou, mas o Payment Token não estava pronto no estado.");
+                  setError("Falha ao autenticar o widget de pagamento.");
                 }
-                setIsLoading(false);
+                setIsLoading(false); // Esconde o spinner do iframe
               }}
             />
           )}

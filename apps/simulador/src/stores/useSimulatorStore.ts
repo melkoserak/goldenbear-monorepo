@@ -1,7 +1,6 @@
 // src/stores/useSimulatorStore.ts
 import { create } from 'zustand';
-import { reserveProposalNumber, getQuestionnaireToken } from '@/services/apiService';
-
+import { reserveProposalNumber, getQuestionnaireToken, getPaymentToken } from '@/services/apiService';
 
 // 1. CRIADA UMA TIPAGEM PARA O RESPONSÁVEL LEGAL (CAMPOS SIMILARES)
 type LegalRepresentative = {
@@ -80,6 +79,8 @@ type FormData = {
   reservedProposalNumber?: string;
   questionnaireToken?: string;
   isPrefetchingTokens: boolean;
+  paymentToken?: string;
+  isPrefetchingPaymentToken: boolean;
   paymentMethod: 'credit' | 'debit' | '';
   paymentPreAuthCode?: string;
 };
@@ -105,6 +106,7 @@ type SimulatorState = {
     updateBeneficiary: (id: string, data: UpdateBeneficiaryData) => void;
     resetDpsAnswers: () => void;
     prefetchQuestionnaireTokens: () => Promise<void>;
+    prefetchPaymentToken: () => Promise<void>;
     // setWpNonce: (nonce: string | null) => void; // <-- REMOVA ESTA LINHA
     // fetchWpNonce: () => Promise<void>; // <-- REMOVA ESTA LINHA
   }
@@ -123,6 +125,8 @@ const initialState: Omit<SimulatorState, 'actions'> = {
     isPrefetchingTokens: false, // <-- Adicionado
     paymentMethod: '',
     paymentPreAuthCode: undefined,
+    paymentToken: undefined, // <-- Adicionado
+    isPrefetchingPaymentToken: false, // <-- Adicionado
     dpsAnswers: undefined,
     reservedProposalNumber: undefined,
     beneficiaries: [{
@@ -267,6 +271,32 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({ // <-- 
         set((state) => ({ formData: { ...state.formData, isPrefetchingTokens: false } }));
       }
     },
+
+    
+  // --- 4. IMPLEMENTAR A NOVA AÇÃO ---
+    prefetchPaymentToken: async () => {
+      if (get().formData.isPrefetchingPaymentToken || get().formData.paymentToken) {
+        return; // Já buscou ou está a buscar
+      }
+
+      set((state) => ({ formData: { ...state.formData, isPrefetchingPaymentToken: true } }));
+      
+      try {
+        console.log("[Prefetch] Iniciando busca de Payment Token...");
+        const { token } = await getPaymentToken();
+        
+        set((state) => ({
+          formData: {
+            ...state.formData,
+            paymentToken: token,
+            isPrefetchingPaymentToken: false,
+          }
+        }));
+        console.log("[Prefetch] Payment Token armazenado no estado.");
+      } catch (error) {
+        console.error("[Prefetch] Falha ao buscar Payment Token:", error);
+        set((state) => ({ formData: { ...state.formData, isPrefetchingPaymentToken: false } }));
+      }
+    },
   }
 }));
-  

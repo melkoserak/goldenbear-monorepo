@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
+
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@goldenbear/ui/components/button';
 import { cn } from '@goldenbear/ui/lib/utils';
 import {
@@ -74,22 +75,33 @@ const MobileNavLink = ({ href, children }: { href: string, children: React.React
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const [lastScrollTop, setLastScrollTop] = useState(0);
+
+  // USEREF: Mantém o valor entre renders sem disparar atualização de UI
+  const lastScrollTop = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      if (Math.abs(lastScrollTop - scrollTop) <= 5) return;
-      if (scrollTop > lastScrollTop && scrollTop > 200) {
+      
+      // Performance: Ignora pequenas variações (debounce simples)
+      if (Math.abs(lastScrollTop.current - scrollTop) <= 5) return;
+
+      // Lógica de esconder/mostrar
+      if (scrollTop > lastScrollTop.current && scrollTop > 200) {
         setIsHidden(true);
       } else {
         setIsHidden(false);
       }
-      setLastScrollTop(scrollTop <= 0 ? 0 : scrollTop);
+
+      // Atualiza a ref (não causa re-render)
+      lastScrollTop.current = scrollTop <= 0 ? 0 : scrollTop;
     };
+
+    // Adiciona listener passivo (melhor performance de scroll)
     window.addEventListener('scroll', handleScroll, { passive: true });
+    
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollTop]);
+  }, []); // Array de dependências vazio = Listener criado apenas uma vez!
 
 
   return (

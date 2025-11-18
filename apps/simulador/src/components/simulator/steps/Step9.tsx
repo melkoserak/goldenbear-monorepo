@@ -10,7 +10,8 @@ import { Button } from '@goldenbear/ui/components/button';
 
 export const Step9 = () => {
   const { dpsAnswers, reservedProposalNumber, questionnaireToken } = useSimulatorStore((state) => state.formData);
-  const { setFormData, nextStep, prevStep, resetDpsAnswers } = useSimulatorStore((state) => state.actions);
+  // --- 1. OBTER A NOVA AÇÃO ---
+  const { setFormData, nextStep, prevStep, resetDpsAnswers, prefetchPaymentToken } = useSimulatorStore((state) => state.actions);
   const firstName = useSimulatorStore((state) => state.formData.fullName.split(' ')[0] || "");
   const simulationDataStore = useCoverageStore((state) => state.coverages);
 
@@ -27,6 +28,8 @@ export const Step9 = () => {
 
   useEffect(() => {
     track('step_view', { step: 9, step_name: 'Questionário de Saúde' });
+
+    prefetchPaymentToken();
 
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== 'https://widgetshmg.mag.com.br') return;
@@ -76,7 +79,7 @@ export const Step9 = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [dpsAnswers, setFormData, nextStep, findFirstQuestionnaireId, reservedProposalNumber, questionnaireToken]);
+  }, [dpsAnswers, setFormData, nextStep, findFirstQuestionnaireId, reservedProposalNumber, questionnaireToken, prefetchPaymentToken]);
 
   // Tela de sucesso (quando o questionário está respondido)
   if (dpsAnswers) {

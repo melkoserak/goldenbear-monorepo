@@ -7,9 +7,18 @@ const typographyVariants = cva(
   {
     variants: {
       variant: {
-        display: "text-4xl lg:text-5xl font-bold leading-tight tracking-tight",
-        h1: "text-4xl font-bold leading-tight tracking-tight",
-        h2: "text-3xl font-bold leading-8 tracking-wide",
+        // --- ALTERAÇÃO AQUI: Tipografia Fluida com clamp() ---
+        
+        // Display: De 2.25rem (36px) a 3.75rem (60px)
+        display: "text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-tight tracking-tight",
+        
+        // H1: De 2rem (32px) a 3rem (48px)
+        h1: "text-[clamp(2rem,4vw,3rem)] font-bold leading-tight tracking-tight",
+        
+        // H2: De 1.5rem (24px) a 2.25rem (36px)
+        h2: "text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-snug tracking-wide",
+        
+        // Mantemos os menores com tamanhos fixos ou responsivos simples para leitura
         h3: "text-2xl font-bold leading-snug tracking-wide",
         h4: "text-xl font-medium leading-7 tracking-wide",
         large: "text-lg font-medium leading-relaxed",

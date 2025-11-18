@@ -1,8 +1,16 @@
-import Image from 'next/image';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@goldenbear/ui/components/accordion';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@goldenbear/ui/components/accordion';
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
+// 1. Remova a importação do 'next/image' se não for mais usada
+// import Image from 'next/image';
+// 2. Adicione o ícone do Lucide
+import { HelpCircle } from 'lucide-react';
 
 // Seus dados do front-page.php
 const faqs = [
@@ -26,9 +34,11 @@ export const FaqSection = () => {
     <Section variant="default">
       <Container className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="faq-intro">
-          <div className="faq-icon mb-4 text-primary">
-            <Image src="/imagens/icon-info-circle.svg" alt="" width={32} height={32} />
+          {/* 3. Substitua a div do ícone */}
+          <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary">
+            <HelpCircle className="w-8 h-8" />
           </div>
+          
           <Typography variant="h2">
             Perguntas frequentes
           </Typography>
