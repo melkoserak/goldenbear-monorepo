@@ -3,15 +3,13 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import IframeResizer from 'iframe-resizer-react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore } from '@/stores/useCoverageStore';
-// --- CORREÇÃO 1: Removido 'getWidgetToken' ---
-import { reserveProposalNumber, getQuestionnaireToken } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, PartyPopper, ArrowLeft, ArrowRight } from 'lucide-react';
 import { NavigationButtons } from '../NavigationButtons';
 import { Button } from '@goldenbear/ui/components/button';
 
 export const Step9 = () => {
-  const { dpsAnswers } = useSimulatorStore((state) => state.formData);
+  const { dpsAnswers, reservedProposalNumber, questionnaireToken } = useSimulatorStore((state) => state.formData);
   const { setFormData, nextStep, prevStep, resetDpsAnswers } = useSimulatorStore((state) => state.actions);
   const firstName = useSimulatorStore((state) => state.formData.fullName.split(' ')[0] || "");
   const simulationDataStore = useCoverageStore((state) => state.coverages);
@@ -19,12 +17,9 @@ export const Step9 = () => {
   const [isLoading, setIsLoading] = useState(!dpsAnswers);
   const [error, setError] = useState<string | null>(null);
   const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
-  // --- CORREÇÃO 2: Novo estado para o token ---
-  const [questionnaireToken, setQuestionnaireToken] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const findFirstQuestionnaireId = useCallback(() => {
-    // ... (código da função existente mantido)
     if (!simulationDataStore || simulationDataStore.length === 0) return 'Venda';
     const firstCoverageWithQuestionnaire = simulationDataStore.find(cov => cov.originalData?.questionariosPorFaixa?.[0]?.questionarios?.[0]?.idQuestionario);
     return firstCoverageWithQuestionnaire?.originalData?.questionariosPorFaixa?.[0]?.questionarios?.[0]?.idQuestionario || 'Venda';
@@ -34,7 +29,6 @@ export const Step9 = () => {
     track('step_view', { step: 9, step_name: 'Questionário de Saúde' });
 
     const handleMessage = (event: MessageEvent) => {
-      // ... (código existente de handleMessage mantido)
       if (event.origin !== 'https://widgetshmg.mag.com.br') return;
       if (typeof event.data === 'string' && event.data.startsWith('{')) {
         try {
@@ -57,33 +51,22 @@ export const Step9 = () => {
       return () => window.removeEventListener('message', handleMessage);
     }
 
-    const initializeWidget = async () => {
+    const initializeWidget = () => {
       setIsLoading(true);
       setError(null);
       setWidgetUrl(null);
-      try {
-        // 1. Reserva a proposta.
-        console.log("[BFF-FRONTEND] Step 9: Chamando reserveProposalNumber()..."); // <-- LOG
-        const { proposalNumber } = await reserveProposalNumber();
-        setFormData({ reservedProposalNumber: proposalNumber });
-        console.log("[BFF-FRONTEND] Step 9: Número da proposta RECEBIDO:", proposalNumber); // <-- LOG
-
-        // 2. Busca o token do questionário.
-        console.log("[BFF-FRONTEND] Step 9: Chamando getQuestionnaireToken()..."); // <-- LOG
-        const { token } = await getQuestionnaireToken();
-        setQuestionnaireToken(token); // Salva no estado
-        console.log("[BFF-FRONTEND] Step 9: Token do questionário RECEBIDO (início):", token.substring(0, 10) + "..."); // <-- LOG
-
+      
+      if (reservedProposalNumber && questionnaireToken) {
+        console.log("[Step9] Tokens de Prefetch encontrados! Carregando iframe instantaneamente.");
+        
         const questionnaireId = findFirstQuestionnaireId();
-        const url = `https://widgetshmg.mag.com.br/questionario-Questionario/v2/responder/${questionnaireId}/Venda/${proposalNumber}/0266e8/efb700?listenForToken=true`;
-  
-        console.log("URL do questionário gerada:", { questionnaireId, proposalNumber, url });
-        setWidgetUrl(url); // Define a URL para renderizar o iframe
-
-      } catch (err) {
-        const error = err as Error;
-        setError(error.message || "Não foi possível carregar o questionário.");
-        track('questionnaire_error', { error_message: error.message });
+        const url = `https://widgetshmg.mag.com.br/questionario-Questionario/v2/responder/${questionnaireId}/Venda/${reservedProposalNumber}/0266e8/efb700?listenForToken=true`;
+        
+        console.log("URL do questionário (Prefetched):", { questionnaireId, reservedProposalNumber, url });
+        setWidgetUrl(url);
+      } else {
+        console.warn("[Step9] Tokens não encontrados no prefetch.");
+        setError("Não foi possível obter os tokens de autenticação do questionário. Por favor, volte ao passo anterior e tente novamente.");
         setIsLoading(false);
       }
     };
@@ -93,11 +76,10 @@ export const Step9 = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [dpsAnswers, setFormData, nextStep, findFirstQuestionnaireId]);
+  }, [dpsAnswers, setFormData, nextStep, findFirstQuestionnaireId, reservedProposalNumber, questionnaireToken]);
 
   // Tela de sucesso (quando o questionário está respondido)
   if (dpsAnswers) {
-    // ... (código existente da tela de sucesso mantido)
     return (
       <div className="animate-fade-in text-center">
         <PartyPopper className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -134,7 +116,19 @@ export const Step9 = () => {
       </p>
       <div className="relative border rounded-lg overflow-hidden min-h-[500px] p-3 px-6">
         {isLoading && ( <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10"><Loader2 className="animate-spin h-12 w-12 text-primary mb-4" /><p className="text-muted-foreground">Carregando questionário seguro...</p></div> )}
-        {error && ( <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 p-4"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><p className="font-semibold text-destructive">Erro ao carregar</p><p className="text-muted-foreground text-center">{error}</p><Button onClick={resetDpsAnswers} className="mt-4">Tentar Novamente</Button></div> )}
+        
+        {/* --- CORREÇÃO APLICADA: PLACEHOLDER REMOVIDO --- */}
+        {error && ( 
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 p-4">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <p className="font-semibold text-destructive">Erro ao carregar</p>
+            <p className="text-muted-foreground text-center">{error}</p>
+            {/* O resetDpsAnswers limpa o 'dpsAnswers', fazendo o useEffect rodar de novo */}
+            <Button onClick={resetDpsAnswers} className="mt-4">Tentar Novamente</Button>
+          </div> 
+        )}
+        {/* --- FIM DA CORREÇÃO --- */}
+
         {widgetUrl && (
           <>
             <IframeResizer
@@ -144,25 +138,21 @@ export const Step9 = () => {
               title="Questionário de Saúde MAG"
               checkOrigin={false}
               style={{ width: '1px', minWidth: '100%', border: 0 }}
-              // --- CORREÇÃO 4: Simplificado o onLoad ---
               onLoad={() => {
-                // --- LOGS ADICIONADOS AQUI ---
-                console.log("[BFF-FRONTEND] Step 9: Iframe onLoad disparado."); 
+                console.log("[Step9] Iframe onLoad disparado."); 
                 try {
                   if (iframeRef.current && questionnaireToken) {
-                    console.log("[BFF-FRONTEND] Step 9: Token PRONTO. Injetando no iframe...", questionnaireToken.substring(0, 10) + "...");
+                    console.log("[Step9] Token PRONTO (do estado). Injetando no iframe...");
                     iframeRef.current.contentWindow?.postMessage({
                       event: 'notify', property: 'Token', value: questionnaireToken
                     }, 'https://widgetshmg.mag.com.br');
-                  } else if (!questionnaireToken) {
-                    console.error("[BFF-FRONTEND] Step 9: Iframe carregou, mas o token AINDA NÃO ESTAVA PRONTO.");
-                    throw new Error("Token do questionário não estava pronto no onLoad.");
                   } else {
-                    console.warn("[BFF-FRONTEND] Step 9: Iframe carregou, token pronto, mas iframeRef.current é nulo.");
+                    console.error("[Step9] Iframe carregou, mas o token NÃO ESTAVA PRONTO no estado.");
+                    throw new Error("Token do questionário não estava pronto no onLoad.");
                   }
                 } catch (err) {
                    const error = err as Error;
-                   console.error("[BFF-FRONTEND] Step 9: Erro ao injetar token", error);
+                   console.error("[Step9] Erro ao injetar token", error);
                    setError("Falha ao autenticar o questionário: " + error.message);
                 } finally {
                   setIsLoading(false);

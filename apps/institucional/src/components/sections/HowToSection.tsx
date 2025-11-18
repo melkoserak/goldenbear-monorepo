@@ -5,6 +5,7 @@ import { cn } from '@goldenbear/ui/lib/utils';
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
+import { FadeInOnScroll } from '@/components/layout/FadeInOnScroll'; // 2. Importe o componente
 
 const steps = [
     {
@@ -61,16 +62,21 @@ export const HowToSection = () => {
         </header>
 
         <div className="flex flex-col md:flex-row items-start gap-10 relative self-stretch w-full">
-          {steps.map((step) => (
-            <article
+          {steps.map((step, index) => ( // 3. Adicione 'index'
+            <FadeInOnScroll 
               key={step.number}
-              className={cn(
-                "flex flex-col items-start gap-6 p-6 relative flex-1 w-full",
-                // CORREÇÃO: Adicionado 'text-card-foreground' para garantir contraste no card branco
-                "bg-card text-card-foreground", 
-                "rounded-lg border-2 border-dashed border-secondary"
-              )}
+              delay={index * 150} // 4. Aplique o atraso sequencial
+              threshold={0.3}     // Garante que o card esteja um pouco visível
+              className="flex-1 w-full"
             >
+              <article
+                className={cn(
+                  "flex flex-col items-start gap-6 p-6 relative w-full h-full", // Adicionado h-full
+                  "bg-card text-card-foreground", 
+                  "rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow"
+                )}
+              >
+
               <div className="inline-flex flex-col items-start gap-4 relative">
                 <div
                   className="inline-flex items-center justify-center w-12 h-12 p-4 relative rounded-full bg-primary"
@@ -90,6 +96,7 @@ export const HowToSection = () => {
                 {step.description}
               </Typography>
             </article>
+            </FadeInOnScroll>
           ))}
         </div>
 

@@ -20,8 +20,7 @@ export const CoverageCard = ({ coverage }: { coverage: Coverage }) => {
   const premium = getCalculatedPremium(coverage);
 
   return (
-    <div className={`border rounded-lg p-6 mb-4 transition-colors duration-300 ${!coverage.isActive ? 'bg-gray-50' : 'bg-white'}`}>
-      <div className="flex justify-between items-start">
+      <div className={`border rounded-lg p-6 mb-4 transition-colors duration-300 ${!coverage.isActive ? 'bg-accent' : 'bg-card'}`}>      <div className="flex justify-between items-start">
         <div>
           <h4 className="text-lg font-bold text-foreground">{coverage.name.replace(/_/g, ' ')}</h4>
           {coverage.isMandatory && <span className="text-xs font-semibold text-primary">OBRIGATÓRIO</span>}

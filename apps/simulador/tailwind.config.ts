@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
-// Importa a configuração compartilhada
-import sharedConfig from "../../packages/config-tailwind/tailwind.config";
+// --- CORREÇÃO APLICADA ---
+// Importa a configuração compartilhada via alias do workspace, não path relativo
+import sharedConfig from "@goldenbear/tailwind-config";
 
 const config: Config = {
   ...sharedConfig, // Herda toda a configuração compartilhada

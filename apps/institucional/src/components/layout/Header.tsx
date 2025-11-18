@@ -33,27 +33,29 @@ const navLinks = [
   {
     label: "Produtos", // Renomeado
     subLinks: [
-      { href: "/seguro-militar#morte", label: "Seguro de Vida (Morte)" },
-      { href: "/seguro-militar#doencas", label: "Doenças Graves" },
-      { href: "/seguro-militar#acidente", label: "Invalidez por Acidente" },
-      { href: "/seguro-militar#funeral", label: "Assistência Funeral" },
+      { href: "/produtos/seguro-vida-morte", label: "Seguro de Vida (Morte)" },
+      { href: "/produtos/doencas-graves", label: "Doenças Graves" },
+      { href: "/produtos/invalidez-acidente", label: "Invalidez por Acidente" },
+      { href: "/produtos/assistencia-funeral", label: "Assistência Funeral" },
     ],
   },
   {
     label: "Para Militares",
     subLinks: [
-      { href: "/seguro-militar", label: "Exército" },
-      { href: "/seguro-militar#marinha", label: "Marinha" },
-      { href: "/seguro-militar#aeronautica", label: "Aeronáutica" },
-      { href: "/seguro-militar#policia-militar", label: "Policiais Militares" },
-      { href: "/seguro-militar#bombeiros", label: "Bombeiros" },
+      // --- ALTERAÇÃO AQUI ---
+      // Atualizado para apontar para as novas LPs dedicadas
+      { href: "/seguro-militar/exercito", label: "Exército" },
+      { href: "/seguro-militar/marinha", label: "Marinha" },
+      { href: "/seguro-militar/aeronautica", label: "Aeronáutica" },
+      { href: "/seguro-militar/policia-militar", label: "Policiais Militares" },
+      { href: "/seguro-militar/bombeiros", label: "Bombeiros" },
     ],
   },
   {
     label: "Veja Mais", // Renomeado
     subLinks: [
       { href: "/blog", label: "Blog" },
-      { href: "/#faq", label: "Dúvidas Frequentes" },
+      { href: "/duvidas-frequentes", label: "Dúvidas Frequentes" },
     ],
   },
   { href: "/contato", label: "Contato" }, // Adicionado

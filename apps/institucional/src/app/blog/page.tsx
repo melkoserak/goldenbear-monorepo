@@ -45,14 +45,14 @@ export default function BlogListingPage() {
     <>
       {/* Header Hero do Blog */}
       <Section variant="primary-gradient" padding="default">
-        <Container className="text-center max-w-4xl">
+        <Container className="text-left">
           <span className="inline-block py-1 px-3 rounded-full bg-white/10 text-white text-sm font-medium mb-4 backdrop-blur-sm">
             Conteúdo Exclusivo
           </span>
-          <Typography variant="display" color="white" className="mb-6">
+          <Typography variant="display" color="white" className="mb-6 max-w-3xl">
             Blog da Família Militar
           </Typography>
-          <Typography variant="large" color="white" className="opacity-90">
+          <Typography variant="large" color="white" className="max-w-2xl">
             Informação, dicas e novidades para ajudar na proteção, no planejamento financeiro e no bem-estar da sua família.
           </Typography>
         </Container>
@@ -73,7 +73,7 @@ export default function BlogListingPage() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                  <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-primary flex items-center gap-1 shadow-sm">
+                  <div className="absolute top-4 left-4 bg-background backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-primary flex items-center gap-1 shadow-sm">
                     <Tag className="w-3 h-3" /> {post.category}
                   </div>
                 </Link>

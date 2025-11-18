@@ -9,23 +9,27 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 // import { CoverageCard } from './step4/CoverageCard'; // 2. REMOVA A IMPORTAÇÃO ESTÁTICA
 import { SummaryBar } from './step4/SummaryBar';
 import { NavigationButtons } from '../NavigationButtons';
+import { Skeleton } from "@goldenbear/ui/components/skeleton"; // <-- IMPORTAR SKELETON
 
 // 3. ADICIONE A IMPORTAÇÃO DINÂMICA COM SSR: FALSE
 const CoverageCard = dynamic(
   () => import('./step4/CoverageCard').then((mod) => mod.CoverageCard),
   { 
-    ssr: false, // Esta é a linha mais importante
-    // Opcional: Mostra um "esqueleto" enquanto o componente carrega
-    loading: () => <div className="border rounded-lg p-6 mb-4 h-[150px] bg-gray-50 animate-pulse"></div> 
+    ssr: false,
+    // 1. ATUALIZAR O SKELETON DE CARREGAMENTO DO CARD
+    loading: () => <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
   }
 );
 // --- FIM DA ALTERAÇÃO ---
 
 
 const LoadingState = () => (
-    <div className="flex flex-col items-center justify-center text-center p-10">
-        <Loader2 className="animate-spin h-12 w-12 text-primary mb-4" />
-        <p className="text-lg text-muted-foreground">A calcular as melhores opções para si...</p>
+    <div className="flex flex-col items-center justify-center p-10 space-y-4">
+        {/* Skeleton que imita 3 cards */}
+        <Skeleton className="h-12 w-3/4" />
+        <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
+        <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
+        <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
     </div>
 );
 

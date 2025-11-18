@@ -8,6 +8,7 @@ import { Input } from '@goldenbear/ui/components/input';
 import { getProfessions, ProfessionOption } from '@/services/apiService';
 import { Check } from 'lucide-react';
 import { track } from '@/lib/tracking';
+import { Label } from '@goldenbear/ui/components/label'; // <-- IMPORTADO
 
 export const Step3 = () => {
   // --- Seleção Otimizada para evitar loops ---
@@ -79,13 +80,14 @@ export const Step3 = () => {
 
   return (
     <form onSubmit={handleSubmit} className="animate-fade-in">
-      {/* 3. Adicione o tabIndex para acessibilidade */}
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
         Perfeito {firstName}! Só mais alguns detalhes para a simulação:
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="birthDate" className="block text-sm font-bold text-gray-600 mb-1">Data de Nascimento <span className="text-red-500">*</span></label>
+        
+        {/* --- CORREÇÃO APLICADA --- */}
+        <div className="space-y-1.5">
+          <Label htmlFor="birthDate">Data de Nascimento <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center">
             <Input type="date" id="birthDate" value={birthDate} 
               onChange={(e) => setFormData({ birthDate: e.target.value })} 
@@ -95,23 +97,25 @@ export const Step3 = () => {
           {touchedFields.birthDate && birthDateError && <p className="text-sm text-destructive mt-1">{birthDateError}</p>}
         </div>
         
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Sexo <span className="text-red-500">*</span></label>
-          <div className="flex gap-4 mt-2" onBlur={() => handleBlur('gender')}>
-            <label className="flex items-center gap-2 cursor-pointer">
+        {/* --- CORREÇÃO APLICADA --- */}
+        <div className="space-y-1.5">
+          <Label>Sexo <span className="text-destructive">*</span></Label>
+          <div className="flex gap-4 pt-2" onBlur={() => handleBlur('gender')}>
+            <Label className="flex items-center gap-2 cursor-pointer font-normal text-muted-foreground">
               <input type="radio" name="gender" value="masculino" checked={gender === 'masculino'} 
                 onChange={(e) => setFormData({ gender: e.target.value })} className="h-4 w-4 text-primary focus:ring-primary" /> Masculino
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            </Label>
+            <Label className="flex items-center gap-2 cursor-pointer font-normal text-muted-foreground">
               <input type="radio" name="gender" value="feminino" checked={gender === 'feminino'} 
                 onChange={(e) => setFormData({ gender: e.target.value })} className="h-4 w-4 text-primary focus:ring-primary" /> Feminino
-            </label>
+            </Label>
           </div>
            {touchedFields.gender && genderError && <p className="text-sm text-destructive mt-1">{genderError}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Faixa de Renda Mensal <span className="text-red-500">*</span></label>
+        {/* --- CORREÇÃO APLICADA --- */}
+        <div className="space-y-1.5">
+          <Label>Faixa de Renda Mensal <span className="text-destructive">*</span></Label>
           <div onBlur={() => handleBlur('income')}>
             <Autocomplete options={incomeOptions} value={income} 
               onChange={(value) => setFormData({ income: value })} 
@@ -121,8 +125,9 @@ export const Step3 = () => {
           {touchedFields.income && incomeError && <p className="text-sm text-destructive mt-1">{incomeError}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Profissão <span className="text-red-500">*</span></label>
+        {/* --- CORREÇÃO APLICADA --- */}
+        <div className="space-y-1.5">
+          <Label>Profissão <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center" onBlur={() => handleBlur('profession')}>
             <Autocomplete 
               options={professions} 

@@ -8,6 +8,7 @@ import { Autocomplete } from '@goldenbear/ui/components/autocomplete';
 import { Input } from '@goldenbear/ui/components/input';
 import { Check } from 'lucide-react';   
 import { track } from '@/lib/tracking';
+import { Label } from '@goldenbear/ui/components/label';
 
 
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
@@ -88,8 +89,9 @@ export const Step2 = () => {
       </h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="cpf" className="block text-sm font-bold text-gray-600 mb-1">Seu CPF <span className="text-red-500">*</span></label>
+        {/* --- 2. APLICAR LABEL --- */}
+        <div className="space-y-1.5"> {/* Adicionado space-y para espaçamento */}
+          <Label htmlFor="cpf">Seu CPF <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center">
             <MaskedInput mask="000.000.000-00" id="cpf" value={cpf} 
               onAccept={(value: string) => setFormData({ cpf: value })} 
@@ -101,8 +103,9 @@ export const Step2 = () => {
           {touched.cpf && cpfError && <p className="text-sm text-destructive mt-1">{cpfError}</p>}
         </div>
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-bold text-gray-600 mb-1">E-mail <span className="text-red-500">*</span></label>
+        {/* --- REPETIR PADRÃO --- */}
+        <div className="space-y-1.5">
+          <Label htmlFor="email">E-mail <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center">
             <Input type="email" id="email" value={email} 
               onChange={(e) => setFormData({ email: e.target.value })}
@@ -114,8 +117,9 @@ export const Step2 = () => {
           {touched.email && emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
         </div>
 
-        <div>
-          <label htmlFor="phone" className="block text-sm font-bold text-gray-600 mb-1">Nº de Celular (DDD) <span className="text-red-500">*</span></label>
+        {/* --- REPETIR PADRÃO --- */}
+        <div className="space-y-1.5">
+          <Label htmlFor="phone">Nº de Celular (DDD) <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center">
             <MaskedInput mask="(00) 00000-0000" id="phone" value={phone} 
                onAccept={(value: string) => setFormData({ phone: value })}
@@ -127,8 +131,9 @@ export const Step2 = () => {
           {touched.phone && phoneError && <p className="text-sm text-destructive mt-1">{phoneError}</p>}
         </div>
         
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Estado <span className="text-red-500">*</span></label>
+        {/* --- REPETIR PADRÃO --- */}
+        <div className="space-y-1.5">
+          <Label>Estado <span className="text-destructive">*</span></Label>
           <div className="relative flex items-center">
             <Autocomplete options={brazilianStates} value={state} onChange={(v) => setFormData({ state: v })} placeholder="Selecione o estado..." />
             {!stateError && state && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500 pointer-events-none" />}
@@ -138,9 +143,10 @@ export const Step2 = () => {
         <div className="md:col-span-2 flex items-center justify-end gap-3">       
           <input type="checkbox" id="consent" checked={consent} onChange={(e) => setFormData({ consent: e.target.checked })}
             className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary" required />
-            <label htmlFor="consent" className="text-sm text-gray-600">
-            Li e aceito os <a href="/termos-de-uso" target="_blank" className="text-primary hover:underline">Termos</a> e <a href="/politica-de-privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</a>. <span className="text-red-500">*</span>
-          </label>
+            {/* 3. APLICAR LABEL (com estilo de texto normal) */}
+            <Label htmlFor="consent" className="text-sm font-normal text-muted-foreground">
+              Li e aceito os <a href="/termos-de-uso" target="_blank" className="text-primary hover:underline">Termos</a> e <a href="/politica-de-privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</a>. <span className="text-destructive">*</span>
+            </Label>
         </div>
       </div>
       <NavigationButtons isNextDisabled={!isFormValid} />

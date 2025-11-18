@@ -1,5 +1,6 @@
 // src/stores/useSimulatorStore.ts
 import { create } from 'zustand';
+import { reserveProposalNumber, getQuestionnaireToken } from '@/services/apiService';
 
 
 // 1. CRIADA UMA TIPAGEM PARA O RESPONSÁVEL LEGAL (CAMPOS SIMILARES)
@@ -77,6 +78,8 @@ type FormData = {
   beneficiaries: Beneficiary[];
  dpsAnswers?: Record<string, unknown>; // Substitui 'any' por um tipo mais seguro
   reservedProposalNumber?: string;
+  questionnaireToken?: string;
+  isPrefetchingTokens: boolean;
   paymentMethod: 'credit' | 'debit' | '';
   paymentPreAuthCode?: string;
 };
@@ -101,6 +104,7 @@ type SimulatorState = {
     removeBeneficiary: (id: string) => void;
     updateBeneficiary: (id: string, data: UpdateBeneficiaryData) => void;
     resetDpsAnswers: () => void;
+    prefetchQuestionnaireTokens: () => Promise<void>;
     // setWpNonce: (nonce: string | null) => void; // <-- REMOVA ESTA LINHA
     // fetchWpNonce: () => Promise<void>; // <-- REMOVA ESTA LINHA
   }
@@ -115,6 +119,8 @@ const initialState: Omit<SimulatorState, 'actions'> = {
     zipCode: "", street: "", number: "", complement: "", neighborhood: "",
     city: "", maritalStatus: "", homePhone: "", rgNumber: "", rgIssuer: "",
     rgDate: "", childrenCount: "0", company: "", isPPE: "",
+    questionnaireToken: undefined, // <-- Adicionado
+    isPrefetchingTokens: false, // <-- Adicionado
     paymentMethod: '',
     paymentPreAuthCode: undefined,
     dpsAnswers: undefined,
@@ -233,6 +239,34 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({ // <-- 
       }
       return { formData: newFormData };
     }),
+// --- 4. ADICIONAR LÓGICA DE PREFETCHING ---
+    prefetchQuestionnaireTokens: async () => {
+      // Evita múltiplas chamadas
+      if (get().formData.isPrefetchingTokens || get().formData.questionnaireToken) {
+        return;
+      }
+
+      set((state) => ({ formData: { ...state.formData, isPrefetchingTokens: true } }));
+      
+      try {
+        console.log("[Prefetch] Iniciando busca de tokens...");
+        const { proposalNumber } = await reserveProposalNumber();
+        const { token } = await getQuestionnaireToken();
+        
+        set((state) => ({
+          formData: {
+            ...state.formData,
+            reservedProposalNumber: proposalNumber,
+            questionnaireToken: token,
+            isPrefetchingTokens: false,
+          }
+        }));
+        console.log("[Prefetch] Tokens armazenados no estado.");
+      } catch (error) {
+        console.error("[Prefetch] Falha ao buscar tokens:", error);
+        set((state) => ({ formData: { ...state.formData, isPrefetchingTokens: false } }));
+      }
+    },
   }
 }));
   

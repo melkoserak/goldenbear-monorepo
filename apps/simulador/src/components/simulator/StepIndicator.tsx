@@ -23,7 +23,8 @@ export const StepIndicator = ({ currentStep }: StepIndicatorProps) => {
                       w-9 h-9 rounded-full border-2 flex items-center justify-center font-bold mb-2 transition-all duration-300
                       ${isCompleted ? 'bg-primary border-primary text-primary-foreground' : ''}
                       ${isActive ? 'border-primary text-primary' : ''}
-                      ${!isActive && !isCompleted ? 'border-border text-gray-400' : ''}
+                      {/* --- CORREÇÃO AQUI --- */}
+                      ${!isActive && !isCompleted ? 'border-border text-muted-foreground' : ''}
                     `}
                   >
                     {stepNumber}
@@ -31,14 +32,16 @@ export const StepIndicator = ({ currentStep }: StepIndicatorProps) => {
                   <div
                     className={`
                       text-sm transition-all duration-300
-                      ${isActive ? 'font-bold text-foreground' : 'text-gray-400'}
+                      {/* --- CORREÇÃO AQUI --- */}
+                      ${isActive ? 'font-bold text-foreground' : 'text-muted-foreground'}
                     `}
                   >
                     {label}
                   </div>
                 </div>
                 {stepNumber < steps.length && (
-                  <div className={`flex-grow h-0.5 -mt-8 mx-[-20px] transition-colors duration-300 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
+                  // --- CORREÇÃO AQUI (bg-border para bg-muted é semanticamente melhor) ---
+                  <div className={`flex-grow h-0.5 -mt-8 mx-[-20px] transition-colors duration-300 ${isCompleted ? 'bg-primary' : 'bg-muted'}`} />
                 )}
               </React.Fragment>
             );

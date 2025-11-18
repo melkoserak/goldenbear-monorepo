@@ -17,7 +17,13 @@ export const HeroSection = () => {
         <div className="inline-flex flex-col items-start justify-center gap-10  py-16 relative self-stretch">
           
           <header className="flex flex-col items-start gap-6 relative self-stretch w-full">
-            <div className="inline-flex items-center gap-2 px-4 py-2 relative bg-neutral-700/50 rounded-[100px]">
+            <div className={cn(
+              "inline-flex items-center gap-2 px-4 py-2 relative rounded-[100px]",
+              // --- CORREÇÃO APLICADA ---
+              // "bg-neutral-700/50" foi trocado por um primitivo (preto com transparência)
+              // que funciona em qualquer tema, já que está sobre um fundo escuro.
+              "bg-black/20"
+            )}>
               <Award className="!relative !w-4 !h-4 text-secondary" aria-hidden="true" />
               <Typography variant="small" color="white">
                 Especialistas em Seguros para Militares
@@ -52,7 +58,7 @@ export const HeroSection = () => {
         <div className="relative w-full lg:w-[100%] lg:block">
           <Image
             className="w-[100%] object-cover rounded-lg"
-            alt="Militar profissional das Forças Armadas"
+            alt="Família sorridente com um escudo de proteção amarelo ao fundo, representando a segurança do seguro de vida."
             src="/imagens/foto-banner-casal-escudo.png"
             width={598}
             height={494}

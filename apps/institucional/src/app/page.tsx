@@ -56,10 +56,9 @@ export default function HomePage() {
         <FeaturesSection />
       </FadeInOnScroll>
 
-      {/* --- 2. ADICIONE A NOVA SEÇÃO AQUI --- */}
-      <FadeInOnScroll>
+      
         <HowToSection />
-      </FadeInOnScroll>
+      
 
 
       <FadeInOnScroll>

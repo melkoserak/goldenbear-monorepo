@@ -15,8 +15,7 @@ export const SummaryBar = () => {
   return (
     // Removemos os estilos de barra fixa e os botões.
     // Agora é uma seção dentro do formulário com uma borda superior.
-    <div className="w-full flex justify-between border rounded border-primary gap-16 mt-8 py-4 px-8 px-* bg-slate-50">
-      <div className="text-left">
+      <div className="w-full flex justify-between border rounded border-primary gap-16 mt-8 py-4 px-8 px-* bg-accent">      <div className="text-left">
           <p className="text-sm text-muted-foreground">Indenização Total</p>
           <p className="font-bold text-xl text-foreground">{formatCurrency(totalIndemnity)}</p>
       </div>

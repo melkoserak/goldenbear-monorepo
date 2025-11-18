@@ -32,10 +32,10 @@ export const FadeInOnScroll = ({
       ref={ref}
       style={style}
       className={cn(
-        // Estado inicial (invisível)
-        "opacity-0 translate-y-4",
+        // Estado inicial: Apenas invisível, sem movimento (corrige CLS)
+        "opacity-0",
         // Estado final (visível)
-        inView && "opacity-100 translate-y-0",
+        inView && "opacity-100",
         // Classes de transição (duração e suavização)
         "transition-all duration-700 ease-out",
         className

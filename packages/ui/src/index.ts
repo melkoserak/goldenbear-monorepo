@@ -17,6 +17,11 @@ export * from "./components/section";
 export * from "./components/container";
 export * from "./components/typography"; // <-- NOVO
 export * from "./components/carousel"; // <-- Adicione
+export * from "./components/textarea"; // <-- ADICIONADO
+export * from "./components/label"; // <-- ADICIONADO
+export * from "./components/feature-card"; // <-- ADICIONADO
+export * from "./components/section-header"; // <-- ADICIONADO
+export { Skeleton } from "./components/skeleton"; // <-- ADICIONADO
 
 // Exporta seus utils
 export * from "./lib/utils";

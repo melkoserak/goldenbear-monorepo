@@ -4,6 +4,7 @@ import { NavigationButtons } from '../NavigationButtons';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { Input } from '@goldenbear/ui/components/input';
 import { Check } from 'lucide-react';
+import { Label } from '@goldenbear/ui/components/label'; // <-- IMPORTADO
 import { track } from '@/lib/tracking'; // 1. Importe a nova função 'track'
 
 export const Step1 = () => {
@@ -52,10 +53,12 @@ export const Step1 = () => {
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
         Primeiramente, nos diga seu nome completo
       </h3>
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-bold text-gray-600 mb-1">
-          Nome completo <span className="text-red-500">*</span>
-        </label>
+      
+      {/* --- CORREÇÃO APLICADA --- */}
+      <div className="space-y-1.5">
+        <Label htmlFor="fullName">
+          Nome completo <span className="text-destructive">*</span>
+        </Label>
         <div className="relative flex items-center">
           <Input
             type="text" id="fullName" name="fullName" value={fullName}
@@ -68,6 +71,8 @@ export const Step1 = () => {
         </div>
         {!isFullNameValid && isTouched && <p className="text-sm text-destructive mt-1">{fullNameError}</p>}
       </div>
+      {/* --- FIM DA CORREÇÃO --- */}
+
       <NavigationButtons isNextDisabled={!isFullNameValid} />
     </form>
   );

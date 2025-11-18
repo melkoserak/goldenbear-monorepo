@@ -7,10 +7,30 @@ import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
 
 const benefits = [
-  { icon: Shield, title: "Morte", description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais." },
-  { icon: HeartPulse, title: "Doenças Graves", description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais." },
-  { icon: ShieldAlert, title: "Acidente", description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais." },
-  { icon: ShieldCheck, title: "Assistência Funeral", description: "Proteção para gastos inesperados em momentos em que a prioridade é a sua saúde. Cobertura de treze doenças, dentre elas, Câncer, AVC, e mais." }
+  { 
+    icon: Shield, 
+    title: "Morte", 
+    description: "Proteção financeira essencial para garantir o padrão de vida da sua família na sua ausência.", 
+    linkUrl: "/produtos/seguro-vida-morte"
+  },
+  { 
+    icon: HeartPulse, 
+    title: "Doenças Graves", 
+    description: "Receba o capital em vida para focar na sua recuperação após o diagnóstico (Câncer, AVC, Infarto e mais).", 
+    linkUrl: "/produtos/doencas-graves"
+  },
+  { 
+    icon: ShieldAlert, 
+    title: "Invalidez por Acidente", 
+    description: "Uma indenização para o seu recomeço e adaptação caso um acidente cause invalidez permanente.", 
+    linkUrl: "/produtos/invalidez-acidente"
+  },
+  { 
+    icon: ShieldCheck, 
+    title: "Assistência Funeral", 
+    description: "Um ato de cuidado que ampara sua família no momento mais difícil, cuidando de toda a burocracia e despesas.", 
+    linkUrl: "/produtos/assistencia-funeral"
+  }
 ];
 
 export const BenefitsSection = () => {
@@ -37,7 +57,13 @@ export const BenefitsSection = () => {
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
             return (
-              <div key={benefit.title} className="flex-1 self-stretch p-10 bg-accent rounded-lg border-t-4 border-primary inline-flex flex-col justify-start items-start gap-6">
+              <div 
+                key={benefit.title} 
+                // --- CORREÇÃO APLICADA ---
+                // Removido bg-accent e border-t-4
+                // Aplicado o padrão de card com sombra
+                className="flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow inline-flex flex-col justify-start items-start gap-6"
+              >
                 <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
@@ -47,8 +73,17 @@ export const BenefitsSection = () => {
                 <Typography variant="body" color="muted">
                   {benefit.description}
                 </Typography>
-                <Button variant="link" asChild className="p-0 h-auto text-zinc-700 font-medium">
-                  <Link href="#">Saiba mais <ArrowRight className="w-4 h-4 ml-1" /></Link>
+                <Button 
+                  variant="link" 
+                  asChild 
+                  // --- CORREÇÃO APLICADA ---
+                  // "text-zinc-700" trocado pelo token semântico correto
+                  className="p-0 h-auto text-accent-foreground font-medium"
+                >
+                 {/* --- CORREÇÃO APLICADA: 'href' ATUALIZADO --- */}
+                  <Link href={benefit.linkUrl}>
+                    Saiba mais <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
                 </Button>
               </div>
             );

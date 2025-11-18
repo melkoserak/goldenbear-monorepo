@@ -62,9 +62,15 @@ const config: Config = {
            },
         },
         borderRadius: {
-          lg: "var(--radius)", // Use a variável de 'tailwind-base.css'
+          lg: "var(--radius)",
           md: "calc(var(--radius) - 2px)",
           sm: "calc(var(--radius) - 4px)",
+        },
+        // --- ADICIONE ESTE BLOCO ---
+        boxShadow: {
+          sm: "var(--shadow-sm)",
+          md: "var(--shadow-md)",
+          lg: "var(--shadow-lg)",
         },
       },
     },

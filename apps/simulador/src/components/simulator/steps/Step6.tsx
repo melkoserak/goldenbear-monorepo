@@ -8,6 +8,7 @@ import { Input } from '@goldenbear/ui/components/input';
 import { track } from '@/lib/tracking';
 import { getAddressByZipCode } from '@/services/apiService';
 import { Loader2 } from 'lucide-react';
+import { Label } from '@goldenbear/ui/components/label'; // <-- IMPORTADO
 
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
   <Input {...props} ref={inputRef as React.Ref<HTMLInputElement>} />
@@ -73,31 +74,34 @@ export const Step6 = () => {
         {firstName}, agora complete o seu endereço:
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="md:col-span-1 relative">
-          <label htmlFor="zipCode" className="block text-sm font-bold text-gray-600 mb-1">CEP <span className="text-red-500">*</span></label>
+        
+        {/* --- CORREÇÃO APLICADA --- */}
+        <div className="md:col-span-1 relative space-y-1.5">
+          <Label htmlFor="zipCode">CEP <span className="text-destructive">*</span></Label>
           <MaskedInput mask="00000-000" id="zipCode" value={formData.zipCode} onAccept={(value: string) => setFormData({ zipCode: value })} className="h-12" required />
           {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" />}
         </div>
-        <div className="md:col-span-3">
-          <label htmlFor="street" className="block text-sm font-bold text-gray-600 mb-1">Logradouro <span className="text-red-500">*</span></label>
+        <div className="md:col-span-3 space-y-1.5">
+          <Label htmlFor="street">Logradouro <span className="text-destructive">*</span></Label>
           <Input id="street" value={formData.street} onChange={(e) => setFormData({ street: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
         </div>
-        <div className="md:col-span-1">
-          <label htmlFor="number" className="block text-sm font-bold text-gray-600 mb-1">Número <span className="text-red-500">*</span></label>
+        <div className="md:col-span-1 space-y-1.5">
+          <Label htmlFor="number">Número <span className="text-destructive">*</span></Label>
           <Input id="number" value={formData.number} onChange={(e) => setFormData({ number: e.target.value })} className="h-12" required />
         </div>
-        <div className="md:col-span-1">
-          <label htmlFor="complement" className="block text-sm font-bold text-gray-600 mb-1">Complemento</label>
+        <div className="md:col-span-1 space-y-1.5">
+          <Label htmlFor="complement">Complemento</Label>
           <Input id="complement" value={formData.complement} onChange={(e) => setFormData({ complement: e.target.value })} className="h-12" />
         </div>
-        <div className="md:col-span-2">
-          <label htmlFor="neighborhood" className="block text-sm font-bold text-gray-600 mb-1">Bairro <span className="text-red-500">*</span></label>
+        <div className="md:col-span-2 space-y-1.5">
+          <Label htmlFor="neighborhood">Bairro <span className="text-destructive">*</span></Label>
           <Input id="neighborhood" value={formData.neighborhood} onChange={(e) => setFormData({ neighborhood: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
         </div>
-        <div className="md:col-span-2">
-          <label htmlFor="city" className="block text-sm font-bold text-gray-600 mb-1">Cidade <span className="text-red-500">*</span></label>
+        <div className="md:col-span-2 space-y-1.5">
+          <Label htmlFor="city">Cidade <span className="text-destructive">*</span></Label>
           <Input id="city" value={formData.city} onChange={(e) => setFormData({ city: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
         </div>
+        {/* --- FIM DA CORREÇÃO --- */}
       </div>
       <NavigationButtons isNextDisabled={!isFormValid} />
     </form>

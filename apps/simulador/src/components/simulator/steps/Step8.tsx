@@ -1,10 +1,10 @@
-// src/components/simulator/steps/Step8.tsx
 "use client";
 import React, { useEffect, useMemo } from 'react';
 import { IMaskMixin } from 'react-imask';
 import { useSimulatorStore, Beneficiary } from '@/stores/useSimulatorStore';
 import { NavigationButtons } from '../NavigationButtons';
 import { Input } from '@goldenbear/ui/components/input';
+import { Label } from '@goldenbear/ui/components/label'; // <-- Importado
 import { Button } from '@goldenbear/ui/components/button';
 import { Autocomplete } from '@goldenbear/ui/components/autocomplete';
 import { track } from '@/lib/tracking';
@@ -55,24 +55,24 @@ const BeneficiaryForm = ({ beneficiary, index }: { beneficiary: Beneficiary; ind
         )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-        <div className="md:col-span-2">
-          <label className="block text-sm font-bold text-gray-600 mb-1">Nome completo <span className="text-red-500">*</span></label>
+        <div className="md:col-span-2 space-y-1.5">
+          <Label>Nome completo <span className="text-destructive">*</span></Label>
           <Input value={beneficiary.fullName} onChange={e => updateBeneficiary(beneficiary.id, { fullName: e.target.value })} className="h-12" required />
         </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">CPF <span className="text-red-500">*</span></label>
+        <div className="space-y-1.5">
+          <Label>CPF <span className="text-destructive">*</span></Label>
           <MaskedInput mask="000.000.000-00" value={beneficiary.cpf} onAccept={(value: string) => updateBeneficiary(beneficiary.id, { cpf: value })} className="h-12" required />
         </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">RG <span className="text-red-500">*</span></label>
+        <div className="space-y-1.5">
+          <Label>RG <span className="text-destructive">*</span></Label>
           <MaskedInput mask="00.000.000-**" value={beneficiary.rg} onAccept={(value: string) => updateBeneficiary(beneficiary.id, { rg: value })} className="h-12" required />
         </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Data de nascimento <span className="text-red-500">*</span></label>
+        <div className="space-y-1.5">
+          <Label>Data de nascimento <span className="text-destructive">*</span></Label>
           <Input type="date" value={beneficiary.birthDate} onChange={e => updateBeneficiary(beneficiary.id, { birthDate: e.target.value })} className="h-12" required />
         </div>
-        <div>
-          <label className="block text-sm font-bold text-gray-600 mb-1">Grau de parentesco <span className="text-red-500">*</span></label>
+        <div className="space-y-1.5">
+          <Label>Grau de parentesco <span className="text-destructive">*</span></Label>
           <Autocomplete options={relationshipOptions} value={beneficiary.relationship} onChange={v => updateBeneficiary(beneficiary.id, { relationship: v })} placeholder="Selecione..." />
         </div>
       </div>
@@ -88,16 +88,16 @@ const BeneficiaryForm = ({ beneficiary, index }: { beneficiary: Beneficiary; ind
 
             <h5 className="text-md font-semibold text-foreground mb-4">Dados do Responsável Legal</h5>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-gray-600 mb-1">Nome completo <span className="text-red-500">*</span></label>
+                <div className="md:col-span-2 space-y-1.5">
+                    <Label>Nome completo <span className="text-destructive">*</span></Label>
                     <Input value={beneficiary.legalRepresentative?.fullName} onChange={e => updateBeneficiary(beneficiary.id, { legalRepresentative: { fullName: e.target.value } })} className="h-12" required={isMinor} />
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-gray-600 mb-1">CPF <span className="text-red-500">*</span></label>
+                <div className="space-y-1.5">
+                    <Label>CPF <span className="text-destructive">*</span></Label>
                     <MaskedInput mask="000.000.000-00" value={beneficiary.legalRepresentative?.cpf} onAccept={(value: string) => updateBeneficiary(beneficiary.id, { legalRepresentative: { cpf:  value  } })} className="h-12" required={isMinor} />
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-gray-600 mb-1">RG <span className="text-red-500">*</span></label>
+                <div className="space-y-1.5">
+                    <Label>RG <span className="text-destructive">*</span></Label>
                     <MaskedInput mask="00.000.000-**" value={beneficiary.legalRepresentative?.rg} onAccept={(value: string) => updateBeneficiary(beneficiary.id, { legalRepresentative: { rg: value } })} className="h-12" required={isMinor} />
                 </div>
             </div>
@@ -110,7 +110,7 @@ const BeneficiaryForm = ({ beneficiary, index }: { beneficiary: Beneficiary; ind
 // The main component for the entire step
 export const Step8 = () => {
   const { fullName, beneficiaries } = useSimulatorStore((state) => state.formData);
-  const { addBeneficiary, nextStep, setValidationStatus } = useSimulatorStore((state) => state.actions);
+  const { addBeneficiary, nextStep, setValidationStatus, prefetchQuestionnaireTokens } = useSimulatorStore((state) => state.actions);
   const beneficiariesError = useSimulatorStore((state) => state.validationStatus.beneficiariesError);
   const firstName = fullName.split(' ')[0] || "";
 
@@ -131,14 +131,14 @@ export const Step8 = () => {
       const isMinor = age < 18;
 
      if (isMinor) {
-  const rep = b.legalRepresentative;
-  return (
-    isBeneficiaryValid &&
-    !!rep?.fullName?.trim() &&
-    (rep?.cpf?.replace(/\D/g, '').length === 11) &&
-    !!rep?.rg?.trim()
-  );
-}
+        const rep = b.legalRepresentative;
+        return (
+          isBeneficiaryValid &&
+          !!rep?.fullName?.trim() &&
+          (rep?.cpf?.replace(/\D/g, '').length === 11) &&
+          !!rep?.rg?.trim()
+        );
+      }
       
       return isBeneficiaryValid;
     });
@@ -146,8 +146,14 @@ export const Step8 = () => {
 
   useEffect(() => {
     track('step_view', { step: 8, step_name: 'Beneficiários' });
-    setValidationStatus({ beneficiariesError: isFormValid ? null : "Preencha todos os campos obrigatórios de todos os beneficiários." });
-  }, [isFormValid, setValidationStatus]);
+    const errorMsg = isFormValid ? null : "Preencha todos os campos obrigatórios de todos os beneficiários.";
+    setValidationStatus({ beneficiariesError: errorMsg });
+
+    if (isFormValid) {
+      console.log("[Step8] Formulário válido, iniciando prefetch...");
+      prefetchQuestionnaireTokens();
+    }
+  }, [isFormValid, setValidationStatus, prefetchQuestionnaireTokens]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

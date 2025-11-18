@@ -1,72 +1,108 @@
+/* Removido o "@layer base {" daqui de cima */
+
 :root {
-  /* Suas cores personalizadas agora em formato HEX */
-  --background: #ffffff; /* Cinza claro do fundo */
-  --foreground: #252525;   /* Cor de texto principal */
+  /* --- 1. Paleta Primitiva (O "Como") --- */
+  /* Define todos os valores de cor brutos aqui */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray-50: #F6F6F6;
+  --color-gray-100: #E9EBF0;
+  --color-gray-300: #e0e0e0;
+  --color-gray-700: #3F3F46;
+  --color-gray-800: #252525;
+  --color-gray-900: #18181b;
+  --color-gray-950: #27272a;
 
-  --card: #FFFFFF;
-  --card-foreground: #252525;
+  --color-blue-500: #0266e8;
+  --color-blue-600: #095BC5;
 
-  --popover: #FFFFFF;
-  --popover-foreground: #252525;
+  --color-yellow-400: #FFCE2D;
+  --color-yellow-500: #FED44D;
 
---primary: #0266e8; /* Seu Azul Primário */
-  --primary-hover: #095BC5; /* <-- ADICIONADO: Novo hover 'blue dark' */
-  --primary-foreground: #FFFFFF; /* Branco para textos sobre o azul */
+  --color-red-600: #DC2626;
 
-  --secondary: #FFCE2D; /* <-- ATUALIZADO: Novo Amarelo */
-  --secondary-hover: #FED44D; /* <-- ADICIONADO: Novo hover amarelo */
-  --secondary-foreground: #252525; /* Cor de texto para o amarelo */
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717A;
+  --color-neutral-100-t: #f4f4f5;
+  
+  /* --- 2. Tokens Semânticos (O "Quê") --- */
+  /* Agora, eles apenas apontam para os primitivos */
+  --background: var(--color-white);
+  --foreground: var(--color-gray-800);
 
-  --muted: #E9EBF0;
-  --muted-foreground: #71717A;
+  --card: var(--color-white);
+  --card-foreground: var(--color-gray-800);
 
-  /* Esta é a cor que corrigimos para o hover */
-  --accent: #F6F6F6;
-  --accent-foreground: #3F3F46;
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-gray-800);
 
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
+  --primary: var(--color-blue-500);
+  --primary-hover: var(--color-blue-600);
+  --primary-foreground: var(--color-white);
 
-  --border: #e0e0e0; /* Sua cor de borda */
-  --input: #e0e0e0;
-  --ring: #0266e8; /* A cor do anel de foco, usando seu azul primário */
+  --secondary: var(--color-yellow-400);
+  --secondary-hover: var(--color-yellow-500);
+  --secondary-foreground: var(--color-gray-800);
+
+  --muted: var(--color-gray-100);
+  --muted-foreground: var(--color-neutral-500);
+
+  --accent: var(--color-gray-50);
+  --accent-foreground: var(--color-gray-700);
+
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-white);
+
+  --border: var(--color-gray-300);
+  --input: var(--color-gray-300);
+  --ring: var(--color-blue-500);
 
   --radius: 0.5rem;
+
+  /* Tokens de Sombra (do passo anterior) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-/* ADICIONE ESTE BLOCO INTEIRO
-  Estas são as variáveis para o Modo Escuro
-*/
+/* --- 3. Theming (Modo Escuro) --- */
+/* O modo escuro apenas remapeia os tokens semânticos */
 html.dark {
-  --background: #18181b; /* Um cinza escuro para o fundo */
-  --foreground: #e4e4e7;   /* Um cinza claro para o texto */
+  --background: var(--color-gray-900);
+  --foreground: var(--color-neutral-100-t);
 
-  --card: #27272a;
-  --card-foreground: #e4e4e7;
+  --card: var(--color-gray-950);
+  --card-foreground: var(--color-neutral-100-t);
 
-  --popover: #27272a;
-  --popover-foreground: #e4e4e7;
+  --popover: var(--color-gray-950);
+  --popover-foreground: var(--color-neutral-100-t);
 
-  /* Cores primária e secundária podem ser as mesmas
-     ou você pode ajustá-las para melhor contraste no escuro */
-  --primary: #0266e8;
-  --primary-hover: #095BC5; /* <-- ADICIONADO */
-  --primary-foreground: #FFFFFF;
+  /* Primário e Secundário podem ser os mesmos */
+  --primary: var(--color-blue-500);
+  --primary-hover: var(--color-blue-600);
+  --primary-foreground: var(--color-white);
 
-  --secondary: #FFCE2D; /* <-- ATUALIZADO */
-  --secondary-hover: #FED44D; /* <-- ADICIONADO */
-  --secondary-foreground: #252525;
+  --secondary: var(--color-yellow-400);
+  --secondary-hover: var(--color-yellow-500);
+  --secondary-foreground: var(--color-gray-800);
 
-  --muted: #3f3f46;
-  --muted-foreground: #a1a1aa;
+  --muted: var(--color-gray-700);
+  --muted-foreground: var(--color-neutral-400);
   
-  --accent: #3f3f46; /* Cinza escuro (para hovers) */
-  --accent-foreground: #f4f4f5; /* Cinza bem claro (para texto no hover) */
+  --accent: var(--color-gray-700);
+  --accent-foreground: var(--color-neutral-100-t);
 
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-white);
 
-  --border: #3f3f46;
-  --input: #3f3f46;
-  --ring: #0266e8;
+  --border: var(--color-gray-700);
+  --input: var(--color-gray-700);
+  --ring: var(--color-blue-500);
+
+  /* Tokens de Sombra (do passo anterior) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
+
+/* Removido o "}" de fechamento do @layer base daqui de baixo */

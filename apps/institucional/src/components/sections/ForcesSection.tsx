@@ -6,71 +6,76 @@ import { ArrowRight } from 'lucide-react';
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
+// 1. Importar os componentes do Carrossel
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@goldenbear/ui/components/carousel';
 
+// 2. Atualizar o array com todas as 6 categorias, descrições e links
 const forces = [
   {
-    title: "Militares do Exército Brasileiro",
-    description: "Segurança e tranquilidade para você e sua família, seja em treinamento, em missão ou no dia a dia do quartel.",
+    title: "Exército Brasileiro",
+    description: "Proteção para todas as patentes, de Soldado a General. Cobertura em treinamento, missão ou no dia a dia.",
     imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/seguro-militar"
+    linkUrl: "/seguro-militar/exercito"
   },
   {
     title: "Marinha do Brasil",
-    description: "Proteção completa para quem serve nos mares, rios e em terra, garantindo seu futuro e de quem você ama.",
-    imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/seguro-militar"
+    description: "Segurança para quem serve nos mares e em terra, de Marinheiro a Almirante. Garantia para você e sua família.",
+    imageUrl: "/imagens/foto-militar-exercito.png", // TODO: Trocar imagem
+    linkUrl: "/seguro-militar/marinha"
   },
   {
     title: "Força Aérea Brasileira",
-    description: "Cobertura à altura dos seus voos, protegendo você no ar e em solo, em qualquer missão pelo país.",
-    imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/seguro-militar"
+    description: "Cobertura à altura dos seus voos, de Soldado a Brigadeiro. Proteção completa no ar e em solo.",
+    imageUrl: "/imagens/foto-militar-exercito.png", // TODO: Trocar imagem
+    linkUrl: "/seguro-militar/aeronautica"
   },
   {
     title: "Policiais Militares",
-    description: "O apoio e a segurança que você precisa para enfrentar os desafios diários na proteção da sociedade.",
-    imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/seguro-militar"
+    description: "Amparo para quem está na linha de frente, de Soldado a Coronel. Segurança para enfrentar os desafios diários.",
+    imageUrl: "/imagens/foto-militar-exercito.png", // TODO: Trocar imagem
+    linkUrl: "/seguro-militar/policia-militar"
   },
   {
     title: "Bombeiros Militares",
-    description: "Proteção robusta para heróis que arriscam a vida para salvar outras, cobrindo todos os momentos.",
-    imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/seguro-militar"
-  },
-  {
-    title: "Outras Forças",
-    description: "Temos soluções especializadas para todas as forças de segurança e corporações. Consulte-nos.",
-    imageUrl: "/imagens/foto-militar-exercito.png",
-    linkUrl: "/contato"
+    description: "Proteção robusta para heróis que arriscam a vida para salvar outras, de Soldado a Coronel BM.",
+    imageUrl: "/imagens/foto-militar-exercito.png", // TODO: Trocar imagem
+    linkUrl: "/seguro-militar/bombeiros"
   }
 ];
 
+// 3. ForceCard ATUALIZADO para altura consistente
 const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
   return (
-    <div className="flex-1 bg-card rounded-lg hover:shadow-lg overflow-hidden flex flex-col justify-start">
+    // Adicionado "h-full" para garantir que o flex-1 funcione no wrapper do CarouselItem
+    <div className="flex-1 bg-card rounded-lg hover:shadow-lg overflow-hidden flex flex-col justify-start h-full">
       <div className="self-stretch h-60 relative flex flex-col justify-start items-start gap-2.5 overflow-hidden">
         <Image 
           className="self-stretch flex-1 w-full h-full object-cover" 
           src={imageUrl} 
           alt={title}
-          fill // Se estiver usando fill, ou width/height responsivos
-          // ADICIONE ISTO:
+          fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
         />
       </div>
-      <div className="self-stretch p-6 flex flex-col justify-start items-start gap-6">
-        {/* Substituindo h3 manual */}
+      {/* Adicionado "flex-1" e "flex-col" para o conteúdo crescer */}
+      <div className="self-stretch p-6 flex flex-col justify-start items-start gap-6 flex-1">
         <Typography variant="h4" className="self-stretch">
           {title}
         </Typography>
         
-        {/* Substituindo p manual */}
-        <Typography variant="body" color="muted" className="self-stretch h-24">
+        {/* Adicionado "flex-1" para empurrar o link para baixo */}
+        <Typography variant="body" color="muted" className="self-stretch flex-1">
           {description}
         </Typography>
         
-        <Button variant="link" asChild className="p-0 h-auto text-foreground font-medium">
+        {/* Adicionado "mt-auto" para alinhar o botão em baixo */}
+        <Button variant="link" asChild className="p-0 h-auto text-foreground font-medium mt-auto">
           <Link href={linkUrl}>
             Saiba mais <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
@@ -83,24 +88,53 @@ const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
 export const ForcesSection = () => {
   return (
     <Section variant="accent">
-      <Container className="flex flex-col justify-start items-center gap-10 lg:gap-20">
-        {/* Título da Seção */}
-        <Typography variant="h2" color="primary" className="self-stretch text-left max-w-[474px]">
-          Proteção sob medida para todas as forças e corporações
-        </Typography>
+      <Container className="flex flex-col justify-start items-center gap-10 lg:gap-12">
         
-        {/* ... Grids de Cards ... */}
-        <div className="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {forces.slice(0, 4).map((force) => <ForceCard key={force.title} {...force} />)}
-        </div>
-        <div className="self-stretch grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-center">
-          <div className="hidden lg:block"></div> 
-          {forces.slice(4, 6).map((force) => <ForceCard key={force.title} {...force} />)}
-          <div className="hidden lg:block"></div>
-        </div>
+        {/* 4. Carrossel implementado para TODOS os dispositivos */}
+        <Carousel
+          opts={{
+            align: "start",
+            loop: false, // <-- Definido como "finito"
+          }}
+          className="w-full"
+        >
+          {/* Header com Título e Setas (visíveis em todos os dispositivos) */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-8">
+            <Typography variant="h2" color="primary" className="text-left max-w-[474px]">
+              Proteção sob medida para todas as forças e corporações
+            </Typography>
+            
+            <div className="flex-shrink-0 flex gap-4">
+              <CarouselPrevious className='' />
+              <CarouselNext />
+            </div>
+          </div>
+
+          {/* 5. Conteúdo do Carrossel com classes responsivas */}
+          <CarouselContent className="-ml-6">
+            {forces.map((force, index) => (
+              <CarouselItem 
+                key={index} 
+                // Define a largura dos itens por breakpoint
+                className="pl-6 basis-4/5 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+              >
+                {/* Wrapper para garantir altura total */}
+                <div className="h-full">
+                  <ForceCard {...force} />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+
+
+          
+        </Carousel>
         
+        {/* 6. Botão "Veja todas" apontando para o HUB */}
         <Button variant="link" asChild className="p-0 h-auto text-foreground">
-          <Link href="/seguro-militar">Veja todas as profissões <ArrowRight className="w-4 h-4 ml-1" /></Link>
+          <Link href="/seguro-militar">
+            Veja todas as profissões <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
         </Button>
       </Container>
     </Section>

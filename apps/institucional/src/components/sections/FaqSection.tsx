@@ -23,7 +23,7 @@ const faqs = [
 
 export const FaqSection = () => {
   return (
-    <Section id="faq" variant="default">
+    <Section variant="default">
       <Container className="grid grid-cols-1 gap-8 md:grid-cols-3">
         <div className="faq-intro">
           <div className="faq-icon mb-4 text-primary">

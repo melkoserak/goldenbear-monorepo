@@ -65,7 +65,9 @@ export const TestimonialsSection = () => {
               <CarouselItem key={index} className="pl-6 md:basis-1/2 lg:basis-1/3">
                 <div className={cn(
                   "flex flex-col justify-between p-8 h-full min-h-[280px]",
-                  "bg-card rounded-lg border border-border shadow-lg select-none transition-colors hover:border-secondary/50"
+                  // --- CORREÇÃO APLICADA ---
+                  // Substituído shadow-lg por tokens e removido hover da borda
+                  "bg-card rounded-lg border border-border select-none transition-shadow shadow-sm hover:shadow-md"
                 )}>
                   <Typography variant="h4" color="muted" className="italic mb-6 font-normal text-lg">
                     "{testimonial.quote}"
