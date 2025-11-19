@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { FontSizeManager } from "@/components/layout/FontSizeManager";
 import { TopBar } from "@/components/layout/TopBar"; // 1. Importe o TopBar
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 
 const noto = Noto_Sans({
@@ -86,7 +87,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <FontSizeManager />
           <TopBar /> {/* 2. Adicione o TopBar aqui */}
           <Header />
-          <main id="content" className="site-content">
+         <main id="content" className="site-content">
+            {/* 2. ADICIONE O BREADCRUMB AQUI */}
+            <Breadcrumbs />
             {children}
           </main>
           <Footer />
