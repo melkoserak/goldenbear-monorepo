@@ -1,109 +1,202 @@
-// src/components/simulator/steps/Step6.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { IMaskMixin } from 'react-imask';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { NavigationButtons } from '../NavigationButtons';
 import { Input } from '@goldenbear/ui/components/input';
+import { Label } from '@goldenbear/ui/components/label';
 import { track } from '@/lib/tracking';
-import { getAddressByZipCode } from '@/services/apiService';
 import { Loader2 } from 'lucide-react';
-import { Label } from '@goldenbear/ui/components/label'; // <-- IMPORTADO
+import { step6Schema, type Step6Data } from '@/lib/schemas';
+import { useAddress } from '@/hooks/useMagApi';
 
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
   <Input {...props} ref={inputRef as React.Ref<HTMLInputElement>} />
 ));
 
 export const Step6 = () => {
-  const { formData, validationStatus } = useSimulatorStore();
-  const { setFormData, setValidationStatus, nextStep } = useSimulatorStore((state) => state.actions);
+  const { formData } = useSimulatorStore();
+  const { setFormData, nextStep } = useSimulatorStore((state) => state.actions);
   const firstName = formData.fullName.split(' ')[0] || "";
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+
+  const { 
+    control, 
+    register, 
+    handleSubmit, 
+    setValue, 
+    watch, 
+    formState: { errors, isValid } 
+  } = useForm<Step6Data>({
+    resolver: zodResolver(step6Schema),
+    defaultValues: {
+      zipCode: formData.zipCode,
+      street: formData.street,
+      number: formData.number,
+      complement: formData.complement,
+      neighborhood: formData.neighborhood,
+      city: formData.city,
+      state: formData.state,
+    },
+    mode: 'onBlur'
+  });
+
+  const zipCodeValue = watch('zipCode');
+  const { data: addressData, isFetching } = useAddress(zipCodeValue || '');
+
+  // Sincroniza estado de loading
+  useEffect(() => {
+    setIsFetchingAddress(isFetching);
+  }, [isFetching]);
 
   useEffect(() => {
     track('step_view', { step: 6, step_name: 'Endereço' });
   }, []);
 
   useEffect(() => {
-    const cleanedZip = formData.zipCode.replace(/\D/g, '');
-    if (cleanedZip.length === 8) {
-      const fetchAddress = async () => {
-        setIsFetchingAddress(true);
-        try {
-          const address = await getAddressByZipCode(cleanedZip);
-          setFormData({
-            street: address.logradouro,
-            neighborhood: address.bairro,
-            city: address.localidade,
-            state: address.uf,
-          });
-        } catch (error) {
-          console.error(error);
-          setFormData({ street: '', neighborhood: '', city: '', state: '' });
-        } finally {
-          setIsFetchingAddress(false);
-        }
-      };
-      fetchAddress();
+    if (addressData) {
+      setValue('street', addressData.logradouro, { shouldValidate: true });
+      setValue('neighborhood', addressData.bairro, { shouldValidate: true });
+      setValue('city', addressData.localidade, { shouldValidate: true });
+      setValue('state', addressData.uf, { shouldValidate: true });
     }
-  }, [formData.zipCode, setFormData]);
+  }, [addressData, setValue]);
 
-  useEffect(() => {
-    setValidationStatus({
-      zipCodeError: formData.zipCode.replace(/\D/g, '').length === 8 ? null : 'CEP inválido.',
-      streetError: formData.street.trim() ? null : 'Campo obrigatório.',
-      numberError: formData.number.trim() ? null : 'Campo obrigatório.',
-      neighborhoodError: formData.neighborhood.trim() ? null : 'Campo obrigatório.',
-      cityError: formData.city.trim() ? null : 'Campo obrigatório.',
-    });
-  }, [formData.zipCode, formData.street, formData.number, formData.neighborhood, formData.city, setValidationStatus]);
-
-  const isFormValid = !validationStatus.zipCodeError && !validationStatus.streetError && !validationStatus.numberError && !validationStatus.neighborhoodError && !validationStatus.cityError;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isFormValid) {
-      track('step_complete', { step: 6, step_name: 'Endereço' });
-      nextStep();
-    }
+  const onSubmit = (data: Step6Data) => {
+    setFormData(data);
+    track('step_complete', { step: 6, step_name: 'Endereço' });
+    nextStep();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="animate-fade-in">
+    <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in" noValidate>
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
         {firstName}, agora complete o seu endereço:
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         
-        {/* --- CORREÇÃO APLICADA --- */}
+        {/* CEP */}
         <div className="md:col-span-1 relative space-y-1.5">
           <Label htmlFor="zipCode">CEP <span className="text-destructive">*</span></Label>
-          <MaskedInput mask="00000-000" id="zipCode" value={formData.zipCode} onAccept={(value: string) => setFormData({ zipCode: value })} className="h-12" required />
-          {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" />}
+          <Controller
+            name="zipCode"
+            control={control}
+            render={({ field: { onChange, value, onBlur, ref } }) => (
+              <MaskedInput 
+                id="zipCode"
+                mask="00000-000" 
+                value={value} 
+                onAccept={(val: string) => onChange(val)} 
+                onBlur={onBlur}
+                inputRef={ref}
+                className={`h-12 ${errors.zipCode ? 'border-destructive' : ''}`} 
+                placeholder="00000-000"
+                // A11y
+                aria-invalid={!!errors.zipCode}
+                aria-describedby={errors.zipCode ? "zipCode-error" : undefined}
+                aria-required="true"
+              />
+            )}
+          />
+          {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" aria-label="Carregando endereço..." />}
+          {errors.zipCode && (
+            <p id="zipCode-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.zipCode.message}
+            </p>
+          )}
         </div>
+
+        {/* Logradouro */}
         <div className="md:col-span-3 space-y-1.5">
           <Label htmlFor="street">Logradouro <span className="text-destructive">*</span></Label>
-          <Input id="street" value={formData.street} onChange={(e) => setFormData({ street: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
+          <Input 
+            id="street" 
+            {...register('street')} 
+            className={errors.street ? 'border-destructive' : ''} 
+            disabled={isFetchingAddress}
+            // A11y 
+            aria-invalid={!!errors.street}
+            aria-describedby={errors.street ? "street-error" : undefined}
+            aria-required="true"
+          />
+          {errors.street && (
+            <p id="street-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.street.message}
+            </p>
+          )}
         </div>
+
+        {/* Número */}
         <div className="md:col-span-1 space-y-1.5">
           <Label htmlFor="number">Número <span className="text-destructive">*</span></Label>
-          <Input id="number" value={formData.number} onChange={(e) => setFormData({ number: e.target.value })} className="h-12" required />
+          <Input 
+            id="number" 
+            {...register('number')} 
+            className={errors.number ? 'border-destructive' : ''}
+            // A11y
+            aria-invalid={!!errors.number}
+            aria-describedby={errors.number ? "number-error" : undefined}
+            aria-required="true"
+          />
+          {errors.number && (
+            <p id="number-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.number.message}
+            </p>
+          )}
         </div>
+
+        {/* Complemento (Opcional) */}
         <div className="md:col-span-1 space-y-1.5">
           <Label htmlFor="complement">Complemento</Label>
-          <Input id="complement" value={formData.complement} onChange={(e) => setFormData({ complement: e.target.value })} className="h-12" />
+          <Input 
+            id="complement" 
+            {...register('complement')} 
+          />
         </div>
+
+        {/* Bairro */}
         <div className="md:col-span-2 space-y-1.5">
           <Label htmlFor="neighborhood">Bairro <span className="text-destructive">*</span></Label>
-          <Input id="neighborhood" value={formData.neighborhood} onChange={(e) => setFormData({ neighborhood: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
+          <Input 
+            id="neighborhood" 
+            {...register('neighborhood')} 
+            className={errors.neighborhood ? 'border-destructive' : ''} 
+            disabled={isFetchingAddress}
+            // A11y
+            aria-invalid={!!errors.neighborhood}
+            aria-describedby={errors.neighborhood ? "neighborhood-error" : undefined}
+            aria-required="true"
+          />
+          {errors.neighborhood && (
+            <p id="neighborhood-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.neighborhood.message}
+            </p>
+          )}
         </div>
+
+        {/* Cidade */}
         <div className="md:col-span-2 space-y-1.5">
           <Label htmlFor="city">Cidade <span className="text-destructive">*</span></Label>
-          <Input id="city" value={formData.city} onChange={(e) => setFormData({ city: e.target.value })} className="h-12" required disabled={isFetchingAddress} />
+          <Input 
+            id="city" 
+            {...register('city')} 
+            className={errors.city ? 'border-destructive' : ''} 
+            disabled={isFetchingAddress}
+            // A11y
+            aria-invalid={!!errors.city}
+            aria-describedby={errors.city ? "city-error" : undefined}
+            aria-required="true"
+          />
+          {errors.city && (
+            <p id="city-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.city.message}
+            </p>
+          )}
         </div>
-        {/* --- FIM DA CORREÇÃO --- */}
       </div>
-      <NavigationButtons isNextDisabled={!isFormValid} />
+      <NavigationButtons isNextDisabled={!isValid} />
     </form>
   );
 };

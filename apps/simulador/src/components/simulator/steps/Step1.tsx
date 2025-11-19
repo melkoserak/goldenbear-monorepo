@@ -1,79 +1,84 @@
 "use client";
-import { useEffect, useState } from 'react';
+
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { NavigationButtons } from '../NavigationButtons';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { Input } from '@goldenbear/ui/components/input';
+import { Label } from '@goldenbear/ui/components/label';
+import { track } from '@/lib/tracking';
 import { Check } from 'lucide-react';
-import { Label } from '@goldenbear/ui/components/label'; // <-- IMPORTADO
-import { track } from '@/lib/tracking'; // 1. Importe a nova função 'track'
+import { step1Schema, type Step1Data } from '@/lib/schemas';
 
 export const Step1 = () => {
-  const fullName = useSimulatorStore((state) => state.formData.fullName);
-  const fullNameError = useSimulatorStore((state) => state.validationStatus.fullNameError);
-  const { nextStep, setFormData, setValidationStatus } = useSimulatorStore((state) => state.actions);
+  const { fullName } = useSimulatorStore((state) => state.formData);
+  const { nextStep, setFormData } = useSimulatorStore((state) => state.actions);
 
-  const [isTouched, setIsTouched] = useState(false);
-  const isFullNameValid = fullName.trim().includes(' ') && fullName.trim().split(' ').length > 1;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isDirty },
+  } = useForm<Step1Data>({
+    resolver: zodResolver(step1Schema),
+    defaultValues: { fullName },
+    mode: 'onChange',
+  });
 
-  // Trackeamento de visualização do passo
   useEffect(() => {
-    track('step_view', {
+    track('step_view', { step: 1, step_name: 'Dados Iniciais' });
+  }, []);
+
+  const onSubmit = (data: Step1Data) => {
+    setFormData({ fullName: data.fullName });
+    track('step_complete', {
       step: 1,
       step_name: 'Dados Iniciais',
+      form_data: { full_name_provided: true },
     });
-  }, []); // O array vazio garante que isto só executa uma vez
-
-  useEffect(() => {
-    if (isTouched) {
-      setValidationStatus({ fullNameError: isFullNameValid ? null : "Por favor, digite seu nome completo." });
-    }
-  }, [fullName, isTouched, isFullNameValid, setValidationStatus]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isFullNameValid) {
-      // 2. Dispare um evento de conclusão mais completo
-      track('step_complete', {
-        step: 1,
-        step_name: 'Dados Iniciais',
-        // Adicione qualquer informação relevante que já tenha
-        form_data: {
-          full_name_provided: true,
-        },
-      });
-      nextStep();
-    } else {
-      setIsTouched(true);
-      setValidationStatus({ fullNameError: "Por favor, digite seu nome completo." });
-    }
+    nextStep();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="animate-fade-in">
+    <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in" noValidate>
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
         Primeiramente, nos diga seu nome completo
       </h3>
-      
-      {/* --- CORREÇÃO APLICADA --- */}
+
       <div className="space-y-1.5">
         <Label htmlFor="fullName">
           Nome completo <span className="text-destructive">*</span>
         </Label>
         <div className="relative flex items-center">
           <Input
-            type="text" id="fullName" name="fullName" value={fullName}
-            onChange={(e) => setFormData({ fullName: e.target.value })}
-            onBlur={() => setIsTouched(true)}
-            className={`h-12 px-4 py-3 pr-10 ${!isFullNameValid && isTouched ? 'border-destructive' : ''}`}
-            placeholder="Seu nome completo" required
+            id="fullName"
+            placeholder="Seu nome completo"
+            className={`h-12 px-4 py-3 pr-10 ${errors.fullName ? 'border-destructive' : ''}`}
+            // --- A11Y: Atributos ARIA ---
+            aria-invalid={errors.fullName ? "true" : "false"}
+            aria-describedby={errors.fullName ? "fullName-error" : undefined}
+            aria-required="true"
+            // ----------------------------
+            {...register('fullName')}
           />
-          {isFullNameValid && <Check className="absolute right-3 h-5 w-5 text-green-500" />}
+          
+          {!errors.fullName && isDirty && isValid && (
+            <Check className="absolute right-3 h-5 w-5 text-green-500 pointer-events-none" aria-hidden="true" />
+          )}
         </div>
-        {!isFullNameValid && isTouched && <p className="text-sm text-destructive mt-1">{fullNameError}</p>}
+        
+        {errors.fullName && (
+          <p 
+            id="fullName-error" // ID conectado ao input
+            className="text-sm text-destructive mt-1" 
+            role="alert"
+          >
+            {errors.fullName.message}
+          </p>
+        )}
       </div>
-      {/* --- FIM DA CORREÇÃO --- */}
 
-      <NavigationButtons isNextDisabled={!isFullNameValid} />
+      <NavigationButtons isNextDisabled={!isValid} />
     </form>
   );
 };

@@ -82,12 +82,13 @@ export const getWidgetToken = () => getMagToken('apiseguradora apiunderwriting')
  * O erro 401 indica que o escopo 'apiunderwriting' estava errado.
  */
 export const getQuestionnaireToken = async () => {
-  MAG_Logger.debug("[BFF-BACKEND] Chamando getMagToken com escopo: 'api.questionario'");
+  MAG_Logger.debug("[BFF-BACKEND] Iniciando busca de token para questionário.");
   
-  // --- A CORREÇÃO ESTÁ AQUI ---
-  const token = await getMagToken('api.questionario'); // <-- APENAS este escopo.
+  const token = await getMagToken('api.questionario'); 
   
-  MAG_Logger.debug("[BFF-BACKEND] Token do questionário recebido (início):", { token: token.substring(0, 10) + "..." });
+  // REMOVIDO: Log do token
+  // MAG_Logger.debug(...)
+  
   return token;
 };
 

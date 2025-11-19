@@ -1,22 +1,46 @@
-// src/components/simulator/SimulatorForm.tsx
 "use client";
-import React, { useEffect, useRef } from 'react'; // Adicione useEffect se não estiver lá
+import React, { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic'; // 1. Importe dynamic
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
-import { Step1 } from './steps/Step1';
-import { Step2 } from './steps/Step2';
-import { Step3 } from './steps/Step3';
-import { Step4 } from './steps/Step4';
-import { Step5 } from './steps/Step5';
-import { Step6 } from './steps/Step6';
-import { Step7 } from './steps/Step7';
-import { Step8 } from './steps/Step8';
-import { Step9 } from './steps/Step9';
-import { Step10 } from './steps/Step10';
-import { Step11 } from './steps/Step11';
 import { StepIndicator } from './StepIndicator';
+import { Skeleton } from '@goldenbear/ui/components/skeleton';
 
+// 2. Importe o Passo 1 estaticamente (LCP - deve ser instantâneo)
+import { Step1 } from './steps/Step1';
 
-// Opcional: mantém os títulos para o <title> da página
+// 3. Componente de Loading Leve (Skeleton)
+const StepLoading = () => (
+  <div className="space-y-6 animate-pulse py-4">
+    <div className="h-8 bg-muted rounded w-3/4 mb-8"></div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    </div>
+    <div className="flex justify-end mt-8">
+       <Skeleton className="h-10 w-32" />
+    </div>
+  </div>
+);
+
+// 4. Importações Dinâmicas (Code Splitting)
+const Step2 = dynamic(() => import('./steps/Step2').then(mod => mod.Step2), { loading: () => <StepLoading /> });
+const Step3 = dynamic(() => import('./steps/Step3').then(mod => mod.Step3), { loading: () => <StepLoading /> });
+const Step4 = dynamic(() => import('./steps/Step4').then(mod => mod.Step4), { loading: () => <StepLoading /> });
+const Step5 = dynamic(() => import('./steps/Step5').then(mod => mod.Step5), { loading: () => <StepLoading /> });
+const Step6 = dynamic(() => import('./steps/Step6').then(mod => mod.Step6), { loading: () => <StepLoading /> });
+const Step7 = dynamic(() => import('./steps/Step7').then(mod => mod.Step7), { loading: () => <StepLoading /> });
+const Step8 = dynamic(() => import('./steps/Step8').then(mod => mod.Step8), { loading: () => <StepLoading /> });
+const Step9 = dynamic(() => import('./steps/Step9').then(mod => mod.Step9), { loading: () => <StepLoading /> });
+const Step10 = dynamic(() => import('./steps/Step10').then(mod => mod.Step10), { loading: () => <StepLoading /> });
+const Step11 = dynamic(() => import('./steps/Step11').then(mod => mod.Step11), { loading: () => <StepLoading /> });
+
+// Configuração de títulos para Acessibilidade e SEO
 const stepTitles: { [key: number]: string } = {
   1: 'Passo 1: Dados Iniciais',
   2: 'Passo 2: Dados de Contato',
@@ -48,22 +72,27 @@ export const SimulatorForm = () => {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
-  // Este useEffect continua útil para acessibilidade e título da página
   useEffect(() => {
     const title = stepTitles[currentStep] || 'Simulador';
     document.title = `${title} | Golden Bear Seguros`;
+    
+    // Foca no topo do formulário ao mudar de passo (Acessibilidade)
     if (formRef.current) {
-      const heading = formRef.current.querySelector('h3');
-      if (heading) {
-        heading.focus();
-      }
+      // Pequeno timeout para garantir que o novo passo renderizou
+      setTimeout(() => {
+          const heading = formRef.current?.querySelector('h3');
+          if (heading) {
+            heading.focus();
+          }
+      }, 100);
     }
   }, [currentStep]);
 
    return (
-    <div ref={formRef} className="bg-white w-full max-w-5xl p-10 rounded-lg shadow-sm">
+    <div ref={formRef} className="bg-white w-full max-w-5xl p-6 md:p-10 rounded-lg shadow-sm border border-border/50">
        <StepIndicator currentStep={getMainStep(currentStep)} />     
-       <div className="mt-8">
+       <div className="mt-8 min-h-[400px]">
+        {/* Renderização Condicional dos Componentes Dinâmicos */}
         {currentStep === 1 && <Step1 />}
         {currentStep === 2 && <Step2 />}
         {currentStep === 3 && <Step3 />}
@@ -79,4 +108,3 @@ export const SimulatorForm = () => {
     </div>
   );
 };
-

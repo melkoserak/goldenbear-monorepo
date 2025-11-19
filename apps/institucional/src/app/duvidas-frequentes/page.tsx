@@ -1,37 +1,45 @@
 import { Metadata } from "next";
-import { 
-  Section, 
-  Container, 
-  Typography
-} from "@goldenbear/ui";
-
-// Componentes reutilizados
 import { FaqSection } from "@/components/sections/FaqSection";
 import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
+// 1. Importe os dados
+import { faqData } from '@/lib/data/faqs';
 
-// 1. Metadata otimizada para "Dúvidas Frequentes"
 export const metadata: Metadata = {
   title: "Dúvidas Frequentes | Golden Bear Seguros",
-  description: "Tire suas dúvidas sobre seguro de vida para militares, coberturas, carências, contratação e mais. Encontre respostas rápidas aqui.",
+  description: "Tire suas dúvidas sobre seguro de vida para militares, coberturas, carências, contratação e mais.",
 };
 
 export default function DuvidasFrequentesPage() {
+  // 2. Gere o JSON-LD estruturado
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqData.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.a,
+      },
+    })),
+  };
+
   return (
     <>
-      {/* Hero Padrão da Página */}
+      {/* 3. Injete o Script */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <PageHero
         tag="FAQ"
         title="Dúvidas Frequentes"
         subtitle="Encontre aqui as respostas para as perguntas mais comuns sobre nossos seguros, coberturas e processo de contratação."
       />
 
-      {/* --- SEÇÃO DEDICADA --- */}
-      {/* Reutiliza a FaqSection que já tínhamos */}
       <FaqSection />
-
-      {/* --- Seção de CTA (Reutilizada) --- */}
-      {/* Opcional: Podemos adicionar mais FAQs aqui no futuro */}
       <DigitalCtaSection />
     </>
   );

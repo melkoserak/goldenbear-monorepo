@@ -1,4 +1,3 @@
-// apps/institucional/src/components/layout/Breadcrumbs.tsx
 "use client";
 
 import Link from "next/link";
@@ -30,8 +29,9 @@ export const Breadcrumbs = () => {
   if (pathname === "/") return null;
 
   const pathSegments = pathname.split("/").filter((segment) => segment !== "");
+  const baseUrl = "https://www.goldenbearseguros.com.br"; // Domínio canônico
 
-  // Lógica para o Mobile (nível pai)
+  // Lógica Mobile
   const parentPath = pathSegments.length > 1 
     ? `/${pathSegments.slice(0, pathSegments.length - 1).join("/")}`
     : "/";
@@ -44,56 +44,89 @@ export const Breadcrumbs = () => {
     ? "Início" 
     : (routeMap[parentSegmentRaw] || parentSegmentRaw.replace(/-/g, " "));
 
+  // --- 1. Geração do JSON-LD Schema ---
+  const breadcrumbList = [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Início",
+      "item": baseUrl
+    },
+    ...pathSegments.map((segment, index) => {
+      const href = `${baseUrl}/${pathSegments.slice(0, index + 1).join("/")}`;
+      const label = routeMap[segment] || segment.replace(/-/g, " ");
+      return {
+        "@type": "ListItem",
+        "position": index + 2, // +2 porque Home é 1
+        "name": label.charAt(0).toUpperCase() + label.slice(1),
+        "item": href
+      };
+    })
+  ];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbList
+  };
+
   return (
-    <div className="w-full py-2 md:py-3 bg-accent/30 border-b border-border/50">
-      <Container>
-        
-        {/* --- VISÃO MOBILE: Back Link Discreto --- */}
-        {/* Alterações: text-xs, opacidade/60, ícone menor (w-3) */}
-        <div className="md:hidden flex items-center">
-          <Link 
-            href={parentPath} 
-            className="inline-flex items-center text-xs text-muted-foreground/60 hover:text-primary transition-colors py-2"
-          >
-            <ArrowLeft className="w-3 h-3 mr-1.5" />
-            Voltar para {parentLabel}
-          </Link>
-        </div>
+    <>
+      {/* 2. Injeção do JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-        {/* --- VISÃO DESKTOP: Breadcrumb Completo (Inalterado) --- */}
-        <nav aria-label="Breadcrumb" className="hidden md:block">
-          <ol className="flex items-center space-x-2">
-            <li>
-              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                <Home className="w-4 h-4" />
-                <span className="sr-only">Início</span>
-              </Link>
-            </li>
+      <div className="w-full py-2 md:py-3 bg-accent/30 border-b border-border/50">
+        <Container>
+          
+          {/* Mobile Back Link */}
+          <div className="md:hidden flex items-center">
+            <Link 
+              href={parentPath} 
+              className="inline-flex items-center text-xs text-muted-foreground/60 hover:text-primary transition-colors py-2"
+            >
+              <ArrowLeft className="w-3 h-3 mr-1.5" />
+              Voltar para {parentLabel}
+            </Link>
+          </div>
 
-            {pathSegments.map((segment, index) => {
-              const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
-              const isLast = index === pathSegments.length - 1;
-              const label = routeMap[segment] || segment.replace(/-/g, " ");
+          {/* Desktop Breadcrumb */}
+          <nav aria-label="Breadcrumb" className="hidden md:block">
+            <ol className="flex items-center space-x-2">
+              <li>
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
+                  <Home className="w-4 h-4" />
+                  <span className="sr-only">Início</span>
+                </Link>
+              </li>
 
-              return (
-                <li key={href} className="flex items-center">
-                  <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground/50" />
-                  {isLast ? (
-                    <Typography variant="small" color="default" className="font-medium capitalize truncate max-w-[200px] lg:max-w-none">
-                      {label}
-                    </Typography>
-                  ) : (
-                    <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors capitalize">
-                      {label}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+              {pathSegments.map((segment, index) => {
+                const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
+                const isLast = index === pathSegments.length - 1;
+                const label = routeMap[segment] || segment.replace(/-/g, " ");
 
-      </Container>
-    </div>
+                return (
+                  <li key={href} className="flex items-center">
+                    <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground/50" />
+                    {isLast ? (
+                      <Typography variant="small" color="default" className="font-medium capitalize truncate max-w-[200px] lg:max-w-none">
+                        {label}
+                      </Typography>
+                    ) : (
+                      <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors capitalize">
+                        {label}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
+        </Container>
+      </div>
+    </>
   );
 };

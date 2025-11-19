@@ -1,31 +1,26 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic'; // 1. IMPORTE O DYNAMIC
+import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore } from '@/stores/useCoverageStore';
-import { getSimulation } from '@/services/apiService';
 import { track } from '@/lib/tracking';
-import { Loader2, AlertTriangle } from 'lucide-react';
-// import { CoverageCard } from './step4/CoverageCard'; // 2. REMOVA A IMPORTAÇÃO ESTÁTICA
+import { AlertTriangle } from 'lucide-react';
 import { SummaryBar } from './step4/SummaryBar';
 import { NavigationButtons } from '../NavigationButtons';
-import { Skeleton } from "@goldenbear/ui/components/skeleton"; // <-- IMPORTAR SKELETON
+import { Skeleton } from "@goldenbear/ui/components/skeleton";
+// 1. Importe o Hook
+import { useSimulation } from '@/hooks/useMagApi';
 
-// 3. ADICIONE A IMPORTAÇÃO DINÂMICA COM SSR: FALSE
 const CoverageCard = dynamic(
   () => import('./step4/CoverageCard').then((mod) => mod.CoverageCard),
   { 
     ssr: false,
-    // 1. ATUALIZAR O SKELETON DE CARREGAMENTO DO CARD
     loading: () => <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
   }
 );
-// --- FIM DA ALTERAÇÃO ---
-
 
 const LoadingState = () => (
     <div className="flex flex-col items-center justify-center p-10 space-y-4">
-        {/* Skeleton que imita 3 cards */}
         <Skeleton className="h-12 w-3/4" />
         <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
         <Skeleton className="border rounded-lg p-6 mb-4 h-[120px] w-full" />
@@ -49,57 +44,29 @@ export const Step4 = () => {
   const coverages = useCoverageStore((state) => state.coverages);
   const setInitialCoverages = useCoverageStore((state) => state.setInitialCoverages);
   const mainSusep = useCoverageStore((state) => state.mainSusep);
-
-   // --- INÍCIO DA CORREÇÃO ---
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
-  // --- FIM DA CORREÇÃO ---
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // 2. Uso do React Query para buscar a simulação
+  const { data: simulationData, isLoading, isError, error } = useSimulation();
 
-  // --- CONSOLE LOG AQUI ---
-  console.log("DEBUG [Step4]: A renderizar. Coberturas atuais na store:", coverages);
-  console.log("DEBUG [Step4]: SUSEP principal atual na store:", mainSusep);
-
-   useEffect(() => {
+  useEffect(() => {
     track('step_view', { step: 4, step_name: 'Resultados da Simulação' });
+  }, []);
 
-    const fetchSimulation = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // --- INÍCIO DA CORREÇÃO ---
-        const payload = {
-          mag_nome_completo: formData.fullName,
-          mag_cpf: formData.cpf,
-          mag_data_nascimento: formData.birthDate,
-          mag_sexo: formData.gender,
-          mag_renda: formData.income,
-          mag_estado: formData.state,
-          mag_profissao_cbo: formData.profession,
-        };
-        const data = await getSimulation(payload);
-        setInitialCoverages(data);
-
-        console.log('[Step4 fetchSimulation] Raw API Response:', JSON.stringify(data, null, 2));
-        
-        track('simulation_success', { api_response_payload: data });
-
-      } catch (err) {
-        const error = err as Error;
-        setError(error.message || 'Não foi possível carregar as opções. Tente novamente.');
-        track('simulation_error', { error_message: error.message });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (coverages.length === 0) {
-      fetchSimulation();
-    } else {
-      setIsLoading(false);
+  // 3. Atualiza a store quando os dados chegam
+  useEffect(() => {
+    if (simulationData) {
+      setInitialCoverages(simulationData);
+      track('simulation_success', { api_response_payload: simulationData });
     }
-  }, [formData, setInitialCoverages, coverages.length]);
+  }, [simulationData, setInitialCoverages]);
+
+  // 4. Track de erro
+  useEffect(() => {
+    if (isError) {
+        track('simulation_error', { error_message: (error as Error)?.message });
+    }
+  }, [isError, error]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +83,6 @@ export const Step4 = () => {
   };
 
   return (
-    // 3. Removido o padding 'pb-24' que não é mais necessário
     <form onSubmit={handleSubmit} className="animate-fade-in">
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-2 text-foreground outline-none">
         {isLoading ? "Aguarde um momento..." : `Personalize o seu seguro ideal, ${firstName}`}
@@ -129,9 +95,9 @@ export const Step4 = () => {
       )}
       
       {isLoading && <LoadingState />}
-      {error && <ErrorState message={error} />}
+      {isError && <ErrorState message={(error as Error)?.message || "Não foi possível carregar as opções."} />}
       
-      {!isLoading && !error && coverages.length > 0 && (
+      {!isLoading && !isError && coverages.length > 0 && (
         <>
           <div>
             {coverages.map((coverage) => (
@@ -139,7 +105,6 @@ export const Step4 = () => {
             ))}
           </div>
           
-          {/* 4. A barra de resumo e os botões agora ficam no final do formulário */}
           <SummaryBar />
           <NavigationButtons 
             isNextDisabled={totalPremium <= 0} 
@@ -148,7 +113,7 @@ export const Step4 = () => {
         </>
       )}
 
-      {!isLoading && !error && coverages.length === 0 && (
+      {!isLoading && !isError && coverages.length === 0 && (
           <ErrorState message="Não encontrámos coberturas disponíveis para o seu perfil. Por favor, volte e verifique os seus dados." />
       )}
     </form>

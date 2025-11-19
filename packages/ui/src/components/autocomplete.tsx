@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Check } from "lucide-react"
-import { useDebounce } from "../hooks/useDebounce" // Importe o hook
+import { useDebounce } from "../hooks/useDebounce"
 
 import { cn, removeAccents } from "../lib/utils"
 import {
@@ -19,14 +19,14 @@ export type AutocompleteOption = {
   label: string
 }
 
-type AutocompleteProps = {
+// 1. Atualizamos a interface para estender as props do Input
+// Omitimos 'value' e 'onChange' porque o Autocomplete lida com eles de forma específica
+interface AutocompleteProps extends Omit<React.ComponentPropsWithoutRef<typeof Input>, "value" | "onChange"> {
   options: AutocompleteOption[]
   value?: string
   onChange: (value: string) => void
-  placeholder?: string
   emptyText?: string
-  className?: string;
-  isLoading?: boolean;
+  isLoading?: boolean
 }
 
 export function Autocomplete({
@@ -37,13 +37,12 @@ export function Autocomplete({
   emptyText = "Nenhuma opção encontrada.",
   className,
   isLoading = false,
+  ...props // 2. Capturamos as props restantes (id, aria-*, etc.)
 }: AutocompleteProps) {
   const [inputValue, setInputValue] = React.useState("")
   const [isOpen, setIsOpen] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
-  // --- CORREÇÃO APLICADA AQUI ---
-  // Atraso ajustado para 300ms para uma experiência fluida
   const debouncedInputValue = useDebounce(inputValue, 300);
 
   React.useEffect(() => {
@@ -52,7 +51,6 @@ export function Autocomplete({
   }, [value, options])
 
   const filteredOptions = React.useMemo(() => {
-    // A filtragem agora usa o valor "atrasado"
     const normalizedInput = removeAccents(debouncedInputValue.toLowerCase());
     return options.filter(option => 
       removeAccents(option.label.toLowerCase()).includes(normalizedInput)
@@ -63,7 +61,7 @@ export function Autocomplete({
     <div className="relative w-full">
       <Input
         ref={inputRef}
-        value={inputValue} // O input SEMPRE usa o valor instantâneo
+        value={inputValue}
         onChange={(e) => {
           setInputValue(e.target.value)
           if (!isOpen) setIsOpen(true)
@@ -74,6 +72,7 @@ export function Autocomplete({
         className={cn("h-12 px-4 py-3", className)}
         autoComplete="off"
         disabled={isLoading}
+        {...props} // 3. Repassamos as props para o Input interno (Aqui a mágica acontece)
       />
 
       {isOpen && (

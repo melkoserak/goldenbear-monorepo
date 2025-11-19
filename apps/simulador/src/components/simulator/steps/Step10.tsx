@@ -1,53 +1,49 @@
-/// src/components/simulator/steps/Step10.tsx
 "use client";
 import React, { useEffect, useState, useRef } from 'react';
-// 1. IMPORTAMOS O 'IframeResizer' COM O NOME CORRETO
 import IframeResizer from 'iframe-resizer-react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore } from '@/stores/useCoverageStore';
-//import { getPaymentToken } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, CreditCard, Landmark } from 'lucide-react';
 import { NavigationButtons } from '../NavigationButtons';
 import { cn } from '@goldenbear/ui/lib/utils';
 
+// --- SEGURANÇA: Domínio autorizado do Widget de Pagamento ---
+const PAYMENT_WIDGET_ORIGIN = 'https://widgetshmg.mongeralaegon.com.br';
+
 export const Step10 = () => {
-  // --- 2. LER OS DADOS DO ESTADO ---
   const { paymentMethod, paymentPreAuthCode, cpf, paymentToken } = useSimulatorStore((state) => state.formData);
   const { setFormData, nextStep } = useSimulatorStore((state) => state.actions);
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
   
-  const [isLoading, setIsLoading] = useState(false); // Apenas para o Iframe, não para o token
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
-  // const [paymentToken, setPaymentToken] = useState<string | null>(null); // <-- REMOVIDO
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-useEffect(() => {
+  useEffect(() => {
     track('step_view', { step: 10, step_name: 'Pagamento' });
   }, []);
   
-  // --- 3. LÓGICA DE 'useEffect' ATUALIZADA ---
   useEffect(() => {
     setWidgetUrl(null);
     setError(null);
     setFormData({ paymentPreAuthCode: undefined });
 
     if (paymentMethod === 'credit') {
-      // Verifica se o token (do prefetch) já está disponível
       if (paymentToken) {
-        console.log("[Step10] Payment Token (Prefetched) encontrado!");
-        setIsLoading(true); // Ativa o loading do *iframe*
+        // --- LOG SEGURO ---
+        console.log("[Step10] Iniciando widget de pagamento.");
+        setIsLoading(true);
         
         const totalValue = totalPremium.toFixed(2);
         const cleanedCpf = cpf.replace(/\D/g, '');
         
-        const url = `https://widgetshmg.mongeralaegon.com.br/widget-cartao-credito/v3/?cnpj=33608308000173&acao=PreAutorizacao&valorCompra=${totalValue}&chave=cpf&valor=${cleanedCpf}&chave=ModeloProposta&valor=EIS`;
+        // Monta a URL (mas não loga no console)
+        const url = `${PAYMENT_WIDGET_ORIGIN}/widget-cartao-credito/v3/?cnpj=33608308000173&acao=PreAutorizacao&valorCompra=${totalValue}&chave=cpf&valor=${cleanedCpf}&chave=ModeloProposta&valor=EIS`;
         setWidgetUrl(url);
-        // O setIsLoading(false) será chamado no onLoad do IframeResizer
       } else {
-        // Fallback (se o utilizador recarregar a página aqui ou o prefetch falhar)
-        console.warn("[Step10] Payment Token não encontrado no prefetch. A executar fallback.");
+        console.warn("[Step10] Token de pagamento indisponível.");
         setError("Não foi possível carregar o módulo de pagamento. Por favor, tente recarregar a página.");
         setIsLoading(false);
       }
@@ -56,16 +52,19 @@ useEffect(() => {
     }
 
     const handleMessage = (event: MessageEvent) => {
-        if (event.origin !== 'https://widgetshmg.mongeralaegon.com.br') return;
+        // --- SEGURANÇA: Validação de origem ---
+        if (event.origin !== PAYMENT_WIDGET_ORIGIN) return;
+
         if (typeof event.data === 'string' && event.data.startsWith('{')) {
             try {
                 const data = JSON.parse(event.data);
                 const preAuthCode = data?.Valor?.CodigoPreAutorizacao;
                 if (preAuthCode) {
-                    console.log("Código de pré-autorização recebido:", preAuthCode);
+                    // Log seguro: apenas confirma o recebimento
+                    console.log("[Step10] Código de pré-autorização recebido com sucesso.");
                     setFormData({ paymentPreAuthCode: preAuthCode });
                 }
-            } catch { /* Ignora mensagens que não são JSON */ }
+            } catch { /* Ignora */ }
         }
     };
     window.addEventListener('message', handleMessage);
@@ -82,7 +81,6 @@ useEffect(() => {
   };
 
   const isFormValid = !!paymentPreAuthCode;
-
 
   return (
     <form onSubmit={handleSubmit} className="animate-fade-in">
@@ -116,19 +114,18 @@ useEffect(() => {
               forwardRef={iframeRef}
               key={widgetUrl}
               src={widgetUrl}
-              title="Widget de Pagamento MAG"
-              checkOrigin={false}
+              title="Pagamento Seguro"
+              // --- SEGURANÇA: Restrição de origem ---
+              checkOrigin={[PAYMENT_WIDGET_ORIGIN]}
               style={{ width: '1px', minWidth: '100%', border: 0, height: '100%', paddingTop: '48px' }}
               onLoad={() => {
-                // --- 5. LÓGICA ONLOAD ATUALIZADA ---
-                // O 'paymentToken' é lido diretamente do estado (que foi pre-fetched)
                 if (iframeRef.current && paymentToken) {
-                  iframeRef.current.contentWindow?.postMessage({ event: 'notify', property: 'Auth', value: paymentToken }, 'https://widgetshmg.mongeralaegon.com.br');
+                  iframeRef.current.contentWindow?.postMessage({ event: 'notify', property: 'Auth', value: paymentToken }, PAYMENT_WIDGET_ORIGIN);
                 } else {
-                  console.error("[Step10] Iframe carregou, mas o Payment Token não estava pronto no estado.");
-                  setError("Falha ao autenticar o widget de pagamento.");
+                  console.error("[Step10] Erro de estado no iframe.");
+                  setError("Falha ao autenticar o widget.");
                 }
-                setIsLoading(false); // Esconde o spinner do iframe
+                setIsLoading(false);
               }}
             />
           )}
