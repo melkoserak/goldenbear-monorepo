@@ -57,32 +57,33 @@ export const BenefitsSection = () => {
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
             return (
+              // 1. Aplicado 'relative group' e classes de transição no container do card
               <div 
                 key={benefit.title} 
-                // --- CORREÇÃO APLICADA ---
-                // Removido bg-accent e border-t-4
-                // Aplicado o padrão de card com sombra
-                className="flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow inline-flex flex-col justify-start items-start gap-6"
+                className="flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md inline-flex flex-col justify-start items-start gap-6 relative group cursor-pointer"
               >
                 <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <Typography variant="h4" color="primary">
+                
+                {/* Adicionado efeito de hover no título */}
+                <Typography variant="h4" color="primary" className="group-hover:text-primary/80 transition-colors">
                   {benefit.title}
                 </Typography>
+                
                 <Typography variant="body" color="muted">
                   {benefit.description}
                 </Typography>
+                
                 <Button 
                   variant="link" 
                   asChild 
-                  // --- CORREÇÃO APLICADA ---
-                  // "text-zinc-700" trocado pelo token semântico correto
-                  className="p-0 h-auto text-accent-foreground font-medium"
+                  className="p-0 h-auto text-accent-foreground font-medium mt-auto"
                 >
-                 {/* --- CORREÇÃO APLICADA: 'href' ATUALIZADO --- */}
                   <Link href={benefit.linkUrl}>
-                    Saiba mais <ArrowRight className="w-4 h-4 ml-1" />
+                    {/* 2. Span Mágico: Estende o clique para todo o card */}
+                    <span className="absolute inset-0 z-10" aria-hidden="true" />
+                    Saiba mais <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
               </div>

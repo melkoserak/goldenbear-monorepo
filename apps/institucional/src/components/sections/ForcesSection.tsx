@@ -52,32 +52,25 @@ const forces = [
 // 3. ForceCard ATUALIZADO para altura consistente
 const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
   return (
-    // Adicionado "h-full" para garantir que o flex-1 funcione no wrapper do CarouselItem
-    <div className="flex-1 bg-card rounded-lg hover:shadow-lg overflow-hidden flex flex-col justify-start h-full">
+    // 1. Adicione 'relative' e 'group' no container pai
+    <div className="flex-1 bg-card rounded-lg hover:shadow-lg overflow-hidden flex flex-col justify-start h-full relative group transition-all duration-300 hover:-translate-y-1">
       <div className="self-stretch h-60 relative flex flex-col justify-start items-start gap-2.5 overflow-hidden">
-        <Image 
-          className="self-stretch flex-1 w-full h-full object-cover" 
-          src={imageUrl} 
-          alt={title}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-        />
+        {/* ... imagem ... */}
       </div>
-      {/* Adicionado "flex-1" e "flex-col" para o conteúdo crescer */}
       <div className="self-stretch p-6 flex flex-col justify-start items-start gap-6 flex-1">
         <Typography variant="h4" className="self-stretch">
           {title}
         </Typography>
         
-        {/* Adicionado "flex-1" para empurrar o link para baixo */}
         <Typography variant="body" color="muted" className="self-stretch flex-1">
           {description}
         </Typography>
         
-        {/* Adicionado "mt-auto" para alinhar o botão em baixo */}
         <Button variant="link" asChild className="p-0 h-auto text-foreground font-medium mt-auto">
           <Link href={linkUrl}>
-            Saiba mais <ArrowRight className="w-4 h-4 ml-1" />
+            {/* 2. O truque mágico: esse span expande a área de clique para todo o card pai (relative) */}
+            <span className="absolute inset-0 z-10" aria-hidden="true" />
+            Saiba mais <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
           </Link>
         </Button>
       </div>

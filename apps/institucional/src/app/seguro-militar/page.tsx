@@ -3,7 +3,6 @@ import Link from "next/link";
 import { 
   Section, 
   Container, 
-  Typography, 
   FeatureCard,
   SectionHeader 
 } from "@goldenbear/ui";
@@ -15,15 +14,16 @@ import {
   ArrowRight
 } from "lucide-react";
 
-// Componentes reutilizados
 import { PartnerSection } from "@/components/sections/PartnerSection";
 import { FaqSection } from "@/components/sections/FaqSection";
 import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
 
-// ... (metadata - sem alterações) ...
+export const metadata: Metadata = {
+  title: "Seguro Militar | Golden Bear",
+  description: "Proteção especializada para Exército, Marinha, Aeronáutica, PM e Bombeiros.",
+};
 
-// Dados para os cartões do Hub (sem alterações)
 const forces = [
   { 
     icon: Shield, 
@@ -66,7 +66,6 @@ export default function SeguroMilitarHubPage() {
         subtitle="Entendemos os riscos únicos da sua profissão. Oferecemos coberturas específicas para cada Força. Selecione a sua para ver os detalhes."
       />
 
-      {/* --- SEÇÃO HUB --- */}
       <Section variant="default" padding="lg">
         <Container>
           <SectionHeader
@@ -78,19 +77,19 @@ export default function SeguroMilitarHubPage() {
                 key={force.title} 
                 icon={force.icon} 
                 title={force.title}
+                // 1. Classes para tornar o card relativo e animado no hover
+                className="relative group transition-all duration-300 hover:-translate-y-1 cursor-pointer"
               >
-                {/* --- CORREÇÃO APLICADA AQUI ---
-                  O subtítulo vem primeiro.
-                  O Link usa 'mt-auto' para ser empurrado para o fundo do card.
-                  'pt-4' adiciona um espaçamento de segurança.
-                */}
                 {force.subtitle}
                 
+                {/* Link empurrado para o rodapé do card */}
                 <Link 
                   href={force.href} 
                   className="inline-flex items-center text-foreground hover:underline font-medium text-sm mt-auto pt-4"
                 >
-                  Ver detalhes <ArrowRight className="w-4 h-4 ml-1" />
+                  {/* 2. Span estendido que cobre todo o card pai */}
+                  <span className="absolute inset-0 z-10" aria-hidden="true" />
+                  Ver detalhes <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </Link>
               </FeatureCard>
             ))}
@@ -98,7 +97,6 @@ export default function SeguroMilitarHubPage() {
         </Container>
       </Section>
 
-      {/* --- Seções Reutilizadas para Confiança --- */}
       <PartnerSection />
       <FaqSection />
       <DigitalCtaSection />

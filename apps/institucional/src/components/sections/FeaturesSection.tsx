@@ -5,73 +5,60 @@ import { cn } from '@goldenbear/ui/lib/utils';
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
+// Importe o componente de animação que já existe no seu projeto
+import { FadeInOnScroll } from '@/components/layout/FadeInOnScroll';
 
 const features = [
   {
     id: 1,
     title: "Especialistas em Militares",
-    // CORREÇÃO: Substituído <p> por <> (Fragmento)
     description: (
       <>
-        Entendemos as <span className="font-semibold">necessidades específicas</span> das 
+        Entendemos as <span className="font-semibold text-foreground">necessidades específicas</span> das 
         Forças Armadas e oferecemos soluções personalizadas.
       </>
     ),
-    backgroundColor: "bg-card",
-    titleBreak: false,
   },
   {
     id: 2,
     title: "Processo Simplificado",
-    // CORREÇÃO: Substituído <p> por <>
     description: (
       <>
         Contratação rápida e descomplicada, sem burocracia.{" "}
-        <span className="font-semibold">Tudo pensado para facilitar sua vida.</span>
+        <span className="font-semibold text-foreground">Tudo pensado para facilitar sua vida.</span>
       </>
     ),
-    backgroundColor: "bg-card",
-    titleBreak: false,
   },
   {
     id: 3,
     title: "Aprovação Rápida",
-    // CORREÇÃO: Substituído <p> por <>
     description: (
       <>
-        <span className="font-semibold">Análise e aprovação em até 48 horas.</span> 
+        <span className="font-semibold text-foreground">Análise e aprovação em até 48 horas.</span> 
         Proteção para sua família sem espera.
       </>
     ),
-    backgroundColor: "bg-card",
-    titleBreak: true,
   },
   {
     id: 4,
     title: "Atendimento Personalizado",
-    // CORREÇÃO: Substituído <p> por <>
     description: (
       <>
         Cada militar tem necessidades únicas. Nosso time está pronto para criar a{" "}
-        <span className="font-semibold">melhor solução para você.</span>
+        <span className="font-semibold text-foreground">melhor solução para você.</span>
       </>
     ),
-    backgroundColor: "bg-card",
-    titleBreak: false,
   },
   {
     id: 5,
     title: "Parceiros da Mag Seguros",
-    // CORREÇÃO: Substituído <p> por <>
     description: (
       <>
         Representantes{" "}
-        <span className="font-semibold">credenciados de uma das maiores seguradoras do Brasil</span>
+        <span className="font-semibold text-foreground">credenciados de uma das maiores seguradoras do Brasil</span>
         , garantindo segurança e confiabilidade.
       </>
     ),
-    backgroundColor: "bg-card",
-    titleBreak: false,
   },
 ];
 
@@ -80,57 +67,79 @@ export const FeaturesSection = () => {
     <Section variant="default" padding="default" className="overflow-visible">
       <Container className="flex flex-col lg:flex-row items-start gap-12 lg:gap-20">
         
-        {/* Coluna da Esquerda */}
-        <div className="inline-flex flex-col items-start gap-12 relative lg:w-[474px] lg:flex-shrink-0 lg:sticky lg:top-32 lg:self-start">
-          <header className="inline-flex flex-col items-start gap-2 relative self-stretch w-full">
-            <Typography variant="h2" color="primary" className="mt-[-1.00px]">
-              Por que escolher a gente?
-            </Typography>
-            <Typography variant="body" className="w-full">
-              Somos especialistas certificados pela Mag Seguros com foco total em
-              atender as necessidades específicas dos militares e suas famílias.
-            </Typography>
-          </header>
+        {/* Coluna da Esquerda (Sticky) */}
+        <div className="inline-flex flex-col items-start gap-8 lg:gap-12 relative lg:w-[474px] lg:flex-shrink-0 lg:sticky lg:top-32 lg:self-start">
+          <FadeInOnScroll>
+            <header className="inline-flex flex-col items-start gap-4 relative self-stretch w-full">
+              <Typography variant="h2" color="primary">
+                Por que escolher a gente?
+              </Typography>
+              <Typography variant="body" className="w-full text-lg">
+                Somos especialistas certificados pela Mag Seguros com foco total em
+                atender as necessidades específicas dos militares e suas famílias.
+              </Typography>
+            </header>
+          </FadeInOnScroll>
 
-          <Button asChild variant="default" size="hero" className="w-full sm:w-auto">
-            <Link href="/simulador">
-              Simulação Gratuita e Rápida
-            </Link>
-          </Button>
+          <FadeInOnScroll delay={0.2}>
+            <Button asChild variant="default" size="hero" className="w-full lg:w-auto">
+              <Link href="/simulador">
+                Simulação Gratuita e Rápida
+              </Link>
+            </Button>
+          </FadeInOnScroll>
         </div>
 
-        {/* Coluna da Direita */}
-        <div className="flex flex-col items-start justify-center gap-10 relative flex-1 w-full">
-          {features.map((feature) => (
-            <article
-              key={feature.id}
-              className={cn(
-                "flex flex-col lg:flex-row items-stretch gap-0 relative self-stretch w-full rounded-lg overflow-hidden border border-border",
-                feature.backgroundColor
-              )}
-            >
-              <div
+        {/* Coluna da Direita (Lista de Features) */}
+        <div className="flex flex-col items-start justify-center gap-6 relative flex-1 w-full">
+          {features.map((feature, index) => (
+            // Animação em cascata (stagger) baseada no índice
+            <FadeInOnScroll key={feature.id} delay={index * 0.1} className="w-full">
+              <article
                 className={cn(
-                  "inline-flex items-center justify-center gap-2.5 px-6 py-10 relative bg-foreground lg:bg-primary text-primary-foreground",
-                  feature.titleBreak ? "h-[118px]" : ""
+                  // Layout Base
+                  "group flex flex-col lg:flex-row items-stretch w-full rounded-xl overflow-hidden",
+                  // Bordas e Cores
+                  "border border-border bg-card",
+                  // Efeitos Hover (Desktop)
+                  "transition-all duration-300 ease-out",
+                  "hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
                 )}
               >
-                <Typography variant="h4" color="white" className="w-full lg:w-52 text-left tracking-[0.60px] leading-[24.0px]">
-                  {feature.titleBreak ? (
-                    <>Aprovação Rápida</>
-                  ) : (
-                    feature.title
+                {/* TITULO
+                   Mobile: Fundo transparente, padding menor, texto primário
+                   Desktop: Fundo Primário, padding generoso, texto branco
+                */}
+                <div
+                  className={cn(
+                    "flex items-center justify-start lg:justify-center",
+                    "px-6 pt-6 pb-2 lg:p-8", // Mobile: padding ajustado / Desktop: padding full
+                    "bg-transparent lg:bg-primary", // Mobile: Transparente / Desktop: Azul
+                    "lg:w-52 lg:flex-shrink-0" // Largura fixa no desktop
                   )}
-                </Typography>
-              </div>
+                >
+                  <Typography 
+                    variant="h4" 
+                    className={cn(
+                      "text-left font-bold leading-tight",
+                      "text-primary lg:text-white" // Mobile: Azul / Desktop: Branco
+                    )}
+                  >
+                    {feature.title}
+                  </Typography>
+                </div>
 
-              <div className="flex-1 p-6 flex items-center">
-                {/* O Typography já cria o <p>, então o conteúdo deve ser apenas texto/span */}
-                <Typography variant="body" className="tracking-[0.48px]">
-                  {feature.description}
-                </Typography>
-              </div>
-            </article>
+                {/* DESCRIÇÃO
+                   Mobile: Padding ajustado para ficar próximo ao título
+                   Desktop: Centralizado verticalmente
+                */}
+                <div className="flex-1 px-6 pb-6 pt-2 lg:p-8 flex items-center">
+                  <Typography variant="body" color="muted" className="leading-relaxed">
+                    {feature.description}
+                  </Typography>
+                </div>
+              </article>
+            </FadeInOnScroll>
           ))}
         </div>
       </Container>
