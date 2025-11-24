@@ -4,18 +4,20 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Section, Container, Typography, SectionHeader } from '@goldenbear/ui';
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-    Button
+import { 
+  Section, 
+  Container, 
+  Typography, 
+  SectionHeader,
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
 } from '@goldenbear/ui';
 import { ArrowRight, Shield, HeartPulse, ShieldAlert, ShieldCheck, Anchor, Plane, Flame } from 'lucide-react';
 
-// --- Dados Centralizados (Mantidos) ---
+// --- Dados Centralizados ---
 interface RelatedItem {
     id: string;
     icon: React.ElementType;
@@ -43,41 +45,48 @@ interface RelatedCarouselSectionProps {
     type: 'products' | 'forces';
 }
 
+// --- Componente de Card Otimizado (Agora é um Link direto) ---
 const ItemCard = ({ item }: { item: RelatedItem }) => {
     const Icon = item.icon;
+    
+    // A solução técnica: O card inteiro É o Link. Sem botões aninhados.
     return (
-        <div className="flex-1 self-stretch p-6 bg-card border border-border rounded-lg shadow-sm flex flex-col justify-start h-full hover:shadow-md transition-shadow">
-            <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5 mb-4">
+        <Link 
+            href={item.href}
+            className="group flex flex-col justify-start h-full p-6 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary select-none"
+        >
+            {/* Ícone com feedback visual no hover do grupo */}
+            <div className="p-2 bg-primary/10 rounded-lg inline-flex justify-start items-center gap-2.5 mb-4 w-fit group-hover:bg-primary/20 transition-colors">
                 <Icon className="w-6 h-6 text-primary" />
             </div>
-            <Typography variant="h4" color="primary" className="mb-2">
+            
+            <Typography variant="h4" color="primary" className="mb-2 group-hover:text-primary/80 transition-colors">
                 {item.title}
             </Typography>
+            
             <Typography variant="body" color="muted" className="flex-1 text-sm line-clamp-3">
                 {item.description}
             </Typography>
-            <Button 
-                variant="link" 
-                asChild 
-                className="p-0 h-auto text-foreground font-medium mt-4"
-            >
-                <Link href={item.href}>
-                    Ver detalhes <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
-            </Button>
-        </div>
+            
+            {/* Simulação visual de botão (sem ser um <button> real para evitar erro de HTML aninhado) */}
+            <div className="mt-4 flex items-center text-sm text-foreground group-hover:text-foreground transition-colors">
+                <span className="underline underline-offset-4 decoration-transparent group-hover:decoration-foreground transition-all">
+                    Ver detalhes
+                </span>
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+            </div>
+        </Link>
     );
 }
 
-// Sub-componente para renderizar o carrossel (usado em Mobile e Desktop > 5)
+// --- Sub-componente de Carrossel ---
 const RelatedCarouselView = ({ filteredItems }: { filteredItems: RelatedItem[] }) => (
     <Carousel opts={{ align: "start", loop: false }} className="w-full">
-        {/* Botões de navegação atualizados para variant="default" */}
-        <div className="flex justify-end gap-4 mb-4">
-            <CarouselPrevious variant="default" size="icon" /> 
-            <CarouselNext variant="default" size="icon" />
+        <div className="flex justify-end gap-4 mb-4 px-1">
+            <CarouselPrevious variant="secondary" size="icon" /> 
+            <CarouselNext variant="secondary" size="icon" />
         </div>
-        <CarouselContent className="-ml-6">
+        <CarouselContent className="-ml-6 pb-4">
             {filteredItems.map((item) => (
                 <CarouselItem key={item.id} className="pl-6 basis-4/5 sm:basis-1/2 lg:basis-1/3">
                     <div className="h-full">
@@ -94,45 +103,42 @@ export const RelatedCarouselSection = ({ type }: RelatedCarouselSectionProps) =>
     
     const isProducts = type === 'products';
     const allItems = isProducts ? PRODUCTS : FORCES;
+    
     const title = isProducts ? 'Combine sua proteção com estas Coberturas' : 'Conheça Outras Forças Atendidas';
-    const subtitle = isProducts ? 'Adicione um ou mais produtos ao seu carrinho de proteção.' : 'Nossa proteção se estende a todas as Forças, incluindo a sua.';
+    const subtitle = isProducts 
+        ? 'Adicione um ou mais produtos ao seu carrinho de proteção.' 
+        : 'Nossa proteção se estende a todas as Forças, incluindo a sua.';
 
     const filteredItems = allItems.filter(item => item.href !== pathname);
     const numItems = filteredItems.length;
     
     if (numItems === 0) return null;
     
-    // Regra Desktop: Mostrar Grid se <= 5 itens.
-    const showStaticGridOnDesktop = numItems <= 5;
+    const showStaticGridOnDesktop = numItems <= 4;
 
     return (
-        // 1. Alterado para variant="default" (fundo branco) para maior contraste.
-        <Section variant="default" padding="default"> 
+        <Section variant="default" padding="default" className="overflow-hidden"> 
             <Container>
-                {/* 2. Ênfase no Título com Borda Primary */}
                 <SectionHeader
                     title={title}
                     subtitle={subtitle}
-                    // Adiciona uma borda à esquerda em primary para destaque visual
-                    className="mb-8 border-l-4 border-primary pl-4" 
+                    className="mb-10 border-l-4 border-primary pl-6" 
                 />
                 
-                {/* 3. VISÃO DESKTOP (Condicional: Grid ou Carousel) */}
+                {/* --- VISÃO DESKTOP --- */}
                 <div className="hidden md:block">
                     {showStaticGridOnDesktop ? (
-                        /* Static Grid (≤ 5 items): Desktop View */
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                             {filteredItems.map((item) => ( 
                                 <ItemCard key={item.id} item={item} /> 
                             ))}
                         </div>
                     ) : (
-                        /* Carousel (> 5 items): Desktop View */
                         <RelatedCarouselView filteredItems={filteredItems} /> 
                     )}
                 </div>
 
-                {/* 4. VISÃO MOBILE (Sempre Carousel) */}
+                {/* --- VISÃO MOBILE --- */}
                 <div className="block md:hidden">
                     <RelatedCarouselView filteredItems={filteredItems} /> 
                 </div>

@@ -48,8 +48,9 @@ const benefits = [
   }
 ];
 
+// --- CORREÇÃO 1: BenefitCard com h-full e efeitos de Hover ---
 const BenefitCard = ({ icon: Icon, title, description }: any) => (
-  <div className="flex-1 px-6 py-10 bg-accent rounded-lg inline-flex flex-col justify-start items-start gap-6">
+  <div className="flex-1 px-6 py-10 bg-accent rounded-lg inline-flex flex-col justify-start items-start gap-6 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-default select-none border border-transparent hover:border-border/50">
     <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
       <Icon className="w-6 h-6 text-primary" />
     </div>
@@ -76,26 +77,42 @@ export const Vantagens = () => {
           </Typography>
         </div>
 
-        {/* Resto do layout (imagem + grid) */}
-        <div className="self-stretch inline-flex flex-col lg:flex-row justify-center items-start gap-0 lg:gap-4">
+        {/* --- CORREÇÃO 2: Container Principal com items-stretch --- 
+            Mudamos de 'items-start' para 'items-stretch'. 
+            Isso faz a Imagem (esq) e o Grid (dir) terem a mesma altura.
+        */}
+        <div className="self-stretch inline-flex flex-col lg:flex-row justify-center items-stretch gap-0 lg:gap-4">
+          
+          {/* Coluna da Imagem */}
           <div className="flex-1 self-stretch relative rounded-lg inline-flex flex-col justify-start items-start gap-2.5 overflow-hidden min-h-[400px]">
-            <Image className="self-stretch flex-1 w-full h-full object-cover rounded-lg" src="/imagens/imagem-familia-call-out.png" alt="Proteja quem você ama" width={644} height={673} />
+            <Image 
+              className="self-stretch flex-1 w-full h-full object-cover rounded-lg" 
+              src="/imagens/imagem-familia-call-out.png" 
+              alt="Proteja quem você ama" 
+              width={644} 
+              height={673} 
+            />
             <div className="left-[10%] top-[45%] absolute">
               <Typography variant="h3" color="white">Proteja quem você ama</Typography>
             </div>
           </div>
           
+          {/* Coluna do Grid Manual */}
           <div className="inline-flex flex-col justify-center items-start gap-4 lg:w-[620px]">
-             {/* Manter a estrutura de grid manual ou refatorar para grid CSS puro */}
-             <div className="w-full inline-flex flex-col sm:flex-row justify-start items-start gap-4">
+             
+             {/* --- CORREÇÃO 3: Linhas do Grid com items-stretch --- 
+                 Mudamos de 'items-start' para 'items-stretch' em cada linha.
+                 Isso garante que se um card tiver mais texto, o vizinho estica junto.
+             */}
+             <div className="w-full inline-flex flex-col sm:flex-row justify-start items-stretch gap-4">
               <BenefitCard {...benefits[0]} />
               <BenefitCard {...benefits[1]} />
             </div>
-            <div className="w-full inline-flex flex-col sm:flex-row justify-start items-start gap-4">
+            <div className="w-full inline-flex flex-col sm:flex-row justify-start items-stretch gap-4">
               <BenefitCard {...benefits[2]} />
               <BenefitCard {...benefits[3]} />
             </div>
-            <div className="w-full inline-flex flex-col sm:flex-row justify-start items-start gap-4">
+            <div className="w-full inline-flex flex-col sm:flex-row justify-start items-stretch gap-4">
               <BenefitCard {...benefits[4]} />
               <BenefitCard {...benefits[5]} />
             </div>

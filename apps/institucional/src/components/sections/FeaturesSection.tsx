@@ -81,8 +81,8 @@ export const FeaturesSection = () => {
             </header>
           </FadeInOnScroll>
 
-          <FadeInOnScroll delay={0.2}>
-            <Button asChild variant="default" size="hero" className="w-full lg:w-auto">
+          <FadeInOnScroll delay={0.2} className="w-full">
+            <Button asChild variant="default" size="hero">
               <Link href="/simulador">
                 Simulação Gratuita e Rápida
               </Link>

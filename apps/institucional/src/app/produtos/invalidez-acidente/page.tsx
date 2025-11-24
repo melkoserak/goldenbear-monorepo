@@ -24,6 +24,8 @@ import { PartnerSection } from "@/components/sections/PartnerSection";
 import { FaqSection } from "@/components/sections/FaqSection";
 import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
+import { RelatedCarouselSection } from "@/components/sections/RelatedCarouselSection"; // <-- NOVO IMPORT
+import { ComparisonSection } from '@/components/sections/ComparisonSection';
 
 // 1. Metadata ATUALIZADA
 export const metadata: Metadata = {
@@ -163,46 +165,11 @@ export default function InvalidezAcidentePage() {
       </Section>
 
       {/* Seção Diferenciais (MANTIDA) */}
-      <Section variant="accent">
-        <Container>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            {/* ... (Conteúdo da seção mantido idêntico ao ficheiro page.tsx) ... */}
-            {/* Coluna Esquerda: Título e CTA */}
-            <div className="max-w-xl">
-              <SectionHeader
-                title="Um Seguro de Vida Individual e Moderno"
-                subtitle="Conheça os diferenciais do nosso seguro de vida em relação aos produtos tradicionais."
-                className="mb-8"
-              />
-              <Button asChild size="lg">
-                <Link href="/simulador">Simule agora</Link>
-              </Button>
-            </div>
-            
-            {/* Coluna Direita: Comparativo */}
-            <div className="space-y-8 p-8 bg-card border border-border rounded-lg shadow-sm">
-              <div>
-                <Typography variant="h4" className="mb-4">Seguros Tradicionais</Typography>
-                <div className="space-y-3">
-                  <ComparisonItem isGoldenBear={false}>Contratação lenta e burocrática, com exames.</ComparisonItem>
-                  <ComparisonItem isGoldenBear={false}>Preço baseado na idade, com reajustes anuais.</ComparisonItem>
-                  <ComparisonItem isGoldenBear={false}>Muitas vezes embutido em outros produtos (venda casada).</ComparisonItem>
-                </div>
-              </div>
-              
-              <div>
-                <Typography variant="h4" color="primary" className="mb-4">Golden Bear (com MAG Seguros)</Typography>
-                <div className="space-y-3">
-                  <ComparisonItem isGoldenBear={true}>Contratação 100% digital e simplificada.</ComparisonItem>
-                  <ComparisonItem isGoldenBear={true}>Cobertura de até R$ 1 Milhão online.</ComparisonItem>
-                  <ComparisonItem isGoldenBear={true}>Preço justo e reenquadramento por faixa etária (a cada 5 anos).</ComparisonItem>
-                  <ComparisonItem isGoldenBear={true}>Você contrata apenas o que precisa, de forma separada.</ComparisonItem>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </Section>
+      {/* Nova Seção Aqui */}
+      <ComparisonSection />
+
+      {/* 💥 SEÇÃO DE PRODUTOS RELACIONADOS 💥 */}
+      <RelatedCarouselSection type="products" />
 
 
       {/* Seção de Prova Social (Reutilizada) */}

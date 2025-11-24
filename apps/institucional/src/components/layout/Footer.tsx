@@ -20,7 +20,7 @@ export const Footer = () => {
   const logoUrl = '/imagens/logo-golden-bear.svg';
 
   return (
-    // 1. Usando o componente <Section> com a variante 'primary' (fundo azul)
+    // 1. Usando o componente <Section> com a variante 'accent' (fundo cinza claro/accent)
     <Section as="footer" variant="accent">
       {/* 2. Usando o componente <Container> */}
       <Container>
@@ -106,11 +106,30 @@ export const Footer = () => {
             </Typography>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/seguro-militar" className="hover:underline">
+                <Link href="/seguro-militar/exercito" className="hover:underline">
                   Exército
                 </Link>
               </li>
-              {/* ... (outros links) ... */}
+              <li>
+                <Link href="/seguro-militar/marinha" className="hover:underline">
+                  Marinha
+                </Link>
+              </li>
+              <li>
+                <Link href="/seguro-militar/aeronautica" className="hover:underline">
+                  Aeronáutica
+                </Link>
+              </li>
+              <li>
+                <Link href="/seguro-militar/policia-militar" className="hover:underline">
+                  Policiais Militares
+                </Link>
+              </li>
+              <li>
+                <Link href="/seguro-militar/bombeiros" className="hover:underline">
+                  Bombeiros
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -146,7 +165,7 @@ export const Footer = () => {
         </div>
 
         {/* Barra Inferior */}
-        {/* 6. Corrigida a cor da borda para usar 'primary-foreground' (branco) */}
+        {/* 6. Corrigida a cor da borda para usar 'foreground/20' para contraste adequado no fundo accent */}
         <div className="border-t border-foreground/20 pt-8 mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
             <div className="text-center md:text-left">
@@ -158,7 +177,7 @@ export const Footer = () => {
                 XXXXX.XXXXXX/XXXX-XX
               </Typography>
             </div>
-            <div className="flex flex-row  gap-6">
+            <div className="flex flex-row gap-6">
               <Link href="/politica-de-privacidade" className="text-xs text-foreground hover:underline transition-colors">
                 Política de Privacidade
               </Link>

@@ -13,6 +13,7 @@ import { DigitalCtaSection } from '@/components/sections/DigitalCtaSection';
 import { PartnerSection } from '@/components/sections/PartnerSection';
 import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { BlogSection } from '@/components/sections/BlogSection';
+import { ComparisonSection } from '@/components/sections/ComparisonSection';
 
 
 export default function HomePage() {
@@ -72,6 +73,9 @@ export default function HomePage() {
       <FadeInOnScroll>
         <CtaSection />
       </FadeInOnScroll>
+
+      {/* Nova Seção Aqui */}
+  <ComparisonSection />
 
       <FadeInOnScroll>
         <Vantagens />

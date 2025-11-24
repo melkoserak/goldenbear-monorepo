@@ -15,6 +15,8 @@ import { PartnerSection } from "@/components/sections/PartnerSection";
 import { FaqSection } from "@/components/sections/FaqSection";
 import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
+import { RelatedCarouselSection } from "@/components/sections/RelatedCarouselSection"; // <-- NOVO IMPORT
+
 
 // Metadata otimizada para "Aeronáutica"
 export const metadata: Metadata = {
@@ -82,6 +84,9 @@ export default function AeronauticaPage() {
           </div>
         </Container>
       </Section>
+
+      {/* 💥 SEÇÃO DE PRODUTOS RELACIONADOS 💥 */}
+      <RelatedCarouselSection type="forces" />
 
       {/* --- Seções Reutilizadas para Confiança --- */}
       <PartnerSection />
