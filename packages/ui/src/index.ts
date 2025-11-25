@@ -22,6 +22,7 @@ export * from "./components/label";
 export * from "./components/feature-card";
 export * from "./components/section-header";
 export { Skeleton } from "./components/skeleton";
+export * from "./components/grid";
 
 // Utils e Hooks (Seguros)
 export * from "./lib/utils";

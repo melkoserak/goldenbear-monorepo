@@ -167,12 +167,14 @@ export default async function BlogPostPage({ params }: Props) {
           </header>
 
           <div className="relative w-full h-[400px] rounded-2xl overflow-hidden shadow-lg mb-12">
+            {/* OTIMIZAÇÃO LCP: Adicionado 'sizes' */}
             <Image 
               src={post.image} 
               alt={post.title} 
               fill 
               className="object-cover"
               priority
+              sizes="(max-width: 768px) 100vw, 768px"
             />
           </div>
 

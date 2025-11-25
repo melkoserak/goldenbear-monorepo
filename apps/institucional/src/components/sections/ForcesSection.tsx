@@ -57,12 +57,14 @@ const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
       className="flex-1 bg-card rounded-lg border border-border shadow-sm hover:shadow-lg overflow-hidden flex flex-col justify-start h-full relative group transition-all duration-300 hover:-translate-y-1 outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className="self-stretch h-60 relative flex flex-col justify-start items-start gap-2.5 overflow-hidden bg-muted">
-        {/* Adicionei a lógica da imagem com efeito de zoom suave no hover */}
+        {/* OTIMIZAÇÃO LCP: Adicionado 'sizes' */}
+        {/* Mobile: card quase full width (80vw). Desktop: 1/3 ou 1/4 da tela (25vw) */}
         <Image 
           src={imageUrl} 
           alt={title} 
           fill 
-          className="object-cover transition-transform duration-500 group-hover:scale-105" 
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 80vw, (max-width: 1200px) 33vw, 25vw" 
         />
       </div>
       

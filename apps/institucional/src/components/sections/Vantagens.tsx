@@ -85,12 +85,14 @@ export const Vantagens = () => {
           
           {/* Coluna da Imagem */}
           <div className="flex-1 self-stretch relative rounded-lg inline-flex flex-col justify-start items-start gap-2.5 overflow-hidden min-h-[400px]">
+            {/* OTIMIZAÇÃO LCP: Adicionado 'sizes' */}
             <Image 
               className="self-stretch flex-1 w-full h-full object-cover rounded-lg" 
               src="/imagens/imagem-familia-call-out.png" 
               alt="Proteja quem você ama" 
               width={644} 
-              height={673} 
+              height={673}
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
             <div className="left-[10%] top-[45%] absolute">
               <Typography variant="h3" color="white">Proteja quem você ama</Typography>

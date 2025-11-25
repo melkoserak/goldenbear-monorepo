@@ -69,7 +69,10 @@ export function Autocomplete({
         onFocus={() => setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
         placeholder={placeholder}
-        className={cn("h-12 px-4 py-3", className)}
+        className={cn(
+            "h-12 px-4 py-3", // Garanta que o h-12 está aqui também para sobrescrever se necessário
+            className
+        )}
         autoComplete="off"
         disabled={isLoading}
         {...props} // 3. Repassamos as props para o Input interno (Aqui a mágica acontece)

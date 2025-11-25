@@ -1,6 +1,7 @@
+// apps/simulador/src/components/simulator/steps/Step8.tsx
 "use client";
 import React, { useEffect } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form'; // 1. Adicionado useWatch
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IMaskMixin } from 'react-imask';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
@@ -27,6 +28,22 @@ const relationshipOptions = [
     { value: 'SOCIO', label: 'Sócio(a)' }, { value: 'NENHUM', label: 'Nenhum' },
 ];
 
+// 2. Função auxiliar para calcular maioridade
+const isUnder18 = (dateString?: string) => {
+  if (!dateString) return false;
+  const birthDate = new Date(dateString);
+  if (isNaN(birthDate.getTime())) return false; // Data inválida
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age < 18;
+};
+
 export const Step8 = () => {
   const { formData } = useSimulatorStore();
   const { setFormData, nextStep, prefetchQuestionnaireTokens } = useSimulatorStore((state) => state.actions);
@@ -36,7 +53,8 @@ export const Step8 = () => {
     control, 
     register, 
     handleSubmit, 
-    formState: { errors, isValid } 
+    formState: { errors, isValid, submitCount },
+    setValue // Usado para limpar campos se necessário
   } = useForm<Step8Data>({
     resolver: zodResolver(step8Schema),
     defaultValues: {
@@ -53,6 +71,23 @@ export const Step8 = () => {
     name: "beneficiaries"
   });
 
+  // 3. Monitora os valores dos beneficiários em tempo real
+  const beneficiariesValues = useWatch({
+    control,
+    name: "beneficiaries"
+  });
+
+  // Scroll para erro no submit
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      const firstErrorElement = document.querySelector('.border-destructive');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => { (firstErrorElement as HTMLElement).focus(); }, 100);
+      }
+    }
+  }, [submitCount, errors]);
+
   useEffect(() => {
     track('step_view', { step: 8, step_name: 'Beneficiários' });
   }, []);
@@ -64,8 +99,16 @@ export const Step8 = () => {
   }, [isValid, prefetchQuestionnaireTokens]);
 
   const onSubmit = (data: Step8Data) => {
-    setFormData({ beneficiaries: data.beneficiaries as any });
-    track('step_complete', { step: 8, step_name: 'Beneficiários', count: data.beneficiaries.length });
+    // Limpeza final: remove dados de representante legal se for maior de idade (opcional, mas boa prática)
+    const cleanBeneficiaries = data.beneficiaries.map(b => {
+      if (!isUnder18(b.birthDate)) {
+        return { ...b, legalRepresentative: undefined };
+      }
+      return b;
+    });
+
+    setFormData({ beneficiaries: cleanBeneficiaries as any });
+    track('step_complete', { step: 8, step_name: 'Beneficiários', count: cleanBeneficiaries.length });
     nextStep();
   };
 
@@ -76,220 +119,226 @@ export const Step8 = () => {
       </h3>
       <p className="text-left text-muted-foreground mb-4">Indique pelo menos um beneficiário. É crucial que esses dados estejam corretos para evitar problemas no futuro.</p>
       <p className="text-left text-xs text-muted-foreground italic mb-8">
-        <strong>Nota:</strong> Se um beneficiário for menor de 18 anos, é necessário indicar um responsável legal.
+        <strong>Nota:</strong> Se um beneficiário for menor de 18 anos, os campos do responsável legal aparecerão automaticamente.
       </p>
 
-      {fields.map((field, index) => (
-        <div key={field.id} className="border rounded-lg p-6 mb-6 relative">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-lg font-semibold text-primary">Beneficiário {index + 1}</h4>
-            {fields.length > 1 && (
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => remove(index)} 
-                className="text-destructive hover:bg-destructive/10"
-                aria-label={`Remover beneficiário ${index + 1}`}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            )}
-          </div>
+      {fields.map((field, index) => {
+        // 4. Calcula se é menor de idade para este beneficiário específico
+        const currentBirthDate = beneficiariesValues?.[index]?.birthDate;
+        const isMinor = isUnder18(currentBirthDate);
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            {/* Nome */}
-            <div className="md:col-span-2 space-y-1.5">
-              <Label htmlFor={`beneficiaries.${index}.fullName`}>Nome completo <span className="text-destructive">*</span></Label>
-              <Input 
-                id={`beneficiaries.${index}.fullName`}
-                {...register(`beneficiaries.${index}.fullName`)} 
-                className={errors.beneficiaries?.[index]?.fullName ? 'border-destructive' : ''} 
-                aria-invalid={errors.beneficiaries?.[index]?.fullName ? "true" : "false"}
-                aria-describedby={`beneficiaries.${index}.fullName-error`}
-              />
-              {errors.beneficiaries?.[index]?.fullName && (
-                <p id={`beneficiaries.${index}.fullName-error`} className="text-sm text-destructive mt-1" role="alert">
-                  {errors.beneficiaries[index]?.fullName?.message}
-                </p>
-              )}
-            </div>
-            
-            {/* CPF */}
-            <div className="space-y-1.5">
-              <Label htmlFor={`beneficiaries.${index}.cpf`}>CPF <span className="text-destructive">*</span></Label>
-              <Controller
-                name={`beneficiaries.${index}.cpf`}
-                control={control}
-                render={({ field: { onChange, value, ref } }) => (
-                   <MaskedInput 
-                     id={`beneficiaries.${index}.cpf`}
-                     mask="000.000.000-00" 
-                     value={value} 
-                     onAccept={(v: string) => onChange(v)} 
-                     inputRef={ref} 
-                     className={errors.beneficiaries?.[index]?.cpf ? 'border-destructive' : ''} 
-                     placeholder="000.000.000-00"
-                     aria-invalid={errors.beneficiaries?.[index]?.cpf ? "true" : "false"}
-                     aria-describedby={`beneficiaries.${index}.cpf-error`}
-                   />
-                )}
-              />
-              {errors.beneficiaries?.[index]?.cpf && (
-                <p id={`beneficiaries.${index}.cpf-error`} className="text-sm text-destructive mt-1" role="alert">
-                  {errors.beneficiaries[index]?.cpf?.message}
-                </p>
+        return (
+          <div key={field.id} className="border rounded-lg p-6 mb-6 relative transition-all duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold text-primary">Beneficiário {index + 1}</h4>
+              {fields.length > 1 && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => remove(index)} 
+                  className="text-destructive hover:bg-destructive/10"
+                  aria-label={`Remover beneficiário ${index + 1}`}
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
               )}
             </div>
 
-            {/* Data Nascimento */}
-            <div className="space-y-1.5">
-                <Label htmlFor={`beneficiaries.${index}.birthDate`}>Data de Nascimento <span className="text-destructive">*</span></Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              {/* Nome */}
+              <div className="md:col-span-2 space-y-1.5">
+                <Label htmlFor={`beneficiaries.${index}.fullName`}>Nome completo <span className="text-destructive">*</span></Label>
                 <Input 
-                  id={`beneficiaries.${index}.birthDate`}
-                  type="date" 
-                  {...register(`beneficiaries.${index}.birthDate`)} 
-                  className={errors.beneficiaries?.[index]?.birthDate ? 'border-destructive' : ''}
-                  aria-invalid={errors.beneficiaries?.[index]?.birthDate ? "true" : "false"}
-                  aria-describedby={`beneficiaries.${index}.birthDate-error`}
+                  id={`beneficiaries.${index}.fullName`}
+                  {...register(`beneficiaries.${index}.fullName`)} 
+                  className={errors.beneficiaries?.[index]?.fullName ? 'border-destructive' : ''} 
+                  aria-invalid={errors.beneficiaries?.[index]?.fullName ? "true" : "false"}
+                  aria-describedby={`beneficiaries.${index}.fullName-error`}
                 />
-                {errors.beneficiaries?.[index]?.birthDate && (
-                  <p id={`beneficiaries.${index}.birthDate-error`} className="text-sm text-destructive mt-1" role="alert">
-                    {errors.beneficiaries[index]?.birthDate?.message}
+                {errors.beneficiaries?.[index]?.fullName && (
+                  <p id={`beneficiaries.${index}.fullName-error`} className="text-sm text-destructive mt-1" role="alert">
+                    {errors.beneficiaries[index]?.fullName?.message}
                   </p>
                 )}
-            </div>
-
-            {/* RG */}
-             <div className="space-y-1.5">
-                <Label htmlFor={`beneficiaries.${index}.rg`}>RG <span className="text-destructive">*</span></Label>
+              </div>
+              
+              {/* CPF */}
+              <div className="space-y-1.5">
+                <Label htmlFor={`beneficiaries.${index}.cpf`}>CPF <span className="text-destructive">*</span></Label>
                 <Controller
-                    name={`beneficiaries.${index}.rg`}
-                    control={control}
-                    render={({ field: { onChange, value, ref } }) => (
-                        <MaskedInput 
-                          id={`beneficiaries.${index}.rg`}
-                          mask="00.000.000-**" 
-                          value={value} 
-                          onAccept={(v: string) => onChange(v)} 
-                          inputRef={ref} 
-                          placeholder="00.000.000-X"
-                          className={errors.beneficiaries?.[index]?.rg ? 'border-destructive' : ''}
-                          aria-invalid={errors.beneficiaries?.[index]?.rg ? "true" : "false"}
-                          aria-describedby={`beneficiaries.${index}.rg-error`}
-                        />
-                    )}
+                  name={`beneficiaries.${index}.cpf`}
+                  control={control}
+                  render={({ field: { onChange, value, ref } }) => (
+                    <MaskedInput 
+                      id={`beneficiaries.${index}.cpf`}
+                      mask="000.000.000-00" 
+                      value={value} 
+                      onAccept={(v: string) => onChange(v)} 
+                      inputRef={ref} 
+                      className={errors.beneficiaries?.[index]?.cpf ? 'border-destructive' : ''} 
+                      placeholder="000.000.000-00"
+                      aria-invalid={errors.beneficiaries?.[index]?.cpf ? "true" : "false"}
+                      aria-describedby={`beneficiaries.${index}.cpf-error`}
+                    />
+                  )}
                 />
-                {errors.beneficiaries?.[index]?.rg && (
-                  <p id={`beneficiaries.${index}.rg-error`} className="text-sm text-destructive mt-1" role="alert">
-                    {errors.beneficiaries[index]?.rg?.message}
+                {errors.beneficiaries?.[index]?.cpf && (
+                  <p id={`beneficiaries.${index}.cpf-error`} className="text-sm text-destructive mt-1" role="alert">
+                    {errors.beneficiaries[index]?.cpf?.message}
                   </p>
                 )}
-            </div>
-
-            {/* Parentesco */}
-            <div className="space-y-1.5">
-              <Label htmlFor={`beneficiaries.${index}.relationship`}>Grau de parentesco <span className="text-destructive">*</span></Label>
-              <Controller
-                name={`beneficiaries.${index}.relationship`}
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <Autocomplete 
-                    // Nota: Autocomplete não aceita ID diretamente no input interno facilmente sem refatoração do componente UI,
-                    // mas mantemos a estrutura para consistência.
-                    options={relationshipOptions} 
-                    value={value} 
-                    onChange={onChange} 
-                    placeholder="Selecione..." 
-                    className={errors.beneficiaries?.[index]?.relationship ? 'border-destructive' : ''}
-                  />
-                )}
-              />
-              {errors.beneficiaries?.[index]?.relationship && (
-                <p id={`beneficiaries.${index}.relationship-error`} className="text-sm text-destructive mt-1" role="alert">
-                  {errors.beneficiaries[index]?.relationship?.message}
-                </p>
-              )}
-            </div>
-            
-            {/* Área do Responsável Legal */}
-            <div className="md:col-span-2 mt-4">
-              <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm mb-4 flex items-center gap-2" role="alert">
-                 <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-                 <span>Se o beneficiário for menor de 18 anos, preencha os dados do responsável abaixo.</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-2 border-t border-dashed">
-                <div className="md:col-span-2 space-y-1.5">
-                  <Label htmlFor={`beneficiaries.${index}.legalRepresentative.fullName`}>Nome do Responsável</Label>
+              {/* Data Nascimento */}
+              <div className="space-y-1.5">
+                  <Label htmlFor={`beneficiaries.${index}.birthDate`}>Data de Nascimento <span className="text-destructive">*</span></Label>
                   <Input 
-                    id={`beneficiaries.${index}.legalRepresentative.fullName`}
-                    {...register(`beneficiaries.${index}.legalRepresentative.fullName`)} 
-                    className={errors.beneficiaries?.[index]?.legalRepresentative?.fullName ? 'border-destructive' : ''}
-                    aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.fullName ? "true" : "false"}
-                    aria-describedby={`beneficiaries.${index}.legalRepresentative.fullName-error`}
+                    id={`beneficiaries.${index}.birthDate`}
+                    type="date" 
+                    {...register(`beneficiaries.${index}.birthDate`)} 
+                    className={errors.beneficiaries?.[index]?.birthDate ? 'border-destructive' : ''}
+                    aria-invalid={errors.beneficiaries?.[index]?.birthDate ? "true" : "false"}
+                    aria-describedby={`beneficiaries.${index}.birthDate-error`}
                   />
-                  {errors.beneficiaries?.[index]?.legalRepresentative?.fullName && (
-                    <p id={`beneficiaries.${index}.legalRepresentative.fullName-error`} className="text-xs text-destructive" role="alert">
-                        {errors.beneficiaries[index]?.legalRepresentative?.fullName?.message}
+                  {errors.beneficiaries?.[index]?.birthDate && (
+                    <p id={`beneficiaries.${index}.birthDate-error`} className="text-sm text-destructive mt-1" role="alert">
+                      {errors.beneficiaries[index]?.birthDate?.message}
                     </p>
                   )}
-                </div>
+              </div>
 
-                <div className="space-y-1.5">
-                   <Label htmlFor={`beneficiaries.${index}.legalRepresentative.cpf`}>CPF do Responsável</Label>
-                   <Controller
-                      name={`beneficiaries.${index}.legalRepresentative.cpf`}
+              {/* RG */}
+              <div className="space-y-1.5">
+                  <Label htmlFor={`beneficiaries.${index}.rg`}>RG <span className="text-destructive">*</span></Label>
+                  <Controller
+                      name={`beneficiaries.${index}.rg`}
                       control={control}
                       render={({ field: { onChange, value, ref } }) => (
-                         <MaskedInput 
-                            id={`beneficiaries.${index}.legalRepresentative.cpf`}
-                            mask="000.000.000-00" 
-                            value={value} 
-                            onAccept={(v: string) => onChange(v)} 
-                            inputRef={ref} 
-                            className={errors.beneficiaries?.[index]?.legalRepresentative?.cpf ? 'border-destructive' : ''}
-                            aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.cpf ? "true" : "false"}
-                            aria-describedby={`beneficiaries.${index}.legalRepresentative.cpf-error`}
-                         />
-                      )}
-                   />
-                   {errors.beneficiaries?.[index]?.legalRepresentative?.cpf && (
-                    <p id={`beneficiaries.${index}.legalRepresentative.cpf-error`} className="text-xs text-destructive" role="alert">
-                        {errors.beneficiaries[index]?.legalRepresentative?.cpf?.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                   <Label htmlFor={`beneficiaries.${index}.legalRepresentative.rg`}>RG do Responsável</Label>
-                   <Controller
-                      name={`beneficiaries.${index}.legalRepresentative.rg`}
-                      control={control}
-                      render={({ field: { onChange, value, ref } }) => (
-                         <MaskedInput 
-                            id={`beneficiaries.${index}.legalRepresentative.rg`}
+                          <MaskedInput 
+                            id={`beneficiaries.${index}.rg`}
                             mask="00.000.000-**" 
                             value={value} 
                             onAccept={(v: string) => onChange(v)} 
-                            inputRef={ref}
-                            className={errors.beneficiaries?.[index]?.legalRepresentative?.rg ? 'border-destructive' : ''}
-                            aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.rg ? "true" : "false"}
-                            aria-describedby={`beneficiaries.${index}.legalRepresentative.rg-error`}
-                         />
+                            inputRef={ref} 
+                            placeholder="00.000.000-X"
+                            className={errors.beneficiaries?.[index]?.rg ? 'border-destructive' : ''}
+                            aria-invalid={errors.beneficiaries?.[index]?.rg ? "true" : "false"}
+                            aria-describedby={`beneficiaries.${index}.rg-error`}
+                          />
                       )}
-                   />
-                   {errors.beneficiaries?.[index]?.legalRepresentative?.rg && (
-                    <p id={`beneficiaries.${index}.legalRepresentative.rg-error`} className="text-xs text-destructive" role="alert">
-                        {errors.beneficiaries[index]?.legalRepresentative?.rg?.message}
+                  />
+                  {errors.beneficiaries?.[index]?.rg && (
+                    <p id={`beneficiaries.${index}.rg-error`} className="text-sm text-destructive mt-1" role="alert">
+                      {errors.beneficiaries[index]?.rg?.message}
                     </p>
                   )}
-                </div>
               </div>
+
+              {/* Parentesco */}
+              <div className="space-y-1.5">
+                <Label htmlFor={`beneficiaries.${index}.relationship`}>Grau de parentesco <span className="text-destructive">*</span></Label>
+                <Controller
+                  name={`beneficiaries.${index}.relationship`}
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <Autocomplete 
+                      options={relationshipOptions} 
+                      value={value} 
+                      onChange={onChange} 
+                      placeholder="Selecione..." 
+                      className={errors.beneficiaries?.[index]?.relationship ? 'border-destructive' : ''}
+                    />
+                  )}
+                />
+                {errors.beneficiaries?.[index]?.relationship && (
+                  <p id={`beneficiaries.${index}.relationship-error`} className="text-sm text-destructive mt-1" role="alert">
+                    {errors.beneficiaries[index]?.relationship?.message}
+                  </p>
+                )}
+              </div>
+              
+              {/* Área do Responsável Legal (Condicional) */}
+              {isMinor && (
+                <div className="md:col-span-2 mt-4 animate-fade-in">
+                  <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm mb-4 flex items-center gap-2" role="alert">
+                    <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                    <span>Beneficiário menor de idade. Por favor, preencha os dados do responsável legal.</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-2 border-t border-dashed">
+                    <div className="md:col-span-2 space-y-1.5">
+                      <Label htmlFor={`beneficiaries.${index}.legalRepresentative.fullName`}>Nome do Responsável</Label>
+                      <Input 
+                        id={`beneficiaries.${index}.legalRepresentative.fullName`}
+                        {...register(`beneficiaries.${index}.legalRepresentative.fullName`)} 
+                        className={errors.beneficiaries?.[index]?.legalRepresentative?.fullName ? 'border-destructive' : ''}
+                        aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.fullName ? "true" : "false"}
+                        aria-describedby={`beneficiaries.${index}.legalRepresentative.fullName-error`}
+                      />
+                      {errors.beneficiaries?.[index]?.legalRepresentative?.fullName && (
+                        <p id={`beneficiaries.${index}.legalRepresentative.fullName-error`} className="text-xs text-destructive" role="alert">
+                            {errors.beneficiaries[index]?.legalRepresentative?.fullName?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`beneficiaries.${index}.legalRepresentative.cpf`}>CPF do Responsável</Label>
+                      <Controller
+                          name={`beneficiaries.${index}.legalRepresentative.cpf`}
+                          control={control}
+                          render={({ field: { onChange, value, ref } }) => (
+                            <MaskedInput 
+                                id={`beneficiaries.${index}.legalRepresentative.cpf`}
+                                mask="000.000.000-00" 
+                                value={value} 
+                                onAccept={(v: string) => onChange(v)} 
+                                inputRef={ref} 
+                                className={errors.beneficiaries?.[index]?.legalRepresentative?.cpf ? 'border-destructive' : ''}
+                                aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.cpf ? "true" : "false"}
+                                aria-describedby={`beneficiaries.${index}.legalRepresentative.cpf-error`}
+                            />
+                          )}
+                      />
+                      {errors.beneficiaries?.[index]?.legalRepresentative?.cpf && (
+                        <p id={`beneficiaries.${index}.legalRepresentative.cpf-error`} className="text-xs text-destructive" role="alert">
+                            {errors.beneficiaries[index]?.legalRepresentative?.cpf?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`beneficiaries.${index}.legalRepresentative.rg`}>RG do Responsável</Label>
+                      <Controller
+                          name={`beneficiaries.${index}.legalRepresentative.rg`}
+                          control={control}
+                          render={({ field: { onChange, value, ref } }) => (
+                            <MaskedInput 
+                                id={`beneficiaries.${index}.legalRepresentative.rg`}
+                                mask="00.000.000-**" 
+                                value={value} 
+                                onAccept={(v: string) => onChange(v)} 
+                                inputRef={ref}
+                                className={errors.beneficiaries?.[index]?.legalRepresentative?.rg ? 'border-destructive' : ''}
+                                aria-invalid={errors.beneficiaries?.[index]?.legalRepresentative?.rg ? "true" : "false"}
+                                aria-describedby={`beneficiaries.${index}.legalRepresentative.rg-error`}
+                            />
+                          )}
+                      />
+                      {errors.beneficiaries?.[index]?.legalRepresentative?.rg && (
+                        <p id={`beneficiaries.${index}.legalRepresentative.rg-error`} className="text-xs text-destructive" role="alert">
+                            {errors.beneficiaries[index]?.legalRepresentative?.rg?.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <div className="flex justify-end mb-4">
         <Button type="button" variant="outline" onClick={() => append({ id: Date.now().toString(), fullName: '', cpf: '', rg: '', birthDate: '', relationship: '' })}>

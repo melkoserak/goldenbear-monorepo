@@ -171,7 +171,7 @@ export const Step3 = () => {
           )}
         </div>
       </div>
-      <NavigationButtons isNextDisabled={!isValid} nextLabel="Ver Opções de Seguro →" />
+      <NavigationButtons isNextDisabled={!isValid} nextLabel="Ver Opções de Seguro" />
     </form>
   );
 };

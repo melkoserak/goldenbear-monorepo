@@ -27,7 +27,8 @@ export interface FrontendFormData {
   mag_renda: string;
   mag_estado: string;
   mag_profissao_cbo: string;
-  // Campos opcionais que podem vir no payload da proposta
+  
+  // Campos opcionais
   mag_email?: string;
   mag_celular?: string;
   mag_cep?: string;
@@ -44,11 +45,14 @@ export interface FrontendFormData {
   mag_num_filhos?: string;
   mag_profissao_empresa?: string;
   mag_ppe?: string;
+  
+  // Campos que agora vêm de slices separados, mas a API espera neste formato flat
   payment_pre_auth_code?: string;
   reserved_proposal_number?: string;
-  widget_answers?: string; // JSON string
-  // Campos dinâmicos de beneficiários (serão processados manualmente)
-  [key: string]: any; 
+  widget_answers?: string; 
+
+  // Index Signature para permitir campos dinâmicos (ex: beneficiários) de forma segura
+  [key: string]: string | number | boolean | undefined | Record<string, unknown> | unknown[];
 }
 
 export interface FrontendCoverage {
@@ -94,7 +98,6 @@ export interface MagSimulationPayload {
   }>;
 }
 
-// Payload complexo da Proposta
 export interface MagProposalPayload {
   PROPOSTA: {
     NUMERO: number;

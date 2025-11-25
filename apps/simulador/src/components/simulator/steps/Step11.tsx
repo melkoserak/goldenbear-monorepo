@@ -1,14 +1,12 @@
-// src/components/simulator/steps/Step11.tsx
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
-import { useCoverageStore, type ApiCoverage } from '@/stores/useCoverageStore'; // Importe o tipo
+import { useCoverageStore, type ApiCoverage } from '@/stores/useCoverageStore';
 import { submitProposal } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, PartyPopper } from 'lucide-react';
 import { Button } from '@goldenbear/ui/components/button';
 
-// Tipos para estruturar os dados do mapa de produtos
 interface MappedCoverage extends ApiCoverage {
     capitalContratado: number;
     premioCalculado: number;
@@ -19,9 +17,15 @@ interface MappedProduct {
     coberturas: MappedCoverage[];
 }
 
-
 export const Step11 = () => {
-    const { formData } = useSimulatorStore();
+    // --- CORREÇÃO AQUI: Destructuring correto da Store ---
+    const { 
+        formData, 
+        // Estes campos agora vêm do AuthSlice (raiz da store), não de formData
+        reservedProposalNumber,
+        paymentPreAuthCode 
+    } = useSimulatorStore();
+    
     const coverageState = useCoverageStore();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +36,6 @@ export const Step11 = () => {
         track('step_view', { step: 11, step_name: 'Envio da Proposta' });
 
         const handleFinalSubmit = async () => {
-            // Usa o tipo MappedProduct para evitar o 'any'
             const productMap = new Map<string, MappedProduct>();
             coverageState.coverages.forEach(coverage => {
                 if (coverage.isActive) {
@@ -64,7 +67,8 @@ export const Step11 = () => {
                 produtos: Array.from(productMap.values())
             };
 
-            const payload: Record<string, string> = {
+            // --- CORREÇÃO NO PAYLOAD: Tipagem segura e uso das vars corretas ---
+            const payload: Record<string, string | number | boolean | undefined> = {
                 mag_nome_completo: formData.fullName,
                 mag_cpf: formData.cpf,
                 mag_email: formData.email,
@@ -89,8 +93,11 @@ export const Step11 = () => {
                 mag_profissao_empresa: formData.company,
                 mag_ppe: formData.isPPE,
                 final_simulation_config: JSON.stringify(finalSimulationConfig),
-                payment_pre_auth_code: formData.paymentPreAuthCode || '',
-                reserved_proposal_number: formData.reservedProposalNumber || '',
+                
+                // Aqui usamos as variáveis que desestruturamos da raiz da store
+                payment_pre_auth_code: paymentPreAuthCode || '',
+                reserved_proposal_number: reservedProposalNumber || '',
+                
                 widget_answers: JSON.stringify(formData.dpsAnswers || {}),
             };
             
@@ -101,7 +108,8 @@ export const Step11 = () => {
             });
             
             try {
-                const result = await submitProposal(payload);
+                // Forçamos o tipo 'any' aqui apenas para o envio, pois o serviço espera Record<string, any>
+                const result = await submitProposal(payload as any);
                 if (result.proposal_number) {
                     setProposalNumber(result.proposal_number);
                     track('proposal_success', { proposal_number: result.proposal_number });
@@ -118,8 +126,7 @@ export const Step11 = () => {
         };
 
         handleFinalSubmit();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // O array vazio é intencional para executar apenas uma vez
+    }, []); 
 
     if (isLoading) {
         return (

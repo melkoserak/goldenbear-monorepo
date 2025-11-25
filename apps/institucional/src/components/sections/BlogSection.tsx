@@ -33,7 +33,15 @@ const BlogCard = ({ title, description, imageUrl, linkUrl }: any) => (
   <div className="flex-1 p-6 bg-accent rounded-lg inline-flex flex-col justify-start gap-6 relative group transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
     <div className="self-stretch h-80 flex flex-col justify-start items-start gap-6">
       <div className="self-stretch flex-1 bg-card rounded-lg flex flex-col justify-center items-center gap-2.5 overflow-hidden">
-        <Image className="self-stretch w-full h-80 object-cover" src={imageUrl} alt={title} width={352} height={343} />
+        <Image 
+  className="self-stretch w-full h-80 object-cover" 
+  src={imageUrl} 
+  alt={title} 
+  width={352} 
+  height={343}
+  // Adicione isto: diz ao browser para baixar img pequena em mobile, média em tablet, pequena em desktop (grid de 3)
+  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+/>
       </div>
       <Typography variant="h4">
         {title}

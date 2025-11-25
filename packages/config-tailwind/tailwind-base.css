@@ -53,10 +53,14 @@
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-white);
 
-  --border: var(--color-gray-300);
+  /* Refinando tokens de borda e input para maior suavidade */
+  --border: var(--color-gray-300); /* #e0e0e0 */
   --input: var(--color-gray-300);
+  
+  /* Token de anel de foco (acessibilidade) */
   --ring: var(--color-blue-500);
 
+  /* Raio de borda consistente */
   --radius: 0.5rem;
 
   /* Tokens de Sombra (do passo anterior) */
@@ -67,42 +71,34 @@
 
 /* --- 3. Theming (Modo Escuro) --- */
 /* O modo escuro apenas remapeia os tokens semânticos */
+/* --- 3. Theming (Modo Escuro) Ajustado --- */
 html.dark {
-  --background: var(--color-gray-900);
-  --foreground: var(--color-neutral-100-t);
+  --background: #09090b; /* Zinco 950 (Mais profundo que cinza puro) */
+  --foreground: #fafafa; /* Zinco 50 */
 
-  --card: var(--color-gray-950);
-  --card-foreground: var(--color-neutral-100-t);
+  --card: #18181b; /* Zinco 900 */
+  --card-foreground: #fafafa;
 
-  --popover: var(--color-gray-950);
-  --popover-foreground: var(--color-neutral-100-t);
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
 
-  /* Primário e Secundário podem ser os mesmos */
-  --primary: var(--color-blue-500);
-  --primary-hover: var(--color-blue-600);
-  --primary-foreground: var(--color-white);
+  --primary: #3b82f6; /* Azul um pouco mais claro para contraste em fundo escuro */
+  --primary-foreground: #ffffff;
 
-  --secondary: var(--color-yellow-400);
-  --secondary-hover: var(--color-yellow-500);
-  --secondary-foreground: var(--color-gray-800);
+  --secondary: #fbbf24; /* Amarelo ajustado */
+  --secondary-foreground: #18181b;
 
-  --muted: var(--color-gray-700);
-  --muted-foreground: var(--color-neutral-600);
+  --muted: #27272a; /* Zinco 800 */
+  --muted-foreground: #a1a1aa; /* Zinco 400 (Melhor contraste que o anterior) */
   
-  --accent: var(--color-gray-700);
-  --accent-foreground: var(--color-neutral-100-t);
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
 
-  --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
+  --destructive: #7f1d1d; /* Vermelho escuro para fundo */
+  --destructive-foreground: #fecaca; /* Texto claro */
 
-  --border: var(--color-gray-700);
-  --input: var(--color-gray-700);
-  --ring: var(--color-blue-500);
-
-  /* Tokens de Sombra (do passo anterior) */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Bordas mais visíveis no dark mode */
+  --border: #3f3f46; /* Zinco 700 */
+  --input: #3f3f46;
+  --ring: #2563eb;
 }
-
-/* Removido o "}" de fechamento do @layer base daqui de baixo */

@@ -5,31 +5,33 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../lib/utils"
 
 const buttonVariants = cva(
-  // --- ALTERAÇÃO AQUI ---
-  // Adicionado "active:scale-[0.98]" para um feedback tátil de clique
+  // Adicionado focus-visible ring offset para acessibilidade e active scale
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-bold ring-offset-background transition-all duration-100 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover w-full sm:w-auto", //
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover w-full sm:w-auto shadow-sm hover:shadow-md", // Sombra suave
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary-hover w-full sm:w-auto", //
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover w-full sm:w-auto shadow-sm hover:shadow-md",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         "outline-hero": 
           "border border-solid border-white bg-transparent text-neutral-200 hover:bg-white/10 hover:text-white",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3 ",
-        lg: "h-11 rounded-md px-8",
+        default: "h-10 px-4 py-2", // 40px
+        sm: "h-9 rounded-md px-3", // 36px
+        lg: "h-11 rounded-md px-8", // 44px
+        
+        // --- NOVO TAMANHO (Para alinhar com Inputs h-12) ---
+        xl: "h-12 rounded-md px-8 text-base", // 48px
+        
         icon: "h-10 w-10",
-        // --- NOVO TAMANHO ADICIONADO ---
-        hero: "h-auto px-6 py-4 rounded-sm",
+        hero: "h-auto px-8 py-4 rounded-md text-base", // Ajustado para rounded-md
       },
     },
     defaultVariants: {
