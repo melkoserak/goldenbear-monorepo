@@ -58,11 +58,7 @@ export const BenefitsSection = () => {
             const Icon = benefit.icon;
             return (
               // 1. O Card inteiro é o Link (Área de clique total)
-              <Link 
-                key={benefit.title} 
-                href={benefit.linkUrl}
-                className="flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md inline-flex flex-col justify-start items-start gap-6 relative group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
+              <div key={benefit.title} className="relative flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md inline-flex flex-col justify-start items-start gap-6 group">
                 <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5 group-hover:bg-primary/10 transition-colors">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
@@ -81,12 +77,15 @@ export const BenefitsSection = () => {
                    - O span interno usa 'decoration-transparent' -> 'group-hover:decoration-primary' para animar o sublinhado suavemente.
                 */}
                 <div className="p-0 h-auto text-accent-foreground font-medium mt-auto inline-flex items-center group-hover:text-foreground transition-colors">
-                   <span className="underline underline-offset-4 decoration-transparent text-sm group-hover:decoration-foreground transition-all duration-300">
-                     Saiba mais
-                   </span>
-                   <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                  <Link href={benefit.linkUrl} className="outline-none">
+                    <span className="absolute inset-0 z-10" aria-hidden="true" />
+                    <span className="underline underline-offset-4 decoration-transparent text-sm group-hover:decoration-foreground transition-all duration-300">
+                      Saiba mais
+                    </span>
+                  </Link>
+                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

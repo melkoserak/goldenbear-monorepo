@@ -1,8 +1,29 @@
-// apps/simulador/src/stores/slices/createFormSlice.ts
 import { StateCreator } from 'zustand';
-import { SimulatorState, Beneficiary, UpdateBeneficiaryData } from '../useSimulatorStore';
+import { SimulatorState } from '../useSimulatorStore';
 
-// Tipos auxiliares (movidos do arquivo original)
+// 1. Definir e EXPORTAR os tipos aqui (remova importações circulares)
+export type LegalRepresentative = {
+  fullName: string;
+  rg: string;
+  cpf: string;
+  birthDate: string;
+  relationship: string;
+};
+
+export type Beneficiary = {
+  id: string;
+  fullName: string;
+  rg: string;
+  cpf: string;
+  birthDate: string;
+  relationship: string;
+  legalRepresentative?: Partial<LegalRepresentative>;
+};
+
+export type UpdateBeneficiaryData = Partial<Omit<Beneficiary, 'id' | 'legalRepresentative'>> & {
+  legalRepresentative?: Partial<LegalRepresentative>;
+};
+
 export interface FormDataState {
   fullName: string;
   cpf: string;
@@ -52,7 +73,7 @@ const initialFormData: FormDataState = {
   rgDate: "", childrenCount: "0", company: "", isPPE: "",
   paymentMethod: '', dpsAnswers: undefined,
   beneficiaries: [{
-    id: 'initial', // ID fixo para evitar mismatch no SSR/Hydration se usar Date.now()
+    id: 'initial-ben', 
     fullName: '', rg: '', cpf: '', birthDate: '', relationship: '',
     legalRepresentative: { fullName: '', rg: '', cpf: '', birthDate: '', relationship: '' }
   }],
@@ -67,7 +88,7 @@ export const createFormSlice: StateCreator<SimulatorState, [], [], FormSlice> = 
 
   addBeneficiary: () => set((state) => {
     const newBen: Beneficiary = { 
-      id: crypto.randomUUID(), // Melhor que Date.now()
+      id: crypto.randomUUID(), 
       fullName: '', rg: '', cpf: '', birthDate: '', relationship: '',
       legalRepresentative: { fullName: '', rg: '', cpf: '', birthDate: '', relationship: '' }
     };

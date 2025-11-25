@@ -2,11 +2,20 @@
 const nextConfig = {
   basePath: '/simulador',
   assetPrefix: '/simulador',
-  // --- ALTERAÇÃO AQUI: Reativado para garantir qualidade de código ---
   reactStrictMode: true,
+  
+  // --- CORREÇÃO CRÍTICA: Ativar otimização ---
   images: {
-    unoptimized: true,
+    // unoptimized: true, // <--- REMOVA ESTA LINHA!
+    formats: ['image/avif', 'image/webp'], // Força formatos modernos
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.goldenbearseguros.com.br',
+      },
+    ],
   },
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -17,7 +26,7 @@ const nextConfig = {
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: https://www.googletagmanager.com;
+      img-src 'self' blob: data: https:;
       font-src 'self' data:;
       frame-src 'self' https://widgetshmg.mag.com.br https://widgetshmg.mongeralaegon.com.br;
       connect-src 'self' https://www.google-analytics.com https://viacep.com.br;
@@ -33,22 +42,12 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: cspHeader,
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'X-Frame-Options', 
-            value: 'SAMEORIGIN', 
-          },
+          { key: 'Content-Security-Policy', value: cspHeader },
+          // Adicione HSTS como sugerido no relatório
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         ],
       },
     ];

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { create } from 'zustand';
+import type { StateCreator } from 'zustand';
 import { createFormSlice, FormSlice } from './createFormSlice';
 
 // 1. Mock do crypto.randomUUID para ambiente de teste (se necessário)
@@ -11,11 +12,16 @@ if (!global.crypto) {
   });
 }
 
-// 2. Criamos uma mini-store apenas com o slice que queremos testar
-// CORREÇÃO: Adicionado cast (set as any, get as any, api as any)
-// Isso resolve o erro de tipagem "FormSlice is not assignable to SimulatorState"
-const useTestStore = create<FormSlice>()((set, get, api) => ({
-  ...createFormSlice(set as any, get as any, api as any),
+// 2. Criamos uma store de teste que simula a estrutura completa
+// Isso garante que o `createFormSlice` receba `set` e `get` com os tipos corretos,
+// eliminando a necessidade de `as any`.
+interface SimulatorState extends FormSlice {
+  // Outros slices poderiam ser mockados aqui, se necessário
+  // e.g., step: number;
+}
+
+const useTestStore = create<SimulatorState>()((set, get, api) => ({
+  ...createFormSlice(set, get, api as any), // 'api' pode precisar de cast se usado pelo slice
 }));
 
 describe('Form Slice Logic', () => {

@@ -4,91 +4,71 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { FontSizeManager } from "@/components/layout/FontSizeManager";
-import { TopBar } from "@/components/layout/TopBar"; // 1. Importe o TopBar
-import type { Metadata } from "next";
+import { TopBar } from "@/components/layout/TopBar";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-
+import type { Metadata, Viewport } from "next"; // Importe Viewport
 
 const noto = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-noto-sans",
+  display: "swap", // Melhora FCP (texto aparece mais rápido)
 });
 
-// --- ATUALIZAÇÃO DE SEO AQUI ---
-export const metadata: Metadata = {
-  title: {
-    default: "Golden Bear Seguros | Seguro de Vida Exclusivo para Militares",
-    template: "%s | Golden Bear Seguros", // Permite títulos dinâmicos em outras páginas (ex: "Sobre | Golden Bear...")
-  },
-  description: "Especialistas em seguros de vida para militares das Forças Armadas (Exército, Marinha e Aeronáutica). Simule online e proteja sua família com a segurança da MAG Seguros.",
-  keywords: [
-    "seguro de vida militar",
-    "seguro exército",
-    "seguro marinha",
-    "seguro aeronáutica",
-    "golden bear seguros",
-    "mag seguros",
-    "seguro de vida forças armadas",
-    "proteção familiar militar"
+// Configuração separada de Viewport (Next.js 14+)
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
   ],
-  authors: [{ name: "Golden Bear Seguros" }],
-  creator: "Golden Bear Seguros",
-  // Define a base para URLs relativas (importante para imagens OG)
-  metadataBase: new URL('https://www.goldenbearseguros.com.br'), 
-  
+  width: 'device-width',
+  initialScale: 1,
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://www.goldenbearseguros.com.br'),
+  title: {
+    default: "Golden Bear Seguros | Seguro de Vida Militar",
+    template: "%s | Golden Bear Seguros",
+  },
+  description: "Especialistas em seguros de vida para militares das Forças Armadas. Simulação 100% digital e segura.",
+  // Verificação para buscadores (Google Search Console)
+  verification: {
+    google: 'seu-codigo-verificacao-google', 
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
     url: 'https://www.goldenbearseguros.com.br',
-    title: "Golden Bear Seguros | Proteção para Família Militar",
-    description: "Seguro de vida sob medida para militares. Sem burocracia, 100% digital e com a solidez da MAG Seguros.",
     siteName: 'Golden Bear Seguros',
-    images: [
-      {
-        url: '/imagens/foto-banner-casal-escudo.png', // Usando a imagem principal que você já tem
-        width: 1200,
-        height: 630,
-        alt: 'Família militar protegida pela Golden Bear Seguros',
-      },
-    ],
-  },
-  
-  twitter: {
-    card: 'summary_large_image',
-    title: "Golden Bear Seguros | Seguro Militar",
-    description: "Proteção especializada para quem serve ao Brasil.",
-    images: ['/imagens/foto-banner-casal-escudo.png'],
-  },
-
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-
-  icons: {
-    icon: '/favicon.ico',
+    images: [{
+      url: '/imagens/foto-banner-casal-escudo.png',
+      width: 1200,
+      height: 630,
+      alt: 'Golden Bear Seguros - Proteção Militar',
+    }],
   },
 };
-// --- FIM DA ATUALIZAÇÃO ---
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-br" suppressHydrationWarning>
-      <body className={`${noto.variable} font-sans bg-background text-foreground`}>
+    // Garante o lang="pt-BR" explicitamente
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+         {/* Preconnect para domínios críticos (Vercel, Google Fonts) */}
+         <link rel="preconnect" href="https://fonts.googleapis.com" />
+         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className={`${noto.variable} font-sans bg-background text-foreground antialiased`}>
         <ThemeProvider>
           <FontSizeManager />
-          <TopBar /> {/* 2. Adicione o TopBar aqui */}
+          <TopBar />
           <Header />
-         <main id="content" className="site-content">
-            {/* 2. ADICIONE O BREADCRUMB AQUI */}
+          <main id="content" className="site-content min-h-screen flex flex-col">
             <Breadcrumbs />
             {children}
           </main>

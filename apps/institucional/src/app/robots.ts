@@ -5,7 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/simulador/api/', '/_next/'], // Protege rotas de API e internas
+      // Bloqueia áreas privadas e API para não gastar "crawl budget" do Google
+      disallow: ['/simulador/api/', '/private/', '/minha-conta/'],
     },
     sitemap: 'https://www.goldenbearseguros.com.br/sitemap.xml',
   };
