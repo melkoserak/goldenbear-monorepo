@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore, type ApiCoverage } from '@/stores/useCoverageStore';
-import { submitProposal } from '@/services/apiService';
+// 1. Importe o tipo ProposalPayload
+import { submitProposal, type ProposalPayload } from '@/services/apiService';
 import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, PartyPopper } from 'lucide-react';
 import { Button } from '@goldenbear/ui/components/button';
@@ -18,10 +19,8 @@ interface MappedProduct {
 }
 
 export const Step11 = () => {
-    // --- CORREÇÃO AQUI: Destructuring correto da Store ---
     const { 
         formData, 
-        // Estes campos agora vêm do AuthSlice (raiz da store), não de formData
         reservedProposalNumber,
         paymentPreAuthCode 
     } = useSimulatorStore();
@@ -67,8 +66,8 @@ export const Step11 = () => {
                 produtos: Array.from(productMap.values())
             };
 
-            // --- CORREÇÃO NO PAYLOAD: Tipagem segura e uso das vars corretas ---
-            const payload: Record<string, string | number | boolean | undefined> = {
+            // 2. Tipagem Estrita: Garantimos que 'payload' segue a interface do serviço
+            const payload: ProposalPayload = {
                 mag_nome_completo: formData.fullName,
                 mag_cpf: formData.cpf,
                 mag_email: formData.email,
@@ -94,7 +93,6 @@ export const Step11 = () => {
                 mag_ppe: formData.isPPE,
                 final_simulation_config: JSON.stringify(finalSimulationConfig),
                 
-                // Aqui usamos as variáveis que desestruturamos da raiz da store
                 payment_pre_auth_code: paymentPreAuthCode || '',
                 reserved_proposal_number: reservedProposalNumber || '',
                 
@@ -108,8 +106,9 @@ export const Step11 = () => {
             });
             
             try {
-                // Forçamos o tipo 'any' aqui apenas para o envio, pois o serviço espera Record<string, any>
-                const result = await submitProposal(payload as any);
+                // 3. Remoção do 'as any': Agora o TypeScript valida o payload
+                const result = await submitProposal(payload);
+                
                 if (result.proposal_number) {
                     setProposalNumber(result.proposal_number);
                     track('proposal_success', { proposal_number: result.proposal_number });
@@ -126,7 +125,7 @@ export const Step11 = () => {
         };
 
         handleFinalSubmit();
-    }, []); 
+    }, []); // Dependências vazias (executa apenas na montagem)
 
     if (isLoading) {
         return (

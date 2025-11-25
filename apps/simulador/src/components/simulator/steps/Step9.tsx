@@ -7,17 +7,17 @@ import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, PartyPopper, ArrowLeft, ArrowRight } from 'lucide-react';
 import { NavigationButtons } from '../NavigationButtons';
 import { Button } from '@goldenbear/ui/components/button';
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary"; // Importe o ErrorBoundary
 
 const MAG_WIDGET_ORIGIN = 'https://widgetshmg.mag.com.br';
 
 export const Step9 = () => {
-  // --- CORREÇÃO 1: Leitura correta da Store Refatorada ---
-  // Tokens agora estão na raiz do estado, não dentro de formData
+  // 1. Acesso ao Estado: Tokens vêm da raiz, dados do form vêm de formData
   const { 
     formData: { dpsAnswers, fullName }, 
     reservedProposalNumber, 
     questionnaireToken,
-    isPrefetchingTokens // Novo estado para loading
+    isPrefetchingTokens 
   } = useSimulatorStore((state) => state);
 
   const { 
@@ -26,13 +26,12 @@ export const Step9 = () => {
     prevStep, 
     resetDpsAnswers, 
     prefetchPaymentToken,
-    prefetchQuestionnaireTokens // Ação para garantir os tokens
+    prefetchQuestionnaireTokens 
   } = useSimulatorStore((state) => state.actions);
 
   const firstName = fullName.split(' ')[0] || "";
   const simulationDataStore = useCoverageStore((state) => state.coverages);
 
-  // Inicializa isLoading como true se não tiver respostas E (estiver buscando tokens OU ainda não tiver tokens)
   const [isLoading, setIsLoading] = useState(!dpsAnswers);
   const [error, setError] = useState<string | null>(null);
   const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
@@ -44,16 +43,30 @@ export const Step9 = () => {
     return firstCoverageWithQuestionnaire?.originalData?.questionariosPorFaixa?.[0]?.questionarios?.[0]?.idQuestionario || 'Venda';
   }, [simulationDataStore]);
 
-  // --- CORREÇÃO 2: Garantia de Tokens (Self-Healing) ---
-  // Se o usuário der F5, os tokens somem (por segurança).
-  // Este efeito garante que eles sejam buscados novamente.
+  // 2. Lógica de Recuperação (Self-Healing)
   useEffect(() => {
     if (!reservedProposalNumber || !questionnaireToken) {
       prefetchQuestionnaireTokens();
     }
-    // Pré-carrega o próximo passo também
     prefetchPaymentToken();
   }, [reservedProposalNumber, questionnaireToken, prefetchQuestionnaireTokens, prefetchPaymentToken]);
+
+  // 3. Função de Retry para o ErrorBoundary
+  const handleRetry = () => {
+    setIsLoading(true);
+    setError(null);
+    // Força re-busca dos tokens se estiverem faltando
+    if (!questionnaireToken || !reservedProposalNumber) {
+        prefetchQuestionnaireTokens();
+    } else {
+        // Se já tem tokens, tenta reinicializar a URL (força re-render)
+        setWidgetUrl(null); 
+        setTimeout(() => {
+             const qId = findFirstQuestionnaireId();
+             setWidgetUrl(`${MAG_WIDGET_ORIGIN}/questionario-Questionario/v2/responder/${qId}/Venda/${reservedProposalNumber}/0266e8/efb700?listenForToken=true`);
+        }, 100);
+    }
+  };
 
   useEffect(() => {
     track('step_view', { step: 9, step_name: 'Questionário de Saúde' });
@@ -80,11 +93,9 @@ export const Step9 = () => {
       return () => window.removeEventListener('message', handleMessage);
     }
 
-    // Lógica de Inicialização do Widget
     const initializeWidget = () => {
       setError(null);
       
-      // Se estiver buscando, mantém loading
       if (isPrefetchingTokens) {
         setIsLoading(true);
         return;
@@ -95,11 +106,9 @@ export const Step9 = () => {
         const questionnaireId = findFirstQuestionnaireId();
         const url = `${MAG_WIDGET_ORIGIN}/questionario-Questionario/v2/responder/${questionnaireId}/Venda/${reservedProposalNumber}/0266e8/efb700?listenForToken=true`;
         setWidgetUrl(url);
-        // Não setamos isLoading(false) aqui, esperamos o iframe carregar
       } else {
-        // Só mostra erro se parou de buscar e ainda não tem tokens
         if (!isPrefetchingTokens) {
-            console.warn("[Step9] Tokens não disponíveis após tentativa de busca.");
+            console.warn("[Step9] Tokens não disponíveis.");
             setError("Não foi possível iniciar o questionário. Tente recarregar a página.");
             setIsLoading(false);
         }
@@ -111,15 +120,7 @@ export const Step9 = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [
-    dpsAnswers, 
-    setFormData, 
-    nextStep, 
-    findFirstQuestionnaireId, 
-    reservedProposalNumber, 
-    questionnaireToken, 
-    isPrefetchingTokens // Adicionado nas dependências para reagir quando o token chegar
-  ]);
+  }, [dpsAnswers, setFormData, nextStep, findFirstQuestionnaireId, reservedProposalNumber, questionnaireToken, isPrefetchingTokens]);
 
   if (dpsAnswers) {
     return (
@@ -155,52 +156,58 @@ export const Step9 = () => {
       <p className="text-left text-muted-foreground mb-8">
         Por favor, responda o questionário seguro abaixo para continuar.
       </p>
-      <div className="relative border rounded-lg overflow-hidden min-h-[500px] p-3 px-6">
-        
-        {/* Estado de Loading unificado (Buscando tokens OU carregando iframe) */}
-        {isLoading && ( 
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
-                <Loader2 className="animate-spin h-12 w-12 text-primary mb-4" />
-                <p className="text-muted-foreground">
-                    {isPrefetchingTokens ? "Preparando ambiente seguro..." : "Carregando questionário..."}
-                </p>
-            </div> 
-        )}
-        
-        {error && ( 
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 p-4">
-            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-            <p className="font-semibold text-destructive">Erro ao carregar</p>
-            <p className="text-muted-foreground text-center">{error}</p>
-            <Button onClick={() => window.location.reload()} className="mt-4">Tentar Novamente</Button>
-          </div> 
-        )}
 
-        {widgetUrl && (
-          <IframeResizer
-            forwardRef={iframeRef}
-            key={widgetUrl}
-            src={widgetUrl}
-            title="Questionário de Saúde"
-            checkOrigin={[MAG_WIDGET_ORIGIN]} 
-            style={{ width: '1px', minWidth: '100%', border: 0 }}
-            onLoad={() => {
-              try {
-                if (iframeRef.current && questionnaireToken) {
-                  iframeRef.current.contentWindow?.postMessage({
-                    event: 'notify', property: 'Token', value: questionnaireToken
-                  }, MAG_WIDGET_ORIGIN);
+      {/* 4. Proteção com ErrorBoundary */}
+      <ErrorBoundary 
+        fallbackMessage="O sistema de questionário está temporariamente indisponível."
+        onReset={handleRetry}
+      >
+        <div className="relative border rounded-lg overflow-hidden min-h-[500px] p-3 px-6">
+          
+          {isLoading && ( 
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                  <Loader2 className="animate-spin h-12 w-12 text-primary mb-4" />
+                  <p className="text-muted-foreground">
+                      {isPrefetchingTokens ? "Preparando ambiente seguro..." : "Carregando questionário..."}
+                  </p>
+              </div> 
+          )}
+          
+          {error && ( 
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 p-4">
+              <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+              <p className="font-semibold text-destructive">Erro ao carregar</p>
+              <p className="text-muted-foreground text-center">{error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-4">Tentar Novamente</Button>
+            </div> 
+          )}
+
+          {widgetUrl && (
+            <IframeResizer
+              forwardRef={iframeRef}
+              key={widgetUrl}
+              src={widgetUrl}
+              title="Questionário de Saúde"
+              checkOrigin={[MAG_WIDGET_ORIGIN]} 
+              style={{ width: '1px', minWidth: '100%', border: 0 }}
+              onLoad={() => {
+                try {
+                  if (iframeRef.current && questionnaireToken) {
+                    iframeRef.current.contentWindow?.postMessage({
+                      event: 'notify', property: 'Token', value: questionnaireToken
+                    }, MAG_WIDGET_ORIGIN);
+                  }
+                } catch (err) {
+                   console.error("[Step9] Erro na inicialização do iframe.");
+                } finally {
+                  setIsLoading(false);
                 }
-              } catch (err) {
-                 console.error("[Step9] Erro na inicialização do iframe.");
-              } finally {
-                // Só remove o loading quando o iframe termina de carregar
-                setIsLoading(false);
-              }
-            }}
-          />
-        )}
-      </div>
+              }}
+            />
+          )}
+        </div>
+      </ErrorBoundary>
+      
       <NavigationButtons showNextButton={false} />
     </div>
   );

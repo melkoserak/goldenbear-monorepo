@@ -11,6 +11,8 @@ const getApiUrl = (endpoint: string): string => {
   return correctUrl;
 };
 
+
+
 export interface ProfessionOption {
   value: string;
   label: string;
@@ -184,7 +186,7 @@ export const getPaymentToken = async (): Promise<{ token: string }> => {
   }
 };
 
-type ProposalPayload = Record<string, any>;
+export type ProposalPayload = Record<string, string | number | boolean | undefined>;
 
 export const submitProposal = async (payload: ProposalPayload) => {
   const url = getApiUrl('proposal');

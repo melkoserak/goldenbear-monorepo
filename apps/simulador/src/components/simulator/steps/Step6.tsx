@@ -7,6 +7,7 @@ import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { NavigationButtons } from '../NavigationButtons';
 import { Input } from '@goldenbear/ui/components/input';
 import { Label } from '@goldenbear/ui/components/label';
+import { Skeleton } from '@goldenbear/ui/components/skeleton'; // 1. Importamos o Skeleton
 import { track } from '@/lib/tracking';
 import { Loader2 } from 'lucide-react';
 import { step6Schema, type Step6Data } from '@/lib/schemas';
@@ -46,7 +47,7 @@ export const Step6 = () => {
   const zipCodeValue = watch('zipCode');
   const { data: addressData, isFetching } = useAddress(zipCodeValue || '');
 
-  // Sincroniza estado de loading
+  // Sincroniza estado de loading para controlar a UI
   useEffect(() => {
     setIsFetchingAddress(isFetching);
   }, [isFetching]);
@@ -93,13 +94,13 @@ export const Step6 = () => {
                 inputRef={ref}
                 className={`h-12 ${errors.zipCode ? 'border-destructive' : ''}`} 
                 placeholder="00000-000"
-                // A11y
                 aria-invalid={!!errors.zipCode}
                 aria-describedby={errors.zipCode ? "zipCode-error" : undefined}
                 aria-required="true"
               />
             )}
           />
+          {/* Mantemos o Loader pequeno no input de CEP para feedback imediato de ação */}
           {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" aria-label="Carregando endereço..." />}
           {errors.zipCode && (
             <p id="zipCode-error" className="text-sm text-destructive mt-1" role="alert">
@@ -108,34 +109,35 @@ export const Step6 = () => {
           )}
         </div>
 
-        {/* Logradouro */}
+        {/* Logradouro - Com Skeleton */}
         <div className="md:col-span-3 space-y-1.5">
           <Label htmlFor="street">Logradouro <span className="text-destructive">*</span></Label>
-          <Input 
-            id="street" 
-            {...register('street')} 
-            className={errors.street ? 'border-destructive' : ''} 
-            disabled={isFetchingAddress}
-            // A11y 
-            aria-invalid={!!errors.street}
-            aria-describedby={errors.street ? "street-error" : undefined}
-            aria-required="true"
-          />
-          {errors.street && (
+          {isFetchingAddress ? (
+            <Skeleton className="h-12 w-full" />
+          ) : (
+            <Input 
+                id="street" 
+                {...register('street')} 
+                className={errors.street ? 'border-destructive' : ''} 
+                aria-invalid={!!errors.street}
+                aria-describedby={errors.street ? "street-error" : undefined}
+                aria-required="true"
+            />
+          )}
+          {errors.street && !isFetchingAddress && (
             <p id="street-error" className="text-sm text-destructive mt-1" role="alert">
               {errors.street.message}
             </p>
           )}
         </div>
 
-        {/* Número */}
+        {/* Número - Sempre visível para preenchimento paralelo */}
         <div className="md:col-span-1 space-y-1.5">
           <Label htmlFor="number">Número <span className="text-destructive">*</span></Label>
           <Input 
             id="number" 
             {...register('number')} 
             className={errors.number ? 'border-destructive' : ''}
-            // A11y
             aria-invalid={!!errors.number}
             aria-describedby={errors.number ? "number-error" : undefined}
             aria-required="true"
@@ -156,47 +158,53 @@ export const Step6 = () => {
           />
         </div>
 
-        {/* Bairro */}
+        {/* Bairro - Com Skeleton */}
         <div className="md:col-span-2 space-y-1.5">
           <Label htmlFor="neighborhood">Bairro <span className="text-destructive">*</span></Label>
-          <Input 
-            id="neighborhood" 
-            {...register('neighborhood')} 
-            className={errors.neighborhood ? 'border-destructive' : ''} 
-            disabled={isFetchingAddress}
-            // A11y
-            aria-invalid={!!errors.neighborhood}
-            aria-describedby={errors.neighborhood ? "neighborhood-error" : undefined}
-            aria-required="true"
-          />
-          {errors.neighborhood && (
+          {isFetchingAddress ? (
+            <Skeleton className="h-12 w-full" />
+          ) : (
+            <Input 
+                id="neighborhood" 
+                {...register('neighborhood')} 
+                className={errors.neighborhood ? 'border-destructive' : ''} 
+                aria-invalid={!!errors.neighborhood}
+                aria-describedby={errors.neighborhood ? "neighborhood-error" : undefined}
+                aria-required="true"
+            />
+          )}
+          {errors.neighborhood && !isFetchingAddress && (
             <p id="neighborhood-error" className="text-sm text-destructive mt-1" role="alert">
               {errors.neighborhood.message}
             </p>
           )}
         </div>
 
-        {/* Cidade */}
+        {/* Cidade - Com Skeleton */}
         <div className="md:col-span-2 space-y-1.5">
           <Label htmlFor="city">Cidade <span className="text-destructive">*</span></Label>
-          <Input 
-            id="city" 
-            {...register('city')} 
-            className={errors.city ? 'border-destructive' : ''} 
-            disabled={isFetchingAddress}
-            // A11y
-            aria-invalid={!!errors.city}
-            aria-describedby={errors.city ? "city-error" : undefined}
-            aria-required="true"
-          />
-          {errors.city && (
+          {isFetchingAddress ? (
+            <Skeleton className="h-12 w-full" />
+          ) : (
+            <Input 
+                id="city" 
+                {...register('city')} 
+                className={errors.city ? 'border-destructive' : ''} 
+                aria-invalid={!!errors.city}
+                aria-describedby={errors.city ? "city-error" : undefined}
+                aria-required="true"
+            />
+          )}
+          {errors.city && !isFetchingAddress && (
             <p id="city-error" className="text-sm text-destructive mt-1" role="alert">
               {errors.city.message}
             </p>
           )}
         </div>
       </div>
-      <NavigationButtons isNextDisabled={!isValid} />
+      
+      {/* Bloqueia o botão próximo enquanto carrega para evitar submit incompleto */}
+      <NavigationButtons isNextDisabled={!isValid || isFetchingAddress} />
     </form>
   );
 };

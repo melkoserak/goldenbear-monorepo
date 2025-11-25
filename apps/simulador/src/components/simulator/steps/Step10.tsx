@@ -7,13 +7,27 @@ import { track } from '@/lib/tracking';
 import { Loader2, AlertTriangle, CreditCard, Landmark } from 'lucide-react';
 import { NavigationButtons } from '../NavigationButtons';
 import { cn } from '@goldenbear/ui/lib/utils';
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary"; // Importe o ErrorBoundary
+import { Button } from '@goldenbear/ui/components/button';
 
-// --- SEGURANÇA: Domínio autorizado do Widget de Pagamento ---
 const PAYMENT_WIDGET_ORIGIN = 'https://widgetshmg.mongeralaegon.com.br';
 
 export const Step10 = () => {
-  const { paymentMethod, paymentPreAuthCode, cpf, paymentToken } = useSimulatorStore((state) => state.formData);
-  const { setFormData, nextStep } = useSimulatorStore((state) => state.actions);
+  // 1. Acesso ao Estado Refatorado
+  const { 
+      formData: { paymentMethod, cpf }, // FormSlice
+      paymentPreAuthCode,               // AuthSlice (Root)
+      paymentToken                      // AuthSlice (Root)
+  } = useSimulatorStore((state) => state);
+
+  // Actions
+  const { 
+      setFormData, 
+      setAuthData,          // Necessário para atualizar o paymentPreAuthCode
+      nextStep, 
+      prefetchPaymentToken 
+  } = useSimulatorStore((state) => state.actions);
+  
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
   
   const [isLoading, setIsLoading] = useState(false);
@@ -25,34 +39,45 @@ export const Step10 = () => {
     track('step_view', { step: 10, step_name: 'Pagamento' });
   }, []);
   
+  // 2. Função de Retry para ErrorBoundary
+  const handleRetry = () => {
+     setIsLoading(true);
+     setError(null);
+     if (!paymentToken) {
+         prefetchPaymentToken();
+     } else {
+         // Se o token existe, reseta o método para forçar re-render da escolha
+         setFormData({ paymentMethod: '' }); 
+         setIsLoading(false);
+     }
+  };
+  
   useEffect(() => {
     setWidgetUrl(null);
     setError(null);
-    setFormData({ paymentPreAuthCode: undefined });
+    // Limpa código anterior ao mudar método
+    setAuthData({ paymentPreAuthCode: undefined });
 
     if (paymentMethod === 'credit') {
       if (paymentToken) {
-        // --- LOG SEGURO ---
         console.log("[Step10] Iniciando widget de pagamento.");
         setIsLoading(true);
         
         const totalValue = totalPremium.toFixed(2);
         const cleanedCpf = cpf.replace(/\D/g, '');
         
-        // Monta a URL (mas não loga no console)
         const url = `${PAYMENT_WIDGET_ORIGIN}/widget-cartao-credito/v3/?cnpj=33608308000173&acao=PreAutorizacao&valorCompra=${totalValue}&chave=cpf&valor=${cleanedCpf}&chave=ModeloProposta&valor=EIS`;
         setWidgetUrl(url);
       } else {
         console.warn("[Step10] Token de pagamento indisponível.");
-        setError("Não foi possível carregar o módulo de pagamento. Por favor, tente recarregar a página.");
-        setIsLoading(false);
+        setError("Não foi possível carregar o módulo de pagamento. Tentando recuperar conexão...");
+        prefetchPaymentToken(); // Tenta buscar se falhar
       }
     } else if (paymentMethod === 'debit') {
       setError("Opção de Débito em Conta ainda não disponível.");
     }
 
     const handleMessage = (event: MessageEvent) => {
-        // --- SEGURANÇA: Validação de origem ---
         if (event.origin !== PAYMENT_WIDGET_ORIGIN) return;
 
         if (typeof event.data === 'string' && event.data.startsWith('{')) {
@@ -60,9 +85,9 @@ export const Step10 = () => {
                 const data = JSON.parse(event.data);
                 const preAuthCode = data?.Valor?.CodigoPreAutorizacao;
                 if (preAuthCode) {
-                    // Log seguro: apenas confirma o recebimento
                     console.log("[Step10] Código de pré-autorização recebido com sucesso.");
-                    setFormData({ paymentPreAuthCode: preAuthCode });
+                    // CORREÇÃO: Salva no AuthSlice
+                    setAuthData({ paymentPreAuthCode: preAuthCode });
                 }
             } catch { /* Ignora */ }
         }
@@ -70,7 +95,7 @@ export const Step10 = () => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
 
-  }, [paymentMethod, totalPremium, cpf, setFormData, paymentToken]);
+  }, [paymentMethod, totalPremium, cpf, setFormData, setAuthData, paymentToken, prefetchPaymentToken]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +112,8 @@ export const Step10 = () => {
       <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
         Como você gostaria de pagar?
       </h3>
+      
+      {/* Seleção de Método */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div onClick={() => setFormData({ paymentMethod: 'credit' })} className={cn("rounded-lg border p-4 flex items-center gap-4 cursor-pointer transition-all", paymentMethod === 'credit' && 'ring-2 ring-primary border-primary')}>
           <CreditCard className="h-8 w-8 text-primary" />
@@ -104,32 +131,50 @@ export const Step10 = () => {
         </div>
       </div>
 
+      {/* Área do Widget com ErrorBoundary */}
       {paymentMethod && (
-        <div className="relative border rounded-lg overflow-hidden h-full">
-          {isLoading && ( <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10"><Loader2 className="animate-spin h-10 w-10 text-primary mb-4" /><p>Carregando ambiente de pagamento seguro...</p></div> )}
-          {error && ( <div className="absolute inset-0 flex flex-col items-center justify-center p-4"><AlertTriangle className="h-10 w-10 text-destructive mb-4" /><p className="font-semibold text-destructive">{error}</p></div> )}
-          
-           {widgetUrl && !error && (
-            <IframeResizer
-              forwardRef={iframeRef}
-              key={widgetUrl}
-              src={widgetUrl}
-              title="Pagamento Seguro"
-              // --- SEGURANÇA: Restrição de origem ---
-              checkOrigin={[PAYMENT_WIDGET_ORIGIN]}
-              style={{ width: '1px', minWidth: '100%', border: 0, height: '100%', paddingTop: '48px' }}
-              onLoad={() => {
-                if (iframeRef.current && paymentToken) {
-                  iframeRef.current.contentWindow?.postMessage({ event: 'notify', property: 'Auth', value: paymentToken }, PAYMENT_WIDGET_ORIGIN);
-                } else {
-                  console.error("[Step10] Erro de estado no iframe.");
-                  setError("Falha ao autenticar o widget.");
-                }
-                setIsLoading(false);
-              }}
-            />
-          )}
-        </div>
+        <ErrorBoundary 
+            fallbackMessage="O módulo de pagamento encontrou um problema." 
+            onReset={handleRetry}
+        >
+            <div className="relative border rounded-lg overflow-hidden h-full min-h-[600px]">
+            
+            {isLoading && ( 
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                    <Loader2 className="animate-spin h-10 w-10 text-primary mb-4" />
+                    <p>Carregando ambiente de pagamento seguro...</p>
+                </div> 
+            )}
+            
+            {error && ( 
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                    <AlertTriangle className="h-10 w-10 text-destructive mb-4" />
+                    <p className="font-semibold text-destructive">{error}</p>
+                    <Button variant="outline" onClick={handleRetry} className="mt-4">Tentar Novamente</Button>
+                </div> 
+            )}
+            
+            {widgetUrl && !error && (
+                <IframeResizer
+                forwardRef={iframeRef}
+                key={widgetUrl}
+                src={widgetUrl}
+                title="Pagamento Seguro"
+                checkOrigin={[PAYMENT_WIDGET_ORIGIN]}
+                style={{ width: '1px', minWidth: '100%', border: 0, height: '100%', paddingTop: '48px' }}
+                onLoad={() => {
+                    if (iframeRef.current && paymentToken) {
+                    iframeRef.current.contentWindow?.postMessage({ event: 'notify', property: 'Auth', value: paymentToken }, PAYMENT_WIDGET_ORIGIN);
+                    } else {
+                    console.error("[Step10] Erro de estado no iframe.");
+                    setError("Falha ao autenticar o widget.");
+                    }
+                    setIsLoading(false);
+                }}
+                />
+            )}
+            </div>
+        </ErrorBoundary>
       )}
       
       <NavigationButtons isNextDisabled={!isFormValid} />

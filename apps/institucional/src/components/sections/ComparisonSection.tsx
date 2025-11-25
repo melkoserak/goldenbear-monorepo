@@ -5,6 +5,8 @@ import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
 import { Button } from '@goldenbear/ui/components/button';
+// 1. Importe o Grid
+import { Grid } from '@goldenbear/ui/components/grid';
 import { cn } from '@goldenbear/ui/lib/utils';
 import { FadeInOnScroll } from '@/components/layout/FadeInOnScroll';
 
@@ -53,10 +55,12 @@ export const ComparisonSection = () => {
           </div>
         </FadeInOnScroll>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        {/* 2. Substituição pelo componente Grid padronizado */}
+        {/* Antes: <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"> */}
+        <Grid cols={2} gap="default" align="center">
           
-          {/* Card: O Mercado (O "Vilão") */}
-          <FadeInOnScroll delay={100} className="h-full">
+          {/* Card: O Mercado */}
+          <FadeInOnScroll delay={100} className="h-full w-full">
             <div className="h-full p-8 rounded-2xl border border-border bg-slate-100 flex flex-col opacity-100 hover:opacity-100 transition-opacity">
               <div className="mb-8 pb-6 border-b border-border">
                 <Typography variant="h3" className="text-muted-foreground">
@@ -87,13 +91,12 @@ export const ComparisonSection = () => {
             </div>
           </FadeInOnScroll>
 
-          {/* Card: Golden Bear (O "Herói") */}
-          <FadeInOnScroll delay={300} className="h-full relative">
-             {/* Elemento decorativo de fundo (Glow) */}
+          {/* Card: Golden Bear */}
+          <FadeInOnScroll delay={300} className="h-full w-full relative">
+             {/* Glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20" />
             
             <div className="relative h-full p-8 rounded-2xl border border-primary/20 bg-card shadow-xl flex flex-col">
-              {/* Badge de Destaque */}
               <div className="absolute top-0 right-0 bg-secondary text-secondary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
                 RECOMENDADO
               </div>
@@ -138,7 +141,7 @@ export const ComparisonSection = () => {
             </div>
           </FadeInOnScroll>
 
-        </div>
+        </Grid>
       </Container>
     </Section>
   );
