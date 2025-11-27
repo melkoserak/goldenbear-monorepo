@@ -16,7 +16,8 @@ export function prepareSimulationPayload(
   const cpf = (data.mag_cpf || '').replace(/\D/g, '');
   const data_nasc = data.mag_data_nascimento;
   const sexo = data.mag_sexo;
-  const renda = parseFloat(data.mag_renda || '0');
+  // parseFloat garante que string numérica vire number
+  const renda = parseFloat(String(data.mag_renda || '0'));
   const estado = (data.mag_estado || '').toUpperCase();
   const profissao_cbo = data.mag_profissao_cbo;
 
@@ -61,28 +62,31 @@ export function prepareProposalPayload(
   }
 
   const profissao_cbo = postData.mag_profissao_cbo;
-  // Nota: Idealmente buscaríamos a descrição da profissão via CBO
   const profissao_desc = 'Profissão Declarada'; 
 
   const documentos = buildDocumentsArray(postData);
   const telefones = buildPhonesArray(postData);
   const planos = buildPlansArray(finalSimConfig);
   
-  // Pega o ID do primeiro plano para associar aos beneficiários
   const primeiro_plano_id = planos.length > 0 ? planos[0].CODIGO : '0';
   const beneficiarios = buildBeneficiariesArray(postData, primeiro_plano_id);
   
   const dados_cobranca = buildPaymentData(postData);
   
-  // Montagem do Payload Estrito
+  // Conversões seguras
+  const matricula = parseInt(process.env.NEXT_PUBLIC_MAG_MATRICULA || '0', 10);
+  const numFilhos = parseInt(String(postData.mag_num_filhos || '0'), 10);
+  const rendaMensal = parseFloat(String(postData.mag_renda || '0'));
+  const cep = parseInt((postData.mag_cep || '').replace(/\D/g, ''), 10);
+
   return {
     PROPOSTA: {
-      NUMERO: 0, // Será gerado pela MAG ou substituído se tiver reserva
+      NUMERO: 0, 
       DT_PROTOCOLO: new Date().toISOString().split('T')[0],
       DT_ASSINATURA: new Date().toISOString().split('T')[0],
       DT_INDEXACAO: new Date().toISOString().split('T')[0],
       DADOS_PROPONENTE: {
-        MATRICULA: parseInt(process.env.NEXT_PUBLIC_MAG_MATRICULA || '0', 10),
+        MATRICULA: matricula,
         NOME: postData.mag_nome_completo,
         DT_NASCIMENTO: postData.mag_data_nascimento,
         IDADE: age,
@@ -93,9 +97,9 @@ export function prepareProposalPayload(
         RECEBE_INFO_EMAIL: !!postData.mag_email,
         EMAIL: postData.mag_email,
         RESIDE_BRASIL: true,
-        RENDA_MENSAL: parseFloat(postData.mag_renda || '0'),
-        NUM_FILHOS: parseInt(postData.mag_num_filhos || '0', 10),
-        PPE: postData.mag_ppe === 'true',
+        RENDA_MENSAL: rendaMensal,
+        NUM_FILHOS: numFilhos,
+        PPE: String(postData.mag_ppe) === 'true',
         DOCUMENTOS: { DOCUMENTO: documentos },
         ENDERECOS: {
           TP_CORRESPONDENCIA: 'RESIDENCIAL',
@@ -108,7 +112,7 @@ export function prepareProposalPayload(
               BAIRRO: postData.mag_bairro || '',
               CIDADE: postData.mag_cidade || '',
               ESTADO: (postData.mag_estado || '').toUpperCase(),
-              CEP: parseInt((postData.mag_cep || '').replace(/\D/g, ''), 10),
+              CEP: cep,
             },
           ],
         },
@@ -148,7 +152,7 @@ export function prepareProposalPayload(
   };
 }
 
-// --- Funções Auxiliares (Privadas) ---
+// --- Funções Auxiliares ---
 
 function buildDocumentsArray(data: FrontendFormData) {
   const docs = [];
@@ -233,35 +237,29 @@ function buildPlansArray(config: FinalSimConfig) {
 function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: string) {
   const beneficiaries: any[] = [];
   
-  // Como os beneficiários vêm de chaves dinâmicas mag_ben[0][nome], etc.
-  // Precisamos extrair manualmente se o frontend não enviar um array estruturado.
-  // Neste caso, assumimos que o frontend (Step11) enviou chaves dinâmicas.
-  
-  // Uma abordagem mais segura seria o frontend enviar um array JSON stringificado em 'beneficiaries_json',
-  // mas vamos manter a lógica de extração baseada em índices para compatibilidade.
-  
-  // Exemplo de extração simples (limitado a 5 beneficiários por segurança)
   for (let i = 0; i < 5; i++) {
     const nomeKey = `mag_ben[${i}][nome]`;
     const nascKey = `mag_ben[${i}][nasc]`;
     const parentKey = `mag_ben[${i}][parentesco]`;
     
     if (data[nomeKey]) {
+        // CORREÇÃO AQUI: Forçamos String() antes de chamar toUpperCase()
+        // para evitar erro de tipo em runtime/build
+        const parentescoStr = String(data[parentKey] || 'OUTROS').toUpperCase();
+
         beneficiaries.push({
             CD_PLANO: primeiro_plano_id,
             NOME: data[nomeKey],
             NASCIMENTO: data[nascKey],
-            PARENTESCO: String(data[parentKey] || 'OUTROS').toUpperCase(),
-            PARTICIPACAO: 0, // Será calculado abaixo
+            PARENTESCO: parentescoStr,
+            PARTICIPACAO: 0, 
         });
     }
   }
 
-  // Distribui a participação igualmente
   if (beneficiaries.length > 0) {
     const participation = parseFloat((100 / beneficiaries.length).toFixed(2));
     beneficiaries.forEach((b, idx) => {
-        // Ajuste no último para fechar 100%
         if (idx === beneficiaries.length - 1) {
              b.PARTICIPACAO = parseFloat((100 - (participation * (beneficiaries.length - 1))).toFixed(2));
         } else {
@@ -276,28 +274,32 @@ function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: stri
 function buildPaymentData(data: FrontendFormData): any {
   const preAuthCode = data.payment_pre_auth_code;
   
+  // Data de competência (Mês/Ano atual)
+  const today = new Date();
+  const compDebito = `${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  const diaVencimento = 30; 
+
   if (preAuthCode) {
     return {
       PERIODICIDADE: 'MENSAL',
       TIPO_COBRANCA: 'CREDITO',
-      DIA_VENCIMENTO: 10, // Pode ser parametrizado
-      COMP_DEBITO: new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }),
+      DIA_VENCIMENTO: diaVencimento,
+      COMP_DEBITO: compDebito,
       NUM_CONVENIO: '0',
       CARTAO: {
-        NUMERO: '', // Tokenizado
-        VALIDADE: '1990-01-01',
-        NUM_PRE_AUTORIZACAO: preAuthCode,
-        BANDEIRA: '',
+        NUMERO: "", 
+        VALIDADE: "1990-01-01", 
+        NUM_PRE_AUTORIZACAO: preAuthCode, 
+        BANDEIRA: "", 
         PARCELA: 1,
         PORTADOR: {
-          NOME: data.mag_nome_completo,
-          TIPO_PESSOA: 'F',
-          DOCUMENTO: (data.mag_cpf || '').replace(/\D/g, ''),
+          NOME: data.mag_nome_completo.toUpperCase(), 
+          TIPO_PESSOA: "F", 
+          DOCUMENTO: (data.mag_cpf || '').replace(/\D/g, ''), 
         },
       },
     };
   }
   
-  // Caso não tenha código de pré-autorização (ex: débito), retorna vazio ou lança erro
   return {}; 
 }
