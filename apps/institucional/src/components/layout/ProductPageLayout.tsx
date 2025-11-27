@@ -1,4 +1,5 @@
-"use client";
+// REMOVA O "use client" DAQUI!
+// Este componente deve ser SERVER-SIDE para aceitar ícones (funções) via props.
 
 import React from "react";
 import Link from "next/link";
@@ -18,6 +19,8 @@ import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
 import { RelatedCarouselSection } from "@/components/sections/RelatedCarouselSection";
 import { ComparisonSection } from '@/components/sections/ComparisonSection';
+
+// ... (Mantenha os tipos e o resto do código exatamente igual)
 
 type Feature = {
   icon: React.ElementType;
@@ -64,7 +67,6 @@ export function ProductPageLayout({ hero, keyBenefits, coverage }: ProductPageLa
 
   return (
     <>
-      {/* --- Hero Section --- */}
       <PageHero
         tag={hero.tag}
         title={hero.title}
@@ -72,7 +74,7 @@ export function ProductPageLayout({ hero, keyBenefits, coverage }: ProductPageLa
         ctaNode={CtaButton}
       />
 
-      {/* --- Key Benefits Section --- */}
+      {/* Resto do JSX mantém-se igual... */}
       <Section variant="default">
         <Container>
           <SectionHeader
@@ -89,7 +91,6 @@ export function ProductPageLayout({ hero, keyBenefits, coverage }: ProductPageLa
         </Container>
       </Section>
 
-      {/* --- Coverage Section --- */}
       <Section variant="accent">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -120,7 +121,6 @@ export function ProductPageLayout({ hero, keyBenefits, coverage }: ProductPageLa
         </Container>
       </Section>
 
-      {/* --- Shared Sections --- */}
       <Section variant="default">
         <Container>
           <SectionHeader
