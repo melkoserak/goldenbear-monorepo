@@ -208,3 +208,34 @@ export const submitProposal = async (payload: ProposalPayload) => {
     throw error;
   }
 };
+
+/**
+ * Busca a estrutura completa do questionário (JSON)
+ */
+export const getQuestionnaireStructure = async (id: string | number) => {
+  try {
+    const response = await fetch(`/simulador/api/questionnaire/${id}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) throw new Error('Erro ao carregar formulário');
+    return await response.json();
+  } catch (error) {
+    console.error("Erro no getQuestionnaireStructure:", error);
+    throw error;
+  }
+};
+
+/**
+ * Envia o JSON respondido para a MAG
+ * payload: { Localizador: { ... }, Resposta: "stringified_json" }
+ */
+export const sendQuestionnaireResponse = async (payload: any) => {
+   // Para enviar, precisaremos de um token. 
+   // Podemos criar uma rota BFF para isso também (Recomendado) 
+   // ou reutilizar a lógica existente se for envio direto.
+   // Por enquanto, vamos focar em renderizar.
+   console.log("Payload pronto para envio:", payload);
+   // TODO: Implementar POST /api/questionnaire/submit se necessário
+   return true; 
+}

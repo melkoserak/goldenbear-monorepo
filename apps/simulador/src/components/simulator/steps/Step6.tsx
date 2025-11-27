@@ -7,11 +7,12 @@ import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { NavigationButtons } from '../NavigationButtons';
 import { Input } from '@goldenbear/ui/components/input';
 import { Label } from '@goldenbear/ui/components/label';
-import { Skeleton } from '@goldenbear/ui/components/skeleton'; // 1. Importamos o Skeleton
+import { Skeleton } from '@goldenbear/ui/components/skeleton';
 import { track } from '@/lib/tracking';
 import { Loader2 } from 'lucide-react';
 import { step6Schema, type Step6Data } from '@/lib/schemas';
 import { useAddress } from '@/hooks/useMagApi';
+import { StepLayout } from '../StepLayout';
 
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
   <Input {...props} ref={inputRef as React.Ref<HTMLInputElement>} />
@@ -23,14 +24,7 @@ export const Step6 = () => {
   const firstName = formData.fullName.split(' ')[0] || "";
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
-  const { 
-    control, 
-    register, 
-    handleSubmit, 
-    setValue, 
-    watch, 
-    formState: { errors, isValid } 
-  } = useForm<Step6Data>({
+  const { control, register, handleSubmit, setValue, watch, formState: { errors, isValid } } = useForm<Step6Data>({
     resolver: zodResolver(step6Schema),
     defaultValues: {
       zipCode: formData.zipCode,
@@ -47,14 +41,8 @@ export const Step6 = () => {
   const zipCodeValue = watch('zipCode');
   const { data: addressData, isFetching } = useAddress(zipCodeValue || '');
 
-  // Sincroniza estado de loading para controlar a UI
-  useEffect(() => {
-    setIsFetchingAddress(isFetching);
-  }, [isFetching]);
-
-  useEffect(() => {
-    track('step_view', { step: 6, step_name: 'Endereço' });
-  }, []);
+  useEffect(() => { setIsFetchingAddress(isFetching); }, [isFetching]);
+  useEffect(() => { track('step_view', { step: 6, step_name: 'Endereço' }); }, []);
 
   useEffect(() => {
     if (addressData) {
@@ -72,139 +60,74 @@ export const Step6 = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in" noValidate>
-      <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
-        {firstName}, agora complete o seu endereço:
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        
-        {/* CEP */}
-        <div className="md:col-span-1 relative space-y-1.5">
-          <Label htmlFor="zipCode">CEP <span className="text-destructive">*</span></Label>
-          <Controller
-            name="zipCode"
-            control={control}
-            render={({ field: { onChange, value, onBlur, ref } }) => (
-              <MaskedInput 
-                id="zipCode"
-                mask="00000-000" 
-                value={value} 
-                onAccept={(val: string) => onChange(val)} 
-                onBlur={onBlur}
-                inputRef={ref}
-                className={`h-12 ${errors.zipCode ? 'border-destructive' : ''}`} 
-                placeholder="00000-000"
-                aria-invalid={!!errors.zipCode}
-                aria-describedby={errors.zipCode ? "zipCode-error" : undefined}
-                aria-required="true"
-              />
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <StepLayout title={`${firstName}, agora complete o seu endereço:`}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* CEP */}
+          <div className="md:col-span-1 relative space-y-1.5">
+            <Label htmlFor="zipCode">CEP <span className="text-destructive">*</span></Label>
+            <Controller
+              name="zipCode"
+              control={control}
+              render={({ field: { onChange, value, onBlur, ref } }) => (
+                <MaskedInput 
+                  id="zipCode"
+                  mask="00000-000" 
+                  value={value} 
+                  onAccept={(val: string) => onChange(val)} 
+                  onBlur={onBlur}
+                  inputRef={ref}
+                  className={`h-12 ${errors.zipCode ? 'border-destructive' : ''}`} 
+                  placeholder="00000-000"
+                />
+              )}
+            />
+            {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" />}
+            {errors.zipCode && <p className="text-sm text-destructive mt-1">{errors.zipCode.message}</p>}
+          </div>
+
+          {/* Logradouro */}
+          <div className="md:col-span-3 space-y-1.5">
+            <Label htmlFor="street">Logradouro <span className="text-destructive">*</span></Label>
+            {isFetchingAddress ? <Skeleton className="h-12 w-full" /> : (
+              <Input id="street" {...register('street')} className={errors.street ? 'border-destructive' : ''} />
             )}
-          />
-          {/* Mantemos o Loader pequeno no input de CEP para feedback imediato de ação */}
-          {isFetchingAddress && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" aria-label="Carregando endereço..." />}
-          {errors.zipCode && (
-            <p id="zipCode-error" className="text-sm text-destructive mt-1" role="alert">
-              {errors.zipCode.message}
-            </p>
-          )}
-        </div>
+            {errors.street && !isFetchingAddress && <p className="text-sm text-destructive mt-1">{errors.street.message}</p>}
+          </div>
 
-        {/* Logradouro - Com Skeleton */}
-        <div className="md:col-span-3 space-y-1.5">
-          <Label htmlFor="street">Logradouro <span className="text-destructive">*</span></Label>
-          {isFetchingAddress ? (
-            <Skeleton className="h-12 w-full" />
-          ) : (
-            <Input 
-                id="street" 
-                {...register('street')} 
-                className={errors.street ? 'border-destructive' : ''} 
-                aria-invalid={!!errors.street}
-                aria-describedby={errors.street ? "street-error" : undefined}
-                aria-required="true"
-            />
-          )}
-          {errors.street && !isFetchingAddress && (
-            <p id="street-error" className="text-sm text-destructive mt-1" role="alert">
-              {errors.street.message}
-            </p>
-          )}
-        </div>
+          {/* Número */}
+          <div className="md:col-span-1 space-y-1.5">
+            <Label htmlFor="number">Número <span className="text-destructive">*</span></Label>
+            <Input id="number" {...register('number')} className={errors.number ? 'border-destructive' : ''} />
+            {errors.number && <p className="text-sm text-destructive mt-1">{errors.number.message}</p>}
+          </div>
 
-        {/* Número - Sempre visível para preenchimento paralelo */}
-        <div className="md:col-span-1 space-y-1.5">
-          <Label htmlFor="number">Número <span className="text-destructive">*</span></Label>
-          <Input 
-            id="number" 
-            {...register('number')} 
-            className={errors.number ? 'border-destructive' : ''}
-            aria-invalid={!!errors.number}
-            aria-describedby={errors.number ? "number-error" : undefined}
-            aria-required="true"
-          />
-          {errors.number && (
-            <p id="number-error" className="text-sm text-destructive mt-1" role="alert">
-              {errors.number.message}
-            </p>
-          )}
-        </div>
+          {/* Complemento */}
+          <div className="md:col-span-1 space-y-1.5">
+            <Label htmlFor="complement">Complemento</Label>
+            <Input id="complement" {...register('complement')} />
+          </div>
 
-        {/* Complemento (Opcional) */}
-        <div className="md:col-span-1 space-y-1.5">
-          <Label htmlFor="complement">Complemento</Label>
-          <Input 
-            id="complement" 
-            {...register('complement')} 
-          />
-        </div>
+          {/* Bairro */}
+          <div className="md:col-span-2 space-y-1.5">
+            <Label htmlFor="neighborhood">Bairro <span className="text-destructive">*</span></Label>
+            {isFetchingAddress ? <Skeleton className="h-12 w-full" /> : (
+              <Input id="neighborhood" {...register('neighborhood')} className={errors.neighborhood ? 'border-destructive' : ''} />
+            )}
+            {errors.neighborhood && !isFetchingAddress && <p className="text-sm text-destructive mt-1">{errors.neighborhood.message}</p>}
+          </div>
 
-        {/* Bairro - Com Skeleton */}
-        <div className="md:col-span-2 space-y-1.5">
-          <Label htmlFor="neighborhood">Bairro <span className="text-destructive">*</span></Label>
-          {isFetchingAddress ? (
-            <Skeleton className="h-12 w-full" />
-          ) : (
-            <Input 
-                id="neighborhood" 
-                {...register('neighborhood')} 
-                className={errors.neighborhood ? 'border-destructive' : ''} 
-                aria-invalid={!!errors.neighborhood}
-                aria-describedby={errors.neighborhood ? "neighborhood-error" : undefined}
-                aria-required="true"
-            />
-          )}
-          {errors.neighborhood && !isFetchingAddress && (
-            <p id="neighborhood-error" className="text-sm text-destructive mt-1" role="alert">
-              {errors.neighborhood.message}
-            </p>
-          )}
+          {/* Cidade */}
+          <div className="md:col-span-2 space-y-1.5">
+            <Label htmlFor="city">Cidade <span className="text-destructive">*</span></Label>
+            {isFetchingAddress ? <Skeleton className="h-12 w-full" /> : (
+              <Input id="city" {...register('city')} className={errors.city ? 'border-destructive' : ''} />
+            )}
+            {errors.city && !isFetchingAddress && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
+          </div>
         </div>
-
-        {/* Cidade - Com Skeleton */}
-        <div className="md:col-span-2 space-y-1.5">
-          <Label htmlFor="city">Cidade <span className="text-destructive">*</span></Label>
-          {isFetchingAddress ? (
-            <Skeleton className="h-12 w-full" />
-          ) : (
-            <Input 
-                id="city" 
-                {...register('city')} 
-                className={errors.city ? 'border-destructive' : ''} 
-                aria-invalid={!!errors.city}
-                aria-describedby={errors.city ? "city-error" : undefined}
-                aria-required="true"
-            />
-          )}
-          {errors.city && !isFetchingAddress && (
-            <p id="city-error" className="text-sm text-destructive mt-1" role="alert">
-              {errors.city.message}
-            </p>
-          )}
-        </div>
-      </div>
-      
-      {/* Bloqueia o botão próximo enquanto carrega para evitar submit incompleto */}
-      <NavigationButtons isNextDisabled={!isValid || isFetchingAddress} />
+        <NavigationButtons isNextDisabled={!isValid || isFetchingAddress} />
+      </StepLayout>
     </form>
   );
 };

@@ -251,7 +251,7 @@ function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: stri
             CD_PLANO: primeiro_plano_id,
             NOME: data[nomeKey],
             NASCIMENTO: data[nascKey],
-            PARENTESCO: (data[parentKey] || 'OUTROS').toUpperCase(),
+            PARENTESCO: String(data[parentKey] || 'OUTROS').toUpperCase(),
             PARTICIPACAO: 0, // Será calculado abaixo
         });
     }

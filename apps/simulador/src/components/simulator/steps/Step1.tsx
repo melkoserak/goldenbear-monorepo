@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +9,7 @@ import { Label } from '@goldenbear/ui/components/label';
 import { track } from '@/lib/tracking';
 import { Check } from 'lucide-react';
 import { step1Schema, type Step1Data } from '@/lib/schemas';
+import { StepLayout } from '../StepLayout';
 
 export const Step1 = () => {
   const { fullName } = useSimulatorStore((state) => state.formData);
@@ -40,45 +40,34 @@ export const Step1 = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in" noValidate>
-      <h3 tabIndex={-1} className="text-2xl font-medium text-left mb-8 text-foreground outline-none">
-        Primeiramente, nos diga seu nome completo
-      </h3>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="fullName">
-          Nome completo <span className="text-destructive">*</span>
-        </Label>
-        <div className="relative flex items-center">
-          <Input
-            id="fullName"
-            placeholder="Seu nome completo"
-            className={`h-12 px-4 py-3 pr-10 ${errors.fullName ? 'border-destructive' : ''}`}
-            // --- A11Y: Atributos ARIA ---
-            aria-invalid={errors.fullName ? "true" : "false"}
-            aria-describedby={errors.fullName ? "fullName-error" : undefined}
-            aria-required="true"
-            // ----------------------------
-            {...register('fullName')}
-          />
-          
-          {!errors.fullName && isDirty && isValid && (
-            <Check className="absolute right-3 h-5 w-5 text-green-500 pointer-events-none" aria-hidden="true" />
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <StepLayout title="Primeiramente, nos diga seu nome completo">
+        <div className="space-y-1.5">
+          <Label htmlFor="fullName">
+            Nome completo <span className="text-destructive">*</span>
+          </Label>
+          <div className="relative flex items-center">
+            <Input
+              id="fullName"
+              placeholder="Seu nome completo"
+              className={`h-12 px-4 py-3 pr-10 ${errors.fullName ? 'border-destructive' : ''}`}
+              aria-invalid={!!errors.fullName}
+              aria-describedby={errors.fullName ? "fullName-error" : undefined}
+              aria-required="true"
+              {...register('fullName')}
+            />
+            {!errors.fullName && isDirty && isValid && (
+              <Check className="absolute right-3 h-5 w-5 text-green-500 pointer-events-none" aria-hidden="true" />
+            )}
+          </div>
+          {errors.fullName && (
+            <p id="fullName-error" className="text-sm text-destructive mt-1" role="alert">
+              {errors.fullName.message}
+            </p>
           )}
         </div>
-        
-        {errors.fullName && (
-          <p 
-            id="fullName-error" // ID conectado ao input
-            className="text-sm text-destructive mt-1" 
-            role="alert"
-          >
-            {errors.fullName.message}
-          </p>
-        )}
-      </div>
-
-      <NavigationButtons isNextDisabled={!isValid} />
+        <NavigationButtons isNextDisabled={!isValid} />
+      </StepLayout>
     </form>
   );
 };

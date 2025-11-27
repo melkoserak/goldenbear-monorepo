@@ -1,5 +1,6 @@
 // src/stores/useCoverageStore.ts
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface Coverage {
   id: string;
@@ -38,7 +39,6 @@ export interface ApiCoverage {
           idQuestionario: string;
       }[];
   }[];
-  // Adicionamos a propriedade opcional aqui
   productId?: number;
 }
 
@@ -55,9 +55,6 @@ type ApiData = {
   };
 };
 
-
-
-
 type CoverageState = {
   coverages: Coverage[];
   mainSusep: string | null;
@@ -71,14 +68,23 @@ type CoverageState = {
 
 const normalizeApiData = (apiData: ApiData): { coverages: Coverage[], mainSusep: string | null } => {
   const products = apiData?.Valor?.simulacoes?.[0]?.produtos;
-  if (!products) {
-    console.error("Estrutura da API inesperada. 'products' não encontrado.");
+  if (!products || products.length === 0) {
+    console.error("Estrutura da API inesperada. 'produtos' não encontrado ou vazio.");
     return { coverages: [], mainSusep: null };
   }
 
+  // 1. Tenta encontrar o produto preferencial (ID 2096)
   const preferredProduct = products.find((p) => p.idProduto === 2096);
-  const productsToProcess = preferredProduct ? [preferredProduct] : products;
   
+  // 2. CORREÇÃO: Se não achar o preferido, pega APENAS O PRIMEIRO da lista.
+  // Antes estava pegando 'products' inteiro (todos), o que duplicava as coberturas.
+  const targetProduct = preferredProduct || products[0];
+  
+  // Garantimos que é um array para o flatMap funcionar, mas agora sempre terá apenas 1 item.
+  const productsToProcess = [targetProduct];
+  
+  console.log(`[useCoverageStore] Produto selecionado: ID ${targetProduct.idProduto} ${preferredProduct ? '(Preferencial)' : '(Fallback)'}`);
+
   const mainSusep = productsToProcess[0]?.coberturas?.[0]?.numeroProcessoSusep || null;
 
   const allCoverages: Coverage[] = productsToProcess.flatMap(
@@ -103,41 +109,48 @@ const normalizeApiData = (apiData: ApiData): { coverages: Coverage[], mainSusep:
           basePremium: parseFloat(cov.premioBase || '0'),
           isActive: cov.obrigatoria === true || true,
           currentCapital: Math.max(baseCapital, minCapital),
-          // --- CORREÇÃO APLICADA AQUI ---
-          // Injetamos o ID do produto no objeto originalData
           originalData: { ...cov, productId: product.idProduto },
         };
       })
   );
   
+  // Remove duplicatas por nome, apenas por segurança extra
   const uniqueCoverages = Array.from(new Map(allCoverages.map((c: Coverage) => [c.name, c])).values());
-  console.log("DEBUG [useCoverageStore]: Dados normalizados:", { coverages: uniqueCoverages, mainSusep });
+  
   return { coverages: uniqueCoverages, mainSusep };
 };
 
-export const useCoverageStore = create<CoverageState>((set, get) => ({
-  coverages: [],
-  mainSusep: null,
-  setInitialCoverages: (apiData) => {
-    const { coverages, mainSusep } = normalizeApiData(apiData);
-    set({ coverages, mainSusep });
-  },
-  toggleCoverage: (id) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id && !c.isMandatory ? { ...c, isActive: !c.isActive } : c) })),
-  updateCapital: (id, capital) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id ? { ...c, currentCapital: capital } : c) })),
-  getCalculatedPremium: (coverage) => {
-    if (!coverage.isActive) return 0;
-    const custoFixo = parseFloat(coverage.originalData?.custoFixo || '0');
-    if (coverage.calculationType === 3 && coverage.baseCapital > 0) {
-      return custoFixo + (coverage.currentCapital / coverage.baseCapital) * coverage.basePremium;
+export const useCoverageStore = create<CoverageState>()(
+  persist(
+    (set, get) => ({
+      coverages: [],
+      mainSusep: null,
+      setInitialCoverages: (apiData) => {
+        const { coverages, mainSusep } = normalizeApiData(apiData);
+        set({ coverages, mainSusep });
+      },
+      toggleCoverage: (id) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id && !c.isMandatory ? { ...c, isActive: !c.isActive } : c) })),
+      updateCapital: (id, capital) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id ? { ...c, currentCapital: capital } : c) })),
+      getCalculatedPremium: (coverage) => {
+        if (!coverage.isActive) return 0;
+        const custoFixo = parseFloat(coverage.originalData?.custoFixo || '0');
+        if (coverage.calculationType === 3 && coverage.baseCapital > 0) {
+          return custoFixo + (coverage.currentCapital / coverage.baseCapital) * coverage.basePremium;
+        }
+        return custoFixo + coverage.basePremium;
+      },
+      getTotalPremium: () => {
+        const { coverages, getCalculatedPremium } = get();
+        return coverages.reduce((total, cov) => total + getCalculatedPremium(cov), 0);
+      },
+      getTotalIndemnity: () => {
+        const { coverages } = get();
+        return coverages.reduce((total, cov) => (cov.isActive ? total + cov.currentCapital : total), 0);
+      },
+    }),
+    {
+      name: 'goldenbear-coverage-storage',
+      storage: createJSONStorage(() => localStorage),
     }
-    return custoFixo + coverage.basePremium;
-  },
-  getTotalPremium: () => {
-    const { coverages, getCalculatedPremium } = get();
-    return coverages.reduce((total, cov) => total + getCalculatedPremium(cov), 0);
-  },
-  getTotalIndemnity: () => {
-    const { coverages } = get();
-    return coverages.reduce((total, cov) => (cov.isActive ? total + cov.currentCapital : total), 0);
-  },
-}));
+  )
+);

@@ -155,3 +155,44 @@ export interface MagProposalPayload {
     };
   };
 }
+
+// --- TIPOS DO QUESTIONÁRIO V2 ---
+
+export interface MagQuestionnaireResponse {
+  Valor: MagQuestionnaireData;
+  Mensagens: any[];
+  HouveErrosDuranteProcessamento: boolean;
+}
+
+export interface MagQuestionnaireData {
+  Id: number;
+  CodigoQuestionario: number;
+  NomeQuestionario: string;
+  VersaoQuestionario: MagQuestionnaireVersion[];
+}
+
+export interface MagQuestionnaireVersion {
+  Versao: number;
+  Perguntas: MagQuestion[];
+}
+
+export interface MagQuestion {
+  Id: number;
+  Descricao: string; // O texto da pergunta
+  TipoResposta: { Sigla: string }; // 'Sim/Nao', 'TextoLivre', 'Valor', 'Data'
+  TipoItem: { Sigla: string }; // 'Pergunta', 'Agrupador', 'Informativo'
+  TipoVariacaoResposta: { Sigla: string }; // 'SelecaoUnica', 'Digitacao', 'Digitacao-Peso', etc
+  OrdemApresentacao: number;
+  Opcoes: MagQuestionOption[];
+  CodigoItem?: number;
+  Observacao?: string;
+  Obrigatorio: boolean;
+  Resposta?: string; // <--- CAMPO QUE VAMOS PREENCHER
+  CodigoInterno?: string; // <--- CAMPO QUE VAMOS PREENCHER (Texto legível da resposta)
+}
+
+export interface MagQuestionOption {
+  Id: number;
+  Descricao: string; // 'SIM', 'NÃO', etc
+  SubItens: MagQuestion[]; // Recursividade: Opções podem ter sub-perguntas
+}
