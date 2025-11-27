@@ -156,43 +156,92 @@ export interface MagProposalPayload {
   };
 }
 
-// --- TIPOS DO QUESTIONÁRIO V2 ---
+// --- ENUMS DE TIPAGEM DO QUESTIONÁRIO ---
 
-export interface MagQuestionnaireResponse {
-  Valor: MagQuestionnaireData;
+export enum MagTipoItem {
+  PERGUNTA = 1,
+  AGRUPADOR = 2,
+  INFORMATIVO = 3
+}
+
+export enum MagTipoResposta {
+  SIM_NAO = 1,
+  TEXTO_LIVRE = 2,
+  VALOR = 3,
+  DOMINIO = 4,
+  NAO_INFORMADO = 5,
+  DATA = 6
+}
+
+export enum MagTipoVariacao {
+  // Para Domínio (Id 4)
+  SELECAO_UNICA = 1,
+  MULTI_SELECAO = 2,
+  
+  // Para Informativo/Geral
+  NAO_INFORMADO = 3,
+  
+  // Para Perguntas/Texto
+  DIGITACAO_COMUM = 4,
+  
+  // Para Data
+  DATA_PADRAO = 6,
+  
+  // Para Valor (Id 3)
+  DIGITACAO_NUMERO_TEXTO = 4, // Ex: "1" ou "um"
+  DIGITACAO_PESO = 10,        // Ex: "80" (Inteiro)
+  DIGITACAO_ALTURA = 11       // Ex: "1,80" (Decimal com vírgula)
+}
+
+// Interface atualizada da Pergunta
+export interface MagQuestion {
+  Id: number;
+  Descricao: string;
+  TipoItem: { Id: number; Sigla: string };
+  TipoResposta: { Id: number; Sigla: string };
+  TipoVariacaoResposta?: { Id: number; Sigla: string };
+  Opcoes?: MagOption[];
+  Perguntas?: MagQuestion[]; // Filhos de Agrupadores
+  Obrigatorio: boolean;
+  CodigoInterno?: string;
+  Observacao?: string;
+}
+
+export interface MagOption {
+  Id: number;
+  Descricao: string;
+  SubItens?: MagQuestion[];
+}
+
+// Adicione esta interface para a resposta detalhada da Pergunta
+export interface MagQuestionDetailResponse {
+  Valor: {
+    Id: number;
+    Descricao: string;
+    TipoResposta: { Id: number; Sigla: string; Descricao: string };
+    TipoItem: { Id: number; Sigla: string; Descricao: string };
+    TipoVariacaoResposta?: { Id: number; Sigla: string; Descricao: string };
+    OrdemApresentacao: number;
+    Opcoes: any[]; // Pode refinar se tiver a estrutura de opções
+    CodigoItem?: number;
+    Status: { Id: number; Sigla: string; Descricao: string };
+    DataCriacao: string;
+    DataAtualizacao: string;
+    Observacao?: string;
+    Obrigatorio: boolean;
+    Identificador?: string;
+    CodigoInterno?: string;
+  };
   Mensagens: any[];
   HouveErrosDuranteProcessamento: boolean;
 }
 
-export interface MagQuestionnaireData {
-  Id: number;
-  CodigoQuestionario: number;
-  NomeQuestionario: string;
-  VersaoQuestionario: MagQuestionnaireVersion[];
-}
-
-export interface MagQuestionnaireVersion {
-  Versao: number;
-  Perguntas: MagQuestion[];
-}
-
-export interface MagQuestion {
-  Id: number;
-  Descricao: string; // O texto da pergunta
-  TipoResposta: { Sigla: string }; // 'Sim/Nao', 'TextoLivre', 'Valor', 'Data'
-  TipoItem: { Sigla: string }; // 'Pergunta', 'Agrupador', 'Informativo'
-  TipoVariacaoResposta: { Sigla: string }; // 'SelecaoUnica', 'Digitacao', 'Digitacao-Peso', etc
-  OrdemApresentacao: number;
-  Opcoes: MagQuestionOption[];
-  CodigoItem?: number;
-  Observacao?: string;
-  Obrigatorio: boolean;
-  Resposta?: string; // <--- CAMPO QUE VAMOS PREENCHER
-  CodigoInterno?: string; // <--- CAMPO QUE VAMOS PREENCHER (Texto legível da resposta)
-}
-
-export interface MagQuestionOption {
-  Id: number;
-  Descricao: string; // 'SIM', 'NÃO', etc
-  SubItens: MagQuestion[]; // Recursividade: Opções podem ter sub-perguntas
+export interface MagDomainResponse {
+  Valor: {
+    Nome: string;
+    Url: string;
+  }[];
+  Mensagens: any[];
+  HouveErrosDuranteProcessamento: boolean;
+  CondicaoFalha: number;
 }

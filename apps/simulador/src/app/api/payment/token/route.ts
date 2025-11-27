@@ -4,10 +4,6 @@ import { MAG_Logger } from '@/lib/mag-api/logger';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * (Tradução de handle_get_payment_token)
- *
- */
 export async function POST() {
   try {
     const token = await getPaymentWidgetToken();

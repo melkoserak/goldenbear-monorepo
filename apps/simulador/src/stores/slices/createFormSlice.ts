@@ -50,8 +50,10 @@ export interface FormDataState {
   company: string;
   isPPE: string;
   paymentMethod: 'credit' | 'debit' | '';
-  dpsAnswers?: Record<string, unknown>;
+  dpsAnswers?: Record<string, any>; // Respostas simples do usuário
+  questionnaireOriginalData?: any;  // NOVO: Estrutura completa original da MAG (Template)
   beneficiaries: Beneficiary[];
+  
 }
 
 export interface FormSlice {

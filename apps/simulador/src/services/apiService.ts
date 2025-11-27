@@ -175,10 +175,12 @@ export const getPaymentToken = async (): Promise<{ token: string }> => {
   const url = getApiUrl('payment/token');
   try {
     const response = await fetch(url, { method: 'POST' });
+    
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Falha ao obter token de pagamento.');
     }
+    
     return await response.json();
   } catch (error) {
     console.error(`Erro na API getPaymentToken (${url}):`, error);
@@ -210,32 +212,28 @@ export const submitProposal = async (payload: ProposalPayload) => {
 };
 
 /**
- * Busca a estrutura completa do questionário (JSON)
+ * Busca a estrutura do questionário através do nosso BFF
  */
-export const getQuestionnaireStructure = async (id: string | number) => {
-  try {
-    const response = await fetch(`/simulador/api/questionnaire/${id}`, {
-      method: 'GET',
-    });
+export const fetchQuestionnaireStructure = async (id: string | number) => {
+  // Garante que a URL está correta
+  const url = `/simulador/api/questionnaire/${id}`;
+  console.log(`[Frontend] Fetching questionnaire from: ${url}`);
 
-    if (!response.ok) throw new Error('Erro ao carregar formulário');
-    return await response.json();
-  } catch (error) {
-    console.error("Erro no getQuestionnaireStructure:", error);
-    throw error;
+  const response = await fetch(url);
+  
+  // --- CORREÇÃO: Ler o erro real do servidor ---
+  if (!response.ok) {
+    let errorMessage = `Erro ${response.status}: `;
+    try {
+      const errorData = await response.json();
+      errorMessage += errorData.error || errorData.message || 'Erro desconhecido no servidor';
+    } catch {
+      errorMessage += await response.text();
+    }
+    
+    console.error(`[Frontend] Falha detalhada:`, errorMessage);
+    throw new Error(errorMessage);
   }
+  
+  return await response.json();
 };
-
-/**
- * Envia o JSON respondido para a MAG
- * payload: { Localizador: { ... }, Resposta: "stringified_json" }
- */
-export const sendQuestionnaireResponse = async (payload: any) => {
-   // Para enviar, precisaremos de um token. 
-   // Podemos criar uma rota BFF para isso também (Recomendado) 
-   // ou reutilizar a lógica existente se for envio direto.
-   // Por enquanto, vamos focar em renderizar.
-   console.log("Payload pronto para envio:", payload);
-   // TODO: Implementar POST /api/questionnaire/submit se necessário
-   return true; 
-}

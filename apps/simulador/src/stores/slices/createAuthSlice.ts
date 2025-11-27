@@ -1,15 +1,18 @@
-// apps/simulador/src/stores/slices/createAuthSlice.ts
 import { StateCreator } from 'zustand';
 import { SimulatorState } from '../useSimulatorStore';
+// Importe a nova função do serviço
 import { reserveProposalNumber, getQuestionnaireToken, getPaymentToken } from '@/services/apiService';
 
 export interface AuthSlice {
   questionnaireToken?: string;
-  paymentToken?: string;
-  paymentPreAuthCode?: string;
   reservedProposalNumber?: string;
+  
+  // Novos campos para pagamento
+  paymentToken?: string;
+  paymentPreAuthCode?: string; // O código de sucesso que o widget retorna
+  
   isPrefetchingTokens: boolean;
-  isPrefetchingPaymentToken: boolean;
+  isPrefetchingPaymentToken: boolean; // Loading específico do pagamento
   
   // Actions
   prefetchQuestionnaireTokens: () => Promise<void>;
@@ -19,9 +22,9 @@ export interface AuthSlice {
 
 export const createAuthSlice: StateCreator<SimulatorState, [], [], AuthSlice> = (set, get) => ({
   questionnaireToken: undefined,
+  reservedProposalNumber: undefined,
   paymentToken: undefined,
   paymentPreAuthCode: undefined,
-  reservedProposalNumber: undefined,
   isPrefetchingTokens: false,
   isPrefetchingPaymentToken: false,
 
