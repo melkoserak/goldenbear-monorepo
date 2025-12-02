@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { PERSONA_CREDIT_CARD, PERSONA_DEBIT, PERSONA_PAYROLL } from '@/lib/debug-personas';
 import { Button } from '@goldenbear/ui/components/button';
-import { Settings, CreditCard, Landmark, FileText, X } from 'lucide-react';
+import { Settings, CreditCard, Landmark, FileText, X, Play } from 'lucide-react';
 
 export const DevToolbar = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -16,13 +16,18 @@ export const DevToolbar = () => {
 
   useEffect(() => {
     setIsMounted(true);
-    if (window.location.hostname === 'localhost') {
+    // Auto-abrir apenas em localhost para facilitar
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
       setIsVisible(true);
     }
   }, []);
 
+  // --- CORREÇÃO AQUI ---
+  // Permite renderizar se estiver em desenvolvimento OU se a variável estiver 'true'
+  const shouldRender = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === 'true';
+
   if (!isMounted) return null;
-  if (process.env.NODE_ENV === 'production') return null;
+  if (!shouldRender) return null;
 
   const handleAutoFill = (persona: any, targetStep: number) => {
     setFormData(persona);
