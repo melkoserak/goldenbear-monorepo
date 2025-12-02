@@ -1,4 +1,3 @@
-// apps/simulador/src/lib/mag-api/processor.ts
 import {
   FrontendFormData,
   FinalSimConfig,
@@ -6,9 +5,13 @@ import {
   MagProposalPayload
 } from './types';
 
-/**
- * Prepara o payload para a API de Simulação da MAG.
- */
+// Função auxiliar para converter MM/YY para YYYY-MM-DD (Mantida)
+function convertCardDate(mmAa: string | undefined): string {
+    if (!mmAa || !mmAa.includes('/')) return '2030-01-01';
+    const [mes, ano] = mmAa.split('/');
+    return `20${ano}-${mes}-01`;
+}
+
 export function prepareSimulationPayload(
   data: FrontendFormData
 ): MagSimulationPayload {
@@ -16,7 +19,6 @@ export function prepareSimulationPayload(
   const cpf = (data.mag_cpf || '').replace(/\D/g, '');
   const data_nasc = data.mag_data_nascimento;
   const sexo = data.mag_sexo;
-  // parseFloat garante que string numérica vire number
   const renda = parseFloat(String(data.mag_renda || '0'));
   const estado = (data.mag_estado || '').toUpperCase();
   const profissao_cbo = data.mag_profissao_cbo;
@@ -44,15 +46,11 @@ export function prepareSimulationPayload(
   };
 }
 
-/**
- * Prepara o payload completo para a API de Proposta da MAG.
- */
 export function prepareProposalPayload(
   postData: FrontendFormData,
   finalSimConfig: FinalSimConfig
 ): MagProposalPayload {
   
-  // Cálculos auxiliares
   const birthDate = new Date(`${postData.mag_data_nascimento}T00:00:00`);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -71,9 +69,9 @@ export function prepareProposalPayload(
   const primeiro_plano_id = planos.length > 0 ? planos[0].CODIGO : '0';
   const beneficiarios = buildBeneficiariesArray(postData, primeiro_plano_id);
   
+  // CHAMADA DA FUNÇÃO CORRIGIDA
   const dados_cobranca = buildPaymentData(postData);
   
-  // Conversões seguras
   const matricula = parseInt(process.env.NEXT_PUBLIC_MAG_MATRICULA || '0', 10);
   const numFilhos = parseInt(String(postData.mag_num_filhos || '0'), 10);
   const rendaMensal = parseFloat(String(postData.mag_renda || '0'));
@@ -152,8 +150,6 @@ export function prepareProposalPayload(
   };
 }
 
-// --- Funções Auxiliares ---
-
 function buildDocumentsArray(data: FrontendFormData) {
   const docs = [];
   if (data.mag_rg_num) {
@@ -205,7 +201,7 @@ function buildPlansArray(config: FinalSimConfig) {
       
       produto.coberturas.forEach((cobertura) => {
         coberturas.push({
-          CODIGO: parseInt(cobertura.itemProdutoId || cobertura.id || '0', 10),
+          CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
           VL_CONTRIB: cobertura.premioCalculado || 0.0,
           VL_COBERTURA: cobertura.capitalContratado || 0.0,
         });
@@ -243,8 +239,6 @@ function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: stri
     const parentKey = `mag_ben[${i}][parentesco]`;
     
     if (data[nomeKey]) {
-        // CORREÇÃO AQUI: Forçamos String() antes de chamar toUpperCase()
-        // para evitar erro de tipo em runtime/build
         const parentescoStr = String(data[parentKey] || 'OUTROS').toUpperCase();
 
         beneficiaries.push({
@@ -271,35 +265,71 @@ function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: stri
   return beneficiaries;
 }
 
+// --- FUNÇÃO DE PAGAMENTO CORRIGIDA ---
 function buildPaymentData(data: FrontendFormData): any {
-  const preAuthCode = data.payment_pre_auth_code;
+  const payment = data.payment as any;
   
-  // Data de competência (Mês/Ano atual)
-  const today = new Date();
-  const compDebito = `${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-  const diaVencimento = 30; 
+  if (!payment || !payment.method) return {};
 
-  if (preAuthCode) {
+  // Geração da Competência (Mês/Ano atual) para passar no Regex
+  const today = new Date();
+  const mes = String(today.getMonth() + 1).padStart(2, '0');
+  const ano = today.getFullYear();
+  const compDebito = `${mes}/${ano}`;
+
+  const baseData = {
+    PERIODICIDADE: 'MENSAL',
+    DIA_VENCIMENTO: 10,
+    COMP_DEBITO: compDebito, 
+    NUM_CONVENIO: '0'
+  };
+
+  // 1. Cartão de Crédito
+  if (payment.method === 'CREDIT_CARD' && payment.creditCard) {
     return {
-      PERIODICIDADE: 'MENSAL',
-      TIPO_COBRANCA: 'CREDITO',
-      DIA_VENCIMENTO: diaVencimento,
-      COMP_DEBITO: compDebito,
-      NUM_CONVENIO: '0',
+      ...baseData,
+      TIPO_COBRANCA: 'CARTAO', 
       CARTAO: {
-        NUMERO: "", 
-        VALIDADE: "1990-01-01", 
-        NUM_PRE_AUTORIZACAO: preAuthCode, 
-        BANDEIRA: "", 
+        NUMERO: payment.creditCard.number.replace(/\s/g, ''),
+        VALIDADE: convertCardDate(payment.creditCard.expirationDate),
+        BANDEIRA: (payment.creditCard.brand || 'VISA').toUpperCase(),
         PARCELA: 1,
+        // --- CORREÇÃO AQUI: Campo obrigatório pela API, mesmo sem widget ---
+        NUM_PRE_AUTORIZACAO: 0, 
         PORTADOR: {
-          NOME: data.mag_nome_completo.toUpperCase(), 
-          TIPO_PESSOA: "F", 
-          DOCUMENTO: (data.mag_cpf || '').replace(/\D/g, ''), 
-        },
-      },
+          NOME: payment.creditCard.holderName.toUpperCase(),
+          TIPO_PESSOA: "FISICA",
+          DOCUMENTO: (data.mag_cpf || '').replace(/\D/g, '')
+        }
+      }
     };
   }
-  
-  return {}; 
+
+  // 2. Débito em Conta
+  if (payment.method === 'DEBIT_ACCOUNT' && payment.debitAccount) {
+    return {
+      ...baseData,
+      TIPO_COBRANCA: 'DEBITO', 
+      CONTA_CORRENTE: {
+        BANCO: payment.debitAccount.bankCode,
+        AGENCIA: payment.debitAccount.agency,
+        CONTA: payment.debitAccount.accountNumber,
+        DIGITO_CONTA: payment.debitAccount.accountDigit
+      }
+    };
+  }
+
+  // 3. Desconto em Folha
+  if (payment.method === 'PAYROLL_DEDUCTION' && payment.payroll) {
+    return {
+      ...baseData,
+      TIPO_COBRANCA: 'FOLHA', 
+      CONSIGNACAO: {
+        MATRICULA: payment.payroll.registrationNumber,
+        ORGAO: payment.payroll.orgCode
+      }
+    };
+  }
+
+  return {};
 }

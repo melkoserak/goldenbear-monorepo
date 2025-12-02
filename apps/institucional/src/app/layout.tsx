@@ -6,16 +6,17 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { FontSizeManager } from "@/components/layout/FontSizeManager";
 import { TopBar } from "@/components/layout/TopBar";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import type { Metadata, Viewport } from "next"; // Importe Viewport
+import type { Metadata, Viewport } from "next";
+// Importação correta do headers para Next.js 15
+import { headers } from 'next/headers'; 
 
 const noto = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-noto-sans",
-  display: "swap", // Melhora FCP (texto aparece mais rápido)
+  display: "swap",
 });
 
-// Configuração separada de Viewport (Next.js 14+)
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
@@ -31,8 +32,10 @@ export const metadata: Metadata = {
     default: "Golden Bear Seguros | Seguro de Vida Militar",
     template: "%s | Golden Bear Seguros",
   },
+  alternates: {
+    canonical: './',
+  },
   description: "Especialistas em seguros de vida para militares das Forças Armadas. Simulação 100% digital e segura.",
-  // Verificação para buscadores (Google Search Console)
   verification: {
     google: 'seu-codigo-verificacao-google', 
   },
@@ -54,21 +57,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+// ATENÇÃO: O componente agora é async para suportar headers() do Next.js 15
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Await headers() antes de usar .get()
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') || '';
+
   return (
-    // Garante o lang="pt-BR" explicitamente
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-         {/* Preconnect para domínios críticos (Vercel, Google Fonts) */}
          <link rel="preconnect" href="https://fonts.googleapis.com" />
          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+         {/* Se tiver scripts manuais aqui que precisem executar, adicione nonce={nonce} neles */}
       </head>
       <body className={`${noto.variable} font-sans bg-background text-foreground antialiased`}>
-        <ThemeProvider>
+        {/* Passamos o nonce para o ThemeProvider se ele injetar scripts, 
+            ou o Next.js lida automaticamente com scripts de componentes */}
+        <ThemeProvider nonce={nonce}>
           <FontSizeManager />
           <TopBar />
           <Header />
-          <main id="content" className="site-content min-h-screen flex flex-col">
+          <main id="content" className="site-content min-h-screen flex flex-col" tabIndex={-1}>
             <Breadcrumbs />
             {children}
           </main>

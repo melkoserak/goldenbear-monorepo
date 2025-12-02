@@ -23,6 +23,7 @@ export * from "./components/feature-card";
 export * from "./components/section-header";
 export { Skeleton } from "./components/skeleton";
 export * from "./components/grid";
+export * from "./components/select";
 
 // Utils e Hooks (Seguros)
 export * from "./lib/utils";

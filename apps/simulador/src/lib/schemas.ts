@@ -49,22 +49,25 @@ export const step6Schema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório."),
   city: z.string().min(1, "Cidade é obrigatória."),
   state: z.string().min(2, "Estado é obrigatório."), // Geralmente vem preenchido pela API
+  maritalStatus: z.string().min(1, "Selecione o estado civil"),
 });
 
 // --- Passo 7: Perfil Detalhado ---
 export const step7Schema = z.object({
-  maritalStatus: z.string().min(1, "Estado civil é obrigatório."),
-  homePhone: z.string().optional(), // Opcional
-  rgNumber: z.string().min(1, "O número do RG é obrigatório."),
-  rgIssuer: z.string().min(1, "O órgão emissor é obrigatório."),
-  rgDate: z.string().regex(dateRegex, "Data de emissão inválida."),
-  childrenCount: z.string().min(1, "Informe o nº de filhos (coloque 0 se nenhum)."),
-  company: z.string().min(1, "A Empresa/Instituição é obrigatória."),
-  // --- CORREÇÃO DO ERRO TS2769 ---
-  // Removemos 'errorMap' e usamos 'message' que é aceito pela definição de tipo do ZodEnum
-  isPPE: z.enum(["true", "false"], {
-    message: "Este campo é obrigatório. Selecione Sim ou Não.",
-  }),
+  rgNumber: z.string().min(5, "RG inválido"),
+  rgIssuer: z.string().min(2, "Órgão emissor inválido"),
+  rgDate: z.string().refine((date) => {
+    if (!date) return false;
+    const d = new Date(date);
+    return !isNaN(d.getTime()) && d < new Date();
+  }, "Data de expedição inválida"),
+  
+  // --- CORREÇÃO: number e boolean ---
+  childrenCount: z.coerce.number().min(0, "Número inválido"), // aceita "0" string e converte para 0 number
+  isPPE: z.boolean(), // aceita true/false direto
+  
+  company: z.string().optional(),
+  homePhone: z.string().optional(),
 });
 
 // --- Passo 8: Beneficiários ---
@@ -137,9 +140,75 @@ export const step8Schema = z.object({
     }),
 });
 
+// Função auxiliar: Algoritmo de Luhn para validar cartão
+const isValidLuhn = (val: string) => {
+  let checksum = 0;
+  let j = 1;
+  for (let i = val.length - 1; i >= 0; i--) {
+    let calc = 0;
+    calc = Number(val.charAt(i)) * j;
+    if (calc > 9) {
+      checksum = checksum + 1;
+      calc = calc - 10;
+    }
+    checksum = checksum + calc;
+    if (j == 1) { j = 2 } else { j = 1 };
+  }
+  return (checksum % 10) == 0;
+};
+
+// Schema Cartão de Crédito
+const creditCardSchema = z.object({
+  method: z.literal('CREDIT_CARD'),
+  creditCard: z.object({
+    number: z.string()
+      .transform(v => v.replace(/\D/g, ''))
+      .refine(v => v.length >= 13 && v.length <= 19, "Número de cartão inválido")
+      .refine(isValidLuhn, "Número de cartão inválido (Luhn)"),
+    holderName: z.string().min(3, "Nome impresso obrigatório").toUpperCase(),
+    expirationDate: z.string()
+      .refine(v => {
+        const [month, year] = v.split('/').map(Number);
+        if (!month || !year) return false;
+        const expiry = new Date(2000 + year, month - 1); // Assume ano 20xx
+        return expiry > new Date();
+      }, "Data inválida ou expirada"),
+    cvv: z.string().min(3, "CVV inválido").max(4),
+    brand: z.string().optional(), // Pode ser inferido
+  })
+});
+
+// Schema Débito em Conta
+const debitSchema = z.object({
+  method: z.literal('DEBIT_ACCOUNT'),
+  debitAccount: z.object({
+    bankCode: z.string().min(1, "Selecione o banco"),
+    agency: z.string().min(1, "Agência obrigatória"),
+    accountNumber: z.string().min(1, "Conta obrigatória"),
+    accountDigit: z.string().min(1, "Dígito obrigatório"),
+  })
+});
+
+// Schema Desconto em Folha
+const payrollSchema = z.object({
+  method: z.literal('PAYROLL_DEDUCTION'),
+  payroll: z.object({
+    registrationNumber: z.string().min(1, "Matrícula obrigatória"),
+    orgCode: z.string().min(1, "Órgão obrigatório"),
+  })
+});
+
+// Schema Unificado do Passo 10
+export const step10Schema = z.discriminatedUnion('method', [
+  creditCardSchema,
+  debitSchema,
+  payrollSchema
+]);
+
 export type Step1Data = z.infer<typeof step1Schema>;
 export type Step2Data = z.infer<typeof step2Schema>;
 export type Step3Data = z.infer<typeof step3Schema>;
 export type Step6Data = z.infer<typeof step6Schema>;
 export type Step7Data = z.infer<typeof step7Schema>;
 export type Step8Data = z.infer<typeof step8Schema>;
+export type Step10Data = z.infer<typeof step10Schema>;

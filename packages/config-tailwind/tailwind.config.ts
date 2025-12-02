@@ -46,6 +46,17 @@ const config: Config = {
             DEFAULT: "var(--card)", // <-- CORRIGIDO
             foreground: "var(--card-foreground)", // <-- CORRIGIDO
           },
+          success: {
+          DEFAULT: "var(--success)",
+          foreground: "var(--success-foreground)",
+          light: "var(--success-light)", // Útil para backgrounds de alertas
+          },
+          warning: {
+            DEFAULT: "var(--warning)",
+            foreground: "var(--warning-foreground)",
+            light: "var(--warning-light)",
+          },
+          
           // Essas duas são redundantes se você já mapeou foreground e muted-foreground
           // "text-color": "var(--foreground)",
           // "text-light": "var(--muted-foreground)",

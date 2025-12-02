@@ -7,7 +7,6 @@ import { z } from "zod";
 import { Typography, Button, Input, Textarea, Label } from "@goldenbear/ui";
 import { Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 
-// 1. Schema de Validação
 const contactSchema = z.object({
   name: z.string().min(3, "Digite seu nome completo."),
   email: z.string().email("E-mail inválido."),
@@ -22,7 +21,6 @@ export const ContactForm = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // 2. Setup do Hook Form
   const {
     register,
     handleSubmit,
@@ -30,7 +28,7 @@ export const ContactForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
-    mode: "onBlur",
+    mode: "onBlur", // Considerar mudar para 'onChange' após o primeiro submit para melhor UX
   });
 
   const onSubmit = async (data: ContactFormData) => {
@@ -46,7 +44,6 @@ export const ContactForm = () => {
 
       setIsSuccess(true);
       reset();
-      // Reset da mensagem de sucesso após 5s
       setTimeout(() => setIsSuccess(false), 5000);
 
     } catch (error) {
@@ -70,6 +67,7 @@ export const ContactForm = () => {
             id="name" 
             placeholder="Seu nome completo" 
             className={errors.name ? "border-destructive" : ""}
+            aria-invalid={!!errors.name}
             {...register("name")}
           />
           {errors.name && <span className="text-sm text-destructive">{errors.name.message}</span>}
@@ -83,6 +81,7 @@ export const ContactForm = () => {
               type="email" 
               placeholder="seu.email@exemplo.com" 
               className={errors.email ? "border-destructive" : ""}
+              aria-invalid={!!errors.email}
               {...register("email")}
             />
             {errors.email && <span className="text-sm text-destructive">{errors.email.message}</span>}
@@ -128,19 +127,21 @@ export const ContactForm = () => {
             {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
           </Button>
 
+          {/* Feedback de Sucesso Refatorado */}
           {isSuccess && (
-            <div className="flex items-center gap-3 rounded-md border border-green-500/20 bg-green-500/10 p-4 text-green-700 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center gap-3 rounded-md border border-success/20 bg-success-light p-4 text-success animate-in fade-in slide-in-from-bottom-2">
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
-              <Typography variant="small" color="default" className="font-medium text-green-700">
+              <Typography variant="small" className="font-medium text-success">
                 Mensagem enviada com sucesso!
               </Typography>
             </div>
           )}
           
+          {/* Feedback de Erro (Mantido com tokens destructive existentes) */}
           {serverError && (
             <div className="flex items-center gap-3 rounded-md border border-destructive/20 bg-destructive/10 p-4 text-destructive animate-in fade-in">
               <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-              <Typography variant="small" color="default" className="font-medium text-destructive">
+              <Typography variant="small" className="font-medium text-destructive">
                 {serverError}
               </Typography>
             </div>

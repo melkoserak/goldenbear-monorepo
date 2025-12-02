@@ -9,6 +9,8 @@ import { Button } from "@goldenbear/ui/components/button";
 import { ArrowLeft, Calendar, User, Clock } from "lucide-react";
 import { ReadingProgress } from "@/components/layout/ReadingProgress";
 import { ShareButton } from "@/components/blog/ShareButton";
+// 1. Adicione o import
+import { sanitizeHtml } from "@goldenbear/ui/lib/html-utils";
 
 // Dados Mockados
 const getPost = (slug: string) => {
@@ -179,8 +181,8 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
 
           <div className="prose prose-lg max-w-none prose-headings:text-foreground prose-headings:font-bold prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary-hover">
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
-          </div>
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
+        </div>
 
           <div className="mt-12 pt-8 border-t border-border flex justify-between items-center">
             <Typography variant="small" color="muted">

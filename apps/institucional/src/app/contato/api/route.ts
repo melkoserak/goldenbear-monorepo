@@ -1,47 +1,50 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// 1. Definição do Schema de Validação
+// --- REMOVIDO: Imports do Upstash (Rate Limit) ---
+// import { Ratelimit } from '@upstash/ratelimit';
+// import { Redis } from '@upstash/redis';
+
 const contactFormSchema = z.object({
-  name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
-  email: z.string().email("Formato de e-mail inválido."),
-  phone: z.string().min(10, "Telefone deve ter DDD + número."),
-  subject: z.string().min(3, "O assunto é muito curto."),
-  message: z.string().min(10, "A mensagem deve ter pelo menos 10 caracteres."),
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  subject: z.string().min(3),
+  message: z.string().min(10),
 });
 
 export async function POST(request: Request) {
   try {
+    // --- REMOVIDO: Lógica de Rate Limit ---
+    // Se quiser reativar no futuro, precisa das chaves no .env
+    
     const body = await request.json();
+    const result = contactFormSchema.safeParse(body);
 
-    // 2. Validação com Zod
-    const data = contactFormSchema.parse(body);
-
-    // --- Simulação de Envio ---
-    console.log("--- NOVO LEAD VALIDADO (ZOD) ---");
-    console.log("Dados:", data);
-    console.log("--------------------------------");
-
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.' 
-    });
-
-  } catch (error) {
-    // 3. Tratamento de Erros de Validação
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ 
-        error: 'Dados inválidos.', 
-        // --- CORREÇÃO: Usar .issues ---
-        details: error.issues.map(e => e.message) 
-      }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos." },
+        { status: 400 }
+      );
     }
 
-    console.error("Erro interno:", error);
-    return NextResponse.json({ 
-      error: 'Ocorreu um erro interno no servidor.' 
-    }, { status: 500 });
+    const { name, email, subject, message, phone } = result.data;
+
+    // AQUI: Implementar o envio real de e-mail (ex: Resend, SendGrid, Nodemailer)
+    // Por enquanto, apenas simulamos um sucesso com um log
+    console.log(`[Formulário Contato] De: ${name} <${email}> | Assunto: ${subject}`);
+    console.log(`Mensagem: ${message}`);
+
+    // Simula delay de rede
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("Erro no formulário:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao processar mensagem." },
+      { status: 500 }
+    );
   }
 }

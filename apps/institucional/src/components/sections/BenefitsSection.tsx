@@ -5,6 +5,8 @@ import { ArrowRight, Shield, HeartPulse, ShieldAlert, ShieldCheck } from 'lucide
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
+// 1. Importação do componente Grid
+import { Grid } from '@goldenbear/ui/components/grid';
 
 const benefits = [
   { 
@@ -52,18 +54,20 @@ export const BenefitsSection = () => {
           </Typography>
         </div>
 
-        {/* Grid de Cards */}
-        <div className="self-stretch grid grid-cols-1 md:grid-cols-2 justify-start items-start gap-10">
+        {/* 2. Substituição pelo componente Grid */}
+        <Grid cols={2} gap="lg" align="start">
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
             return (
-              // 1. O Card inteiro é o Link (Área de clique total)
-              <div key={benefit.title} className="relative flex-1 self-stretch p-10 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md inline-flex flex-col justify-start items-start gap-6 group">
+              <div 
+                key={benefit.title} 
+                // Removido 'flex-1 self-stretch' pois o Grid já controla isso
+                className="relative w-full p-10 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md inline-flex flex-col justify-start items-start gap-6 group"
+              >
                 <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5 group-hover:bg-primary/10 transition-colors">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
                 
-                {/* Título reage ao hover do card (group-hover) */}
                 <Typography variant="h4" color="primary" className="group-hover:text-primary/80 transition-colors">
                   {benefit.title}
                 </Typography>
@@ -72,10 +76,6 @@ export const BenefitsSection = () => {
                   {benefit.description}
                 </Typography>
                 
-                {/* 2. Correção do "Saiba mais":
-                   - Usamos 'group-hover:text-primary' para acender a cor do texto inteiro.
-                   - O span interno usa 'decoration-transparent' -> 'group-hover:decoration-primary' para animar o sublinhado suavemente.
-                */}
                 <div className="p-0 h-auto text-accent-foreground font-medium mt-auto inline-flex items-center group-hover:text-foreground transition-colors">
                   <Link href={benefit.linkUrl} className="outline-none">
                     <span className="absolute inset-0 z-10" aria-hidden="true" />
@@ -88,7 +88,7 @@ export const BenefitsSection = () => {
               </div>
             );
           })}
-        </div>
+        </Grid>
 
         <Button asChild variant="default" size="hero">
           <Link href="/simulador">Simulação Gratuita e Rápida</Link>

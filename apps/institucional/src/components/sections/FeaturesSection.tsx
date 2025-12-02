@@ -5,8 +5,9 @@ import { cn } from '@goldenbear/ui/lib/utils';
 import { Section } from '@goldenbear/ui/components/section';
 import { Container } from '@goldenbear/ui/components/container';
 import { Typography } from '@goldenbear/ui/components/typography';
-// Importe o componente de animação que já existe no seu projeto
 import { FadeInOnScroll } from '@/components/layout/FadeInOnScroll';
+// 1. Importação do Grid
+import { Grid } from '@goldenbear/ui/components/grid';
 
 const features = [
   {
@@ -67,7 +68,7 @@ export const FeaturesSection = () => {
     <Section variant="default" padding="default" className="overflow-visible">
       <Container className="flex flex-col lg:flex-row items-start gap-12 lg:gap-20">
         
-        {/* Coluna da Esquerda (Sticky) */}
+        {/* Coluna da Esquerda (Sticky) - Mantida com flex pois é layout estrutural */}
         <div className="inline-flex flex-col items-start gap-8 lg:gap-12 relative lg:w-[474px] lg:flex-shrink-0 lg:sticky lg:top-32 lg:self-start">
           <FadeInOnScroll>
             <header className="inline-flex flex-col items-start gap-4 relative self-stretch w-full">
@@ -90,57 +91,50 @@ export const FeaturesSection = () => {
           </FadeInOnScroll>
         </div>
 
-        {/* Coluna da Direita (Lista de Features) */}
-        <div className="flex flex-col items-start justify-center gap-6 relative flex-1 w-full">
-          {features.map((feature, index) => (
-            // Animação em cascata (stagger) baseada no índice
-            <FadeInOnScroll key={feature.id} delay={index * 0.1} className="w-full">
-              <article
-                className={cn(
-                  // Layout Base
-                  "group flex flex-col lg:flex-row items-stretch w-full rounded-xl overflow-hidden",
-                  // Bordas e Cores
-                  "border border-border bg-card",
-                  // Efeitos Hover (Desktop)
-                  "transition-all duration-300 ease-out",
-                  "hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-                )}
-              >
-                {/* TITULO
-                   Mobile: Fundo transparente, padding menor, texto primário
-                   Desktop: Fundo Primário, padding generoso, texto branco
-                */}
-                <div
+        {/* Coluna da Direita (Lista de Features) - Refatorada com Grid */}
+        <div className="relative flex-1 w-full">
+          {/* 2. Uso do Grid cols={1} para lista vertical 
+             Garante gap consistente (default = 24px/32px) 
+          */}
+          <Grid cols={1} gap="default">
+            {features.map((feature, index) => (
+              <FadeInOnScroll key={feature.id} delay={index * 0.1} className="w-full">
+                <article
                   className={cn(
-                    "flex items-center justify-start lg:justify-center",
-                    "px-6 pt-6 pb-2 lg:p-8", // Mobile: padding ajustado / Desktop: padding full
-                    "bg-transparent lg:bg-primary", // Mobile: Transparente / Desktop: Azul
-                    "lg:w-52 lg:flex-shrink-0" // Largura fixa no desktop
+                    "group flex flex-col lg:flex-row items-stretch w-full rounded-xl overflow-hidden",
+                    "border border-border bg-card",
+                    "transition-all duration-300 ease-out",
+                    "hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
                   )}
                 >
-                  <Typography 
-                    variant="h4" 
+                  <div
                     className={cn(
-                      "text-left font-bold leading-tight",
-                      "text-primary lg:text-white" // Mobile: Azul / Desktop: Branco
+                      "flex items-center justify-start lg:justify-center",
+                      "px-6 pt-6 pb-2 lg:p-8",
+                      "bg-transparent lg:bg-primary",
+                      "lg:w-52 lg:flex-shrink-0"
                     )}
                   >
-                    {feature.title}
-                  </Typography>
-                </div>
+                    <Typography 
+                      variant="h4" 
+                      className={cn(
+                        "text-left font-bold leading-tight",
+                        "text-primary lg:text-white"
+                      )}
+                    >
+                      {feature.title}
+                    </Typography>
+                  </div>
 
-                {/* DESCRIÇÃO
-                   Mobile: Padding ajustado para ficar próximo ao título
-                   Desktop: Centralizado verticalmente
-                */}
-                <div className="flex-1 px-6 pb-6 pt-2 lg:p-8 flex items-center">
-                  <Typography variant="body" color="muted" className="leading-relaxed">
-                    {feature.description}
-                  </Typography>
-                </div>
-              </article>
-            </FadeInOnScroll>
-          ))}
+                  <div className="flex-1 px-6 pb-6 pt-2 lg:p-8 flex items-center">
+                    <Typography variant="body" color="muted" className="leading-relaxed">
+                      {feature.description}
+                    </Typography>
+                  </div>
+                </article>
+              </FadeInOnScroll>
+            ))}
+          </Grid>
         </div>
       </Container>
     </Section>

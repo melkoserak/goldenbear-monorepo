@@ -1,14 +1,14 @@
 "use client";
 import React, { useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic'; // 1. Importe dynamic
+import dynamic from 'next/dynamic';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { StepIndicator } from './StepIndicator';
 import { Skeleton } from '@goldenbear/ui/components/skeleton';
 
-// 2. Importe o Passo 1 estaticamente (LCP - deve ser instantâneo)
+// 1. Passo 1 estático (LCP - deve ser instantâneo)
 import { Step1 } from './steps/Step1';
 
-// 3. Componente de Loading Leve (Skeleton)
+// 2. Componente de Loading Leve
 const StepLoading = () => (
   <div className="space-y-6 animate-pulse py-4">
     <div className="h-8 bg-muted rounded w-3/4 mb-8"></div>
@@ -28,7 +28,7 @@ const StepLoading = () => (
   </div>
 );
 
-// 4. Importações Dinâmicas (Code Splitting)
+// 3. Importações Dinâmicas (Code Splitting)
 const Step2 = dynamic(() => import('./steps/Step2').then(mod => mod.Step2), { loading: () => <StepLoading /> });
 const Step3 = dynamic(() => import('./steps/Step3').then(mod => mod.Step3), { loading: () => <StepLoading /> });
 const Step4 = dynamic(() => import('./steps/Step4').then(mod => mod.Step4), { loading: () => <StepLoading /> });
@@ -40,7 +40,11 @@ const Step9 = dynamic(() => import('./steps/Step9').then(mod => mod.Step9), { lo
 const Step10 = dynamic(() => import('./steps/Step10').then(mod => mod.Step10), { loading: () => <StepLoading /> });
 const Step11 = dynamic(() => import('./steps/Step11').then(mod => mod.Step11), { loading: () => <StepLoading /> });
 
-// Configuração de títulos para Acessibilidade e SEO
+// --- CORREÇÃO AQUI: Importar do arquivo ./steps/Step12 ---
+const Step12 = dynamic(() => import('./steps/Step12').then(mod => mod.Step12), { loading: () => <StepLoading /> });
+
+
+// Configuração de títulos
 const stepTitles: { [key: number]: string } = {
   1: 'Passo 1: Dados Iniciais',
   2: 'Passo 2: Dados de Contato',
@@ -52,7 +56,8 @@ const stepTitles: { [key: number]: string } = {
   8: 'Passo 8: Beneficiários',
   9: 'Passo 9: Questionário de Saúde',
   10: 'Passo 10: Pagamento',
-  11: 'Passo 11: Finalização',
+  11: 'Passo 11: Assinatura Digital',
+  12: 'Passo 12: Finalização',
 };
 
 const getMainStep = (step: number) => {
@@ -64,7 +69,7 @@ const getMainStep = (step: number) => {
 };
 
 export const SimulatorForm = () => {
- const currentStep = useSimulatorStore((state) => state.currentStep);
+  const currentStep = useSimulatorStore((state) => state.currentStep);
   const formRef = useRef<HTMLDivElement>(null);
   const hydrateFromStorage = useSimulatorStore((state) => state.actions.hydrateFromStorage);
   
@@ -76,9 +81,8 @@ export const SimulatorForm = () => {
     const title = stepTitles[currentStep] || 'Simulador';
     document.title = `${title} | Golden Bear Seguros`;
     
-    // Foca no topo do formulário ao mudar de passo (Acessibilidade)
+    // Foca no topo ao mudar de passo
     if (formRef.current) {
-      // Pequeno timeout para garantir que o novo passo renderizou
       setTimeout(() => {
           const heading = formRef.current?.querySelector('h3');
           if (heading) {
@@ -89,10 +93,10 @@ export const SimulatorForm = () => {
   }, [currentStep]);
 
    return (
-    <div ref={formRef} className="bg-white w-full max-w-5xl p-6 md:p-10 rounded-lg shadow-sm border border-border/50">
+    <div ref={formRef} className="bg-accent md:bg-white w-full max-w-5xl p-0 md:p-10 rounded-lg shadow-sm border-none md:border border-border/50">
        <StepIndicator currentStep={getMainStep(currentStep)} />     
        <div className="mt-8">
-        {/* Renderização Condicional dos Componentes Dinâmicos */}
+        {/* Renderização Condicional */}
         {currentStep === 1 && <Step1 />}
         {currentStep === 2 && <Step2 />}
         {currentStep === 3 && <Step3 />}
@@ -104,6 +108,7 @@ export const SimulatorForm = () => {
         {currentStep === 9 && <Step9 />}
         {currentStep === 10 && <Step10 />}
         {currentStep === 11 && <Step11 />}
+        {currentStep === 12 && <Step12 />}
       </div>
     </div>
   );

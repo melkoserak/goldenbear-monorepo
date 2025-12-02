@@ -50,16 +50,18 @@ export const HeroSection = () => {
         </div>
 
         <div className="relative w-full lg:w-[100%] lg:block">
-          <Image
-            className="w-[100%] object-cover rounded-lg"
-            alt="Família sorridente com um escudo de proteção amarelo ao fundo, representando a segurança do seguro de vida."
-            src="/imagens/foto-banner-casal-escudo.png"
-            width={598}
-            height={494}
-            priority
-            // --- OTIMIZAÇÃO DE PERFORMANCE ---
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-          />
+              <Image
+              className="w-[100%] object-cover rounded-lg"
+              alt="Família sorridente com um escudo de proteção amarelo ao fundo..."
+              src="/imagens/foto-banner-casal-escudo.png"
+              width={598}
+              height={494}
+              priority
+              quality={85} // <-- ADICIONADO: Compressão segura para Hero
+              // --- OTIMIZAÇÃO DE PERFORMANCE ---
+              // Ajustado: Em mobile (max 768px), desconta o padding lateral (aprox 48px)
+              sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1200px) 50vw, 600px"
+            />
 
           <div className={cn(
             "hidden lg:flex items-start gap-2 p-4 absolute top-[113px] left-[-50px]",

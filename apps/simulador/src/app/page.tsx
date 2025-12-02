@@ -14,7 +14,7 @@ import { Accessibility } from "lucide-react";
 
 export default function SimulatorPage() {
   return (
-    <main className="flex flex-col items-center w-full p-6 gap-10">
+    <main className="flex flex-col items-center w-full p-4 md:p-6  gap-10">
       <header className="w-full max-w-5xl flex items-center justify-between">
         <div className="flex items-center">
           <Image 
@@ -42,8 +42,8 @@ export default function SimulatorPage() {
       </header>
       <div className="w-full max-w-5xl text-left">
         {/* ... (resto da página) ... */}
-        <h1 className="text-2xl font-medium leading-snug text-foreground">
-          Descubra o <span className="font-bold text-primary">plano ideal para você</span><br />
+        <h1 className="text-2xl max-w-[474px] font-medium leading-snug text-foreground">
+          Descubra o <span className="font-bold text-primary">plano ideal para você </span>
           e envie sua proposta em poucos passos.
         </h1>
       </div>

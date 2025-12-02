@@ -38,8 +38,15 @@ export default function HomePage() {
       dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
       opens: '09:00',
       closes: '18:00',
-    },
+    }, 
   ],
+  // --- ADICIONE ISTO ---
+  sameAs: [
+    "https://www.instagram.com/goldenbearseguros",
+    "https://www.facebook.com/goldenbearseguros",
+    "https://www.linkedin.com/company/golden-bear-seguros",
+    "https://www.youtube.com/@goldenbearseguros"
+  ]
 };
 
  return (

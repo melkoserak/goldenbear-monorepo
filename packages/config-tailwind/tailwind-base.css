@@ -67,7 +67,18 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Cores de Sucesso (Baseadas no verde, mas abstraídas) */
+  --success: #22c55e;           /* green-500 */
+  --success-foreground: #ffffff;
+  --success-light: #dcfce7;     /* green-100 para fundos suaves */
+  
+  /* Cores de Aviso */
+  --warning: #f59e0b;           /* amber-500 */
+  --warning-foreground: #ffffff;
+  --warning-light: #fef3c7;     /* amber-100 */
 }
+
 
 /* --- 3. Theming (Modo Escuro) --- */
 /* O modo escuro apenas remapeia os tokens semânticos */
@@ -89,7 +100,7 @@ html.dark {
   --secondary-foreground: #18181b;
 
   --muted: #27272a; /* Zinco 800 */
-  --muted-foreground: #a1a1aa; /* Zinco 400 (Melhor contraste que o anterior) */
+  --muted-foreground: #d4d4d8; /* Zinco 400 (Melhor contraste que o anterior) */
   
   --accent: #27272a;
   --accent-foreground: #fafafa;
@@ -101,4 +112,12 @@ html.dark {
   --border: #3f3f46; /* Zinco 700 */
   --input: #3f3f46;
   --ring: #2563eb;
+  
+  --success: #22c55e; 
+  --success-foreground: #ffffff;
+  --success-light: #14532d;     /* green-900 ajustado para dark mode */
+  
+  --warning: #fbbf24;
+  --warning-foreground: #000000;
+  --warning-light: #451a03;     /* amber-950 ajustado */
 }

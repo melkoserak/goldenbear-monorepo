@@ -1,4 +1,3 @@
-// src/stores/useCoverageStore.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -22,18 +21,22 @@ export interface Coverage {
 
 export interface ApiCoverage {
   itemProdutoId?: string;
-  id?: string;
+  id?: string | number;
   descricao?: string;
+  descricaoComercial?: string; // <--- ADICIONADO AQUI
   descricaoDigitalCurta?: string;
   descricaoDigitalLonga?: string;
   numeroProcessoSusep?: string;
   obrigatoria?: boolean;
+  tipo?: { id: number; descricao: string };
   tipoId?: number;
-  valorMinimoCapitalContratacao?: string;
-  capitalBase?: string;
-  limite?: string;
-  premioBase?: string;
-  custoFixo?: string;
+  valorMinimoCapitalContratacao?: string | number;
+  capitalBase?: string | number;
+  limite?: string | number;
+  premioBase?: string | number;
+  custoFixo?: string | number;
+  valorFixo?: number;
+  capitalFixo?: number;
   questionariosPorFaixa?: {
       questionarios: {
           idQuestionario: string;
@@ -43,15 +46,16 @@ export interface ApiCoverage {
 }
 
 interface ApiProduct {
-  idProduto: number;
+  id: number;
+  idProduto?: number;
+  descricao: string;
   coberturas: ApiCoverage[];
 }
 
 type ApiData = {
   Valor?: {
-    simulacoes?: {
-      produtos?: ApiProduct[];
-    }[];
+    simulacoes?: { produtos?: ApiProduct[] }[];
+    produtos?: ApiProduct[];
   };
 };
 
@@ -67,57 +71,57 @@ type CoverageState = {
 };
 
 const normalizeApiData = (apiData: ApiData): { coverages: Coverage[], mainSusep: string | null } => {
-  const products = apiData?.Valor?.simulacoes?.[0]?.produtos;
+  let products: ApiProduct[] = [];
+  
+  if (apiData?.Valor?.produtos) {
+      products = apiData.Valor.produtos;
+  } else if (apiData?.Valor?.simulacoes?.[0]?.produtos) {
+      products = apiData.Valor.simulacoes[0].produtos;
+  }
+
   if (!products || products.length === 0) {
-    console.error("Estrutura da API inesperada. 'produtos' não encontrado ou vazio.");
+    console.error("Estrutura da API inesperada. 'produtos' não encontrado.");
     return { coverages: [], mainSusep: null };
   }
 
-  // 1. Tenta encontrar o produto preferencial (ID 2096)
-  const preferredProduct = products.find((p) => p.idProduto === 2096);
+  const targetProduct = products.find((p) => p.id === 2096 || p.idProduto === 2096) || products[0];
+  const productId = targetProduct.id || targetProduct.idProduto || 0;
   
-  // 2. CORREÇÃO: Se não achar o preferido, pega APENAS O PRIMEIRO da lista.
-  // Antes estava pegando 'products' inteiro (todos), o que duplicava as coberturas.
-  const targetProduct = preferredProduct || products[0];
-  
-  // Garantimos que é um array para o flatMap funcionar, mas agora sempre terá apenas 1 item.
-  const productsToProcess = [targetProduct];
-  
-  console.log(`[useCoverageStore] Produto selecionado: ID ${targetProduct.idProduto} ${preferredProduct ? '(Preferencial)' : '(Fallback)'}`);
+  console.log(`[useCoverageStore] Produto selecionado: ${targetProduct.descricao} (ID ${productId})`);
 
-  const mainSusep = productsToProcess[0]?.coberturas?.[0]?.numeroProcessoSusep || null;
+  const mainSusep = targetProduct.coberturas?.[0]?.numeroProcessoSusep || null;
 
-  const allCoverages: Coverage[] = productsToProcess.flatMap(
-    (product: ApiProduct) =>
-      product.coberturas.map((cov: ApiCoverage) => {
-        const baseCapital = parseFloat(cov.capitalBase || '0');
-        const apiMinCapital = parseFloat(cov.valorMinimoCapitalContratacao || '0') || baseCapital || 0;
-        const minCapital = Math.max(apiMinCapital, 20000);
+  const coverages: Coverage[] = targetProduct.coberturas.map((cov: ApiCoverage) => {
+      const apiCapitalBase = Number(cov.capitalBase || cov.capitalFixo || 0);
+      const apiMinCapital = Number(cov.valorMinimoCapitalContratacao || apiCapitalBase || 0);
+      const apiMaxCapital = Number(cov.limite || apiCapitalBase * 10 || 0);
+      
+      const apiBasePremium = Number(cov.valorFixo || cov.premioBase || 0);
 
-        return {
-          id: `${product.idProduto}-${cov.itemProdutoId || cov.id || cov.descricao}`,
-          name: cov.descricao || "Cobertura sem nome",
-          description: cov.descricaoDigitalCurta || "Descrição não fornecida.", 
-          longDescription: cov.descricaoDigitalLonga || "Detalhes não fornecidos.",
-          susep: cov.numeroProcessoSusep || 'N/A',
-          isAdjustable: cov.tipoId === 3, 
-          calculationType: cov.tipoId || 0,
-          isMandatory: cov.obrigatoria === true,
-          minCapital: minCapital,
-          maxCapital: parseFloat(cov.limite || '0'),
-          baseCapital: baseCapital,
-          basePremium: parseFloat(cov.premioBase || '0'),
-          isActive: cov.obrigatoria === true || true,
-          currentCapital: Math.max(baseCapital, minCapital),
-          originalData: { ...cov, productId: product.idProduto },
-        };
-      })
-  );
+      const coverageId = cov.id || cov.itemProdutoId;
+      const tipoId = cov.tipo?.id || cov.tipoId || 0;
+      const isAdjustable = tipoId === 3 && !cov.valorFixo;
+
+      return {
+        id: `${productId}-${coverageId}`,
+        name: cov.descricao || "Cobertura",
+        description: cov.descricaoDigitalCurta || cov.descricaoComercial || "Sem descrição.",
+        longDescription: cov.descricaoDigitalLonga || "",
+        susep: cov.numeroProcessoSusep || 'N/A',
+        isMandatory: cov.obrigatoria === true,
+        isActive: true,
+        isAdjustable: isAdjustable,
+        calculationType: tipoId,
+        minCapital: Math.max(apiMinCapital, 1000),
+        maxCapital: apiMaxCapital,
+        baseCapital: apiCapitalBase,
+        basePremium: apiBasePremium,
+        currentCapital: Math.max(apiCapitalBase, apiMinCapital),
+        originalData: { ...cov, productId: productId },
+      };
+  });
   
-  // Remove duplicatas por nome, apenas por segurança extra
-  const uniqueCoverages = Array.from(new Map(allCoverages.map((c: Coverage) => [c.name, c])).values());
-  
-  return { coverages: uniqueCoverages, mainSusep };
+  return { coverages, mainSusep };
 };
 
 export const useCoverageStore = create<CoverageState>()(
@@ -129,15 +133,23 @@ export const useCoverageStore = create<CoverageState>()(
         const { coverages, mainSusep } = normalizeApiData(apiData);
         set({ coverages, mainSusep });
       },
-      toggleCoverage: (id) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id && !c.isMandatory ? { ...c, isActive: !c.isActive } : c) })),
-      updateCapital: (id, capital) => set((state) => ({ coverages: state.coverages.map((c) => c.id === id ? { ...c, currentCapital: capital } : c) })),
+      toggleCoverage: (id) => set((state) => ({
+        coverages: state.coverages.map((c) => 
+          c.id === id && !c.isMandatory ? { ...c, isActive: !c.isActive } : c
+        ) 
+      })),
+      updateCapital: (id, capital) => set((state) => ({ 
+        coverages: state.coverages.map((c) => c.id === id ? { ...c, currentCapital: capital } : c) 
+      })),
       getCalculatedPremium: (coverage) => {
         if (!coverage.isActive) return 0;
-        const custoFixo = parseFloat(coverage.originalData?.custoFixo || '0');
-        if (coverage.calculationType === 3 && coverage.baseCapital > 0) {
-          return custoFixo + (coverage.currentCapital / coverage.baseCapital) * coverage.basePremium;
+        if (coverage.basePremium > 0 && !coverage.isAdjustable) {
+            return coverage.basePremium;
         }
-        return custoFixo + coverage.basePremium;
+        if (coverage.isAdjustable && coverage.baseCapital > 0) {
+          return (coverage.currentCapital / coverage.baseCapital) * coverage.basePremium;
+        }
+        return coverage.basePremium;
       },
       getTotalPremium: () => {
         const { coverages, getCalculatedPremium } = get();
@@ -145,7 +157,10 @@ export const useCoverageStore = create<CoverageState>()(
       },
       getTotalIndemnity: () => {
         const { coverages } = get();
-        return coverages.reduce((total, cov) => (cov.isActive ? total + cov.currentCapital : total), 0);
+        return coverages.reduce((total, cov) => {
+             if (!cov.isActive) return total;
+             return cov.currentCapital > 10000 ? total + cov.currentCapital : total;
+        }, 0);
       },
     }),
     {

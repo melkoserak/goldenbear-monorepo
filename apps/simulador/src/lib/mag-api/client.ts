@@ -3,12 +3,17 @@ import { MagSimulationPayload } from './types';
 
 // Remove barra final se houver para evitar erros de URL
 const BASE_URL = process.env.MAG_API_BASE_URL?.replace(/\/$/, '') || '';
+// IDs do Sistema fornecidos pelo suporte
+// STG: 78931e5a-0bba-4f96-b0e9-d4e6ae8395ff
+// PRD: 8cd318ae-67fc-40a8-97d6-ccb09063143f
+const SYSTEM_ID = process.env.NODE_ENV === 'production' 
+  ? '8cd318ae-67fc-40a8-97d6-ccb09063143f' 
+  : '78931e5a-0bba-4f96-b0e9-d4e6ae8395ff';
 
 // 1. Função Genérica de Token
 async function getMagToken(scope: string): Promise<string> {
-  // SÓ loga em desenvolvimento
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`[BFF-BACKEND] Solicitando token. Escopo: "${scope}"`);
+    MAG_Logger.debug(`[BFF-BACKEND] Solicitando token. Escopo: "${scope}"`);
   }
 
   const url = `${BASE_URL}/connect/token`;
@@ -30,49 +35,48 @@ async function getMagToken(scope: string): Promise<string> {
     const data = await response.json();
 
     if (!response.ok || !data.access_token) {
-      console.error('[BFF-BACKEND] ❌ Erro Token:', { status: response.status, error: data });
-      throw new Error(`Falha auth MAG: ${response.status}`);
+      // --- CORREÇÃO DE LOG ---
+      // Loga o erro cru no terminal para leitura imediata
+      console.error(`[DEBUG TOKEN] Falha ao obter token para escopo '${scope}':`, JSON.stringify(data, null, 2));
+      
+      const errorMsg = data.error_description || data.error || JSON.stringify(data);
+      
+      MAG_Logger.error('[BFF-BACKEND] ❌ Erro Token:', { 
+        status: response.status, 
+        scope: scope,
+        error: errorMsg 
+      });
+      
+      throw new Error(`Falha auth MAG (${scope}): ${errorMsg}`);
     }
 
     return data.access_token;
   } catch (error) {
-    console.error('[BFF-BACKEND] ❌ Exceção Token:', error);
+    MAG_Logger.error('[BFF-BACKEND] ❌ Exceção Token:', error as Error);
     throw error;
   }
 }
 
 // --- Tokens Específicos ---
 
-// Token para Simulação e Proposta (Escopo padrão)
 const getApiSeguradoraToken = () => getMagToken('apiseguradora');
-
-// Token para Widget (Se ainda for usar em algum lugar)
 export const getWidgetToken = () => getMagToken('apiseguradora apiunderwriting');
-
-// Token para Pagamento
 export const getPaymentWidgetToken = () => getMagToken('cartaocredito');
 
-// --- O TOKEN DO QUESTIONÁRIO (CORRIGIDO) ---
-// Escopo confirmado: api.questionario
 export const getQuestionnaireToken = async () => {
   return getMagToken('api.questionario');
 };
+// --- NOVO: Token para Controle de Acesso ---
+export const getAccessControlToken = async () => getMagToken('apicontroleacesso');
 
 // --- Funções de Negócio: Questionário ---
 
-/**
- * Busca a estrutura do questionário (GET)
- * Endpoint confirmado: /api.questionario/v2/Questionario/{id}
- */
 export async function getQuestionnaireStructure(id: string | number) {
   try {
-    // 1. Pega o token com escopo 'api.questionario'
     const token = await getQuestionnaireToken();
-    
-    // 2. Monta a URL exata que você confirmou
     const url = `${BASE_URL}/api.questionario/v2/Questionario/${id}`;
 
-    console.log(`[MAG Client] GET ${url}`);
+    MAG_Logger.info(`[MAG Client] GET Questionário`, { url });
 
     const response = await fetch(url, {
       method: 'GET',
@@ -85,13 +89,13 @@ export async function getQuestionnaireStructure(id: string | number) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[MAG Client] Erro GET Questionário (${response.status}):`, errorText);
+      MAG_Logger.error(`[MAG Client] Erro GET Questionário (${response.status}):`, new Error(errorText));
       throw new Error(`Erro MAG (${response.status}): ${errorText}`);
     }
 
     return response.json();
   } catch (error) {
-    console.error("[MAG Client] Falha crítica em getQuestionnaireStructure:", error);
+    MAG_Logger.error("[MAG Client] Falha crítica em getQuestionnaireStructure:", error as Error);
     throw error;
   }
 }
@@ -99,11 +103,9 @@ export async function getQuestionnaireStructure(id: string | number) {
 export async function getDomains() {
   try {
     const token = await getQuestionnaireToken();
-    
-    const cleanBaseUrl = process.env.MAG_API_BASE_URL?.replace(/\/$/, '') || '';
-    const url = `${cleanBaseUrl}/api.questionario/v2/Dominio`;
+    const url = `${BASE_URL}/api.questionario/v2/Dominio`;
 
-    console.log(`[MAG Client] GET Domínios: ${url}`);
+    MAG_Logger.info(`[MAG Client] GET Domínios`, { url });
 
     const response = await fetch(url, {
       method: 'GET',
@@ -111,40 +113,143 @@ export async function getDomains() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      // Cache longo (24h) pois metadados mudam raramente
       next: { revalidate: 86400 } 
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[MAG Client] Erro ao buscar domínios:`, errorText);
+      MAG_Logger.error(`[MAG Client] Erro ao buscar domínios:`, new Error(errorText));
       throw new Error(`Erro MAG Domínios (${response.status}): ${errorText}`);
     }
 
     return response.json();
   } catch (error) {
-    console.error("[MAG Client] Falha em getDomains:", error);
+    MAG_Logger.error("[MAG Client] Falha em getDomains:", error as Error);
     throw error;
   }
 }
 
 /**
  * Envia as respostas (POST)
- * Assumindo o padrão do endpoint: /api.questionario/v2/Resposta
+ * CORREÇÃO: filledJson agora é 'any' para aceitar o objeto direto
  */
-export async function postQuestionnaireAnswers(proposalNumber: string, filledJsonString: string) {
+export async function postQuestionnaireAnswers(proposalNumber: string, filledJson: any) {
   try {
     const token = await getQuestionnaireToken();
-    
-    // Mantendo o mesmo padrão de URL do serviço
     const url = `${BASE_URL}/api.questionario/v2/Resposta`;
+
+    // Log seguro (apenas chaves ou resumo)
+    MAG_Logger.info("[MAG Client] Enviando DPS (Objeto)", { proposalNumber });
 
     const body = {
       Localizador: {
         Origem: "Venda",
         IdentificadorExterno: String(proposalNumber)
       },
-      Resposta: filledJsonString
+      // Aqui transformamos o objeto em string para satisfazer o contrato da API
+      Resposta: JSON.stringify(filledJson) 
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body), // Serializa o envelope externo
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      MAG_Logger.error(`[MAG Client] Erro POST Resposta (${response.status}):`, new Error(errorText));
+      throw new Error(`Falha envio DPS: ${response.status} - ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    MAG_Logger.error("[MAG Client] Falha crítica em postQuestionnaireAnswers:", error as Error);
+    throw error;
+  }
+}
+
+export async function getQuestion(id: string | number) {
+  try {
+    const token = await getQuestionnaireToken();
+    const url = `${BASE_URL}/api.questionario/v2/Pergunta/${id}`;
+
+    MAG_Logger.info(`[MAG Client] GET Pergunta`, { url });
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      MAG_Logger.error(`[MAG Client] Erro ao buscar pergunta ${id}:`, new Error(errorText));
+      throw new Error(`Erro MAG Pergunta (${response.status}): ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    MAG_Logger.error("[MAG Client] Falha em getQuestion:", error as Error);
+    throw error;
+  }
+}
+
+export async function createQuestion(payload: any) {
+  try {
+    const token = await getQuestionnaireToken();
+    const url = `${BASE_URL}/api.questionario/v2/Pergunta`;
+
+    MAG_Logger.info(`[MAG Client] POST Criar Pergunta`, { url });
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      MAG_Logger.error(`[MAG Client] Erro ao criar pergunta:`, new Error(errorText));
+      throw new Error(`Erro MAG Criar Pergunta (${response.status}): ${errorText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    MAG_Logger.error("[MAG Client] Falha em createQuestion:", error as Error);
+    throw error;
+  }
+}
+
+// --- NOVAS FUNÇÕES: Assinatura Digital ---
+
+/**
+ * Solicita o envio do Token (OTP) para o usuário
+ */
+export async function requestSignatureOtp(username: string, channel: 'Email' | 'SMS' | 'Whatsapp' = 'Email') {
+  try {
+    const token = await getAccessControlToken(); // Scope: apicontroleacesso
+    
+    // URL Corrigida conforme e-mail do suporte
+    const url = `${BASE_URL}/gestao-acesso/v1/token/user/${username}/system/${SYSTEM_ID}`;
+
+    MAG_Logger.info(`[MAG Client] Solicitando OTP para ${username} via ${channel}`);
+
+    const body = {
+      output: channel === 'Whatsapp' ? 'SMS' : channel, // Fallback se Whats não for suportado
+      timeoutInMinutes: "5",
+      tokenSize: "6"
     };
 
     const response = await fetch(url, {
@@ -159,61 +264,62 @@ export async function postQuestionnaireAnswers(proposalNumber: string, filledJso
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[MAG Client] Erro POST Resposta (${response.status}):`, errorText);
-      throw new Error(`Falha envio DPS: ${response.status} - ${errorText}`);
+      MAG_Logger.error(`[MAG Client] Erro Solicitação OTP (${response.status}):`, new Error(errorText));
+      throw new Error(`Falha ao solicitar token: ${response.status} - ${errorText}`);
     }
 
-    return response.json();
+    return true;
   } catch (error) {
-    console.error("[MAG Client] Falha crítica em postQuestionnaireAnswers:", error);
-    throw error;
-  }
-}
-
-export async function getQuestion(id: string | number) {
-  try {
-    const token = await getQuestionnaireToken();
-    
-    // Monta a URL: remove barra final da base e adiciona o endpoint
-    const cleanBaseUrl = process.env.MAG_API_BASE_URL?.replace(/\/$/, '') || '';
-    const url = `${cleanBaseUrl}/api.questionario/v2/Pergunta/${id}`;
-
-    console.log(`[MAG Client] GET Pergunta: ${url}`);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store' // Dados administrativos geralmente não devem ser cacheados
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[MAG Client] Erro ao buscar pergunta ${id}:`, errorText);
-      throw new Error(`Erro MAG Pergunta (${response.status}): ${errorText}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error("[MAG Client] Falha em getQuestion:", error);
+    MAG_Logger.error("[MAG Client] Falha em requestSignatureOtp:", error as Error);
     throw error;
   }
 }
 
 /**
- * Cria uma nova pergunta (POST)
- * Endpoint: /api.questionario/v2/Pergunta
+ * Realiza a assinatura validando o Token
  */
-export async function createQuestion(payload: any) {
+export async function createDigitalSignature(payload: {
+  username: string;
+  document: string;
+  email: string;
+  name: string;
+  phone: string;
+  tokenCode: string;
+  ip: string;
+  userAgent: string;
+}) {
   try {
-    const token = await getQuestionnaireToken();
-    
-    const cleanBaseUrl = process.env.MAG_API_BASE_URL?.replace(/\/$/, '') || '';
-    const url = `${cleanBaseUrl}/api.questionario/v2/Pergunta`;
+    const token = await getAccessControlToken();
+    const url = `${BASE_URL}/gestao-acesso/v1/signature`;
 
-    console.log(`[MAG Client] POST Criar Pergunta: ${url}`);
+    MAG_Logger.info(`[MAG Client] Criando Assinatura para ${payload.username}`);
+
+    const cleanDoc = payload.document.replace(/\D/g, '').substring(0, 11); 
+    const cleanPhone = payload.phone.replace(/\D/g, '').substring(0, 11);
+
+    // --- CORREÇÃO: Valores mínimos garantidos ---
+    const body = {
+      user: {
+        username: cleanDoc, 
+        document: cleanDoc,
+        email: payload.email.substring(0, 50), // Garante corte
+        nameProponente: payload.name.substring(0, 50),
+        cellphone: cleanPhone 
+      },
+      token: {
+        tokenCode: payload.tokenCode,
+        sendType: "Email",
+        systemId: SYSTEM_ID,
+        tokenType: "ValidacaoCompra"
+      },
+      sender: {
+        userAgent: "Simulador", // Valor fixo minúsculo
+        ip: "127.0.0.1",        // Valor fixo seguro (IPv4)
+        port: "443",
+        timezone: "UTC"
+      },
+      description: "Sig" // Valor minúsculo
+    };
 
     const response = await fetch(url, {
       method: 'POST',
@@ -221,24 +327,22 @@ export async function createQuestion(payload: any) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
       cache: 'no-store'
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[MAG Client] Erro ao criar pergunta:`, errorText);
-      throw new Error(`Erro MAG Criar Pergunta (${response.status}): ${errorText}`);
+      MAG_Logger.error(`[MAG Client] Erro Assinatura (${response.status}):`, new Error(errorText));
+      throw new Error(`Erro na assinatura (${response.status}). Verifique o token.`);
     }
 
-    return response.json();
+    return await response.json(); 
   } catch (error) {
-    console.error("[MAG Client] Falha em createQuestion:", error);
+    MAG_Logger.error("[MAG Client] Falha em createDigitalSignature:", error as Error);
     throw error;
   }
-}
-
-// --- Funções de Negócio: Simulação e Proposta (Mantidas) ---
+}// --- Funções de Negócio: Simulação e Proposta ---
 
 export async function getProfessions() {
   const token = await getApiSeguradoraToken();

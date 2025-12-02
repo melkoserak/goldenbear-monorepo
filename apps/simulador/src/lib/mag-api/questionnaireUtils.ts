@@ -1,13 +1,12 @@
 // apps/simulador/src/lib/mag-api/questionnaireUtils.ts
 
-// 1. Definição dos Tipos Locais (para uso interno da função)
 export interface MagNode {
   Id: number;
-  TipoItem: { Sigla: string }; // 'Pergunta', 'Agrupador'
+  TipoItem: { Sigla: string }; 
   Opcoes?: MagOption[];
-  Perguntas?: MagNode[]; // Agrupadores podem ter perguntas filhas
-  Resposta?: string; // O campo que vamos injetar
-  [key: string]: any; // Permite outras props originais
+  Perguntas?: MagNode[]; 
+  Resposta?: string; 
+  [key: string]: any; 
 }
 
 export interface MagOption {
@@ -19,21 +18,28 @@ export interface MagOption {
 
 /**
  * Percorre recursivamente a árvore do questionário e injeta as respostas.
+ * Retorna o OBJETO (não string) para evitar dupla serialização.
  */
 export function fillQuestionnaireTree(
   originalStructure: any,
   userAnswers: Record<string, { value: string; optionId?: number }>
-): string {
+): any {
   
-  // Deep clone para não mutar o original
-  const structureClone = JSON.parse(JSON.stringify(originalStructure));
+  // 1. Unwrap 'Valor' se existir (Remove o envelope da API)
+  let rootData = originalStructure;
+  if (originalStructure && originalStructure.Valor) {
+    rootData = originalStructure.Valor;
+  }
+
+  // 2. Deep clone do dado limpo
+  const structureClone = JSON.parse(JSON.stringify(rootData));
 
   const processNode = (node: MagNode) => {
     // Se existe resposta do usuário para este ID de pergunta
     if (userAnswers[node.Id]) {
       const answer = userAnswers[node.Id];
       
-      // REGRA 3: A resposta deve ser sempre String
+      // A resposta deve ser sempre String na estrutura da MAG
       node.Resposta = String(answer.value);
     }
 
@@ -52,16 +58,15 @@ export function fillQuestionnaireTree(
     }
   };
 
-  // Identifica o ponto de entrada da árvore (pode variar dependendo da API)
+  // Identifica o ponto de entrada e processa
   if (Array.isArray(structureClone)) {
     structureClone.forEach(processNode);
-  } else if (structureClone.Perguntas && Array.isArray(structureClone.Perguntas)) {
-    structureClone.Perguntas.forEach(processNode);
   } else if (structureClone.VersaoQuestionario?.[0]?.Perguntas) {
     structureClone.VersaoQuestionario[0].Perguntas.forEach(processNode);
-  } else if (structureClone.Valor?.VersaoQuestionario?.[0]?.Perguntas) {
-    structureClone.Valor.VersaoQuestionario[0].Perguntas.forEach(processNode);
+  } else if (structureClone.Perguntas && Array.isArray(structureClone.Perguntas)) {
+    structureClone.Perguntas.forEach(processNode);
   }
 
-  return JSON.stringify(structureClone);
+  // Retorna o OBJETO modificado
+  return structureClone;
 }

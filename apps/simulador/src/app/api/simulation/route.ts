@@ -6,80 +6,86 @@ import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-// 1. Schema de Validação para Simulação
 const simulationSchema = z.object({
-  mag_nome_completo: z.string().min(3, "Nome completo é obrigatório"),
-  mag_cpf: z.string().transform(val => val.replace(/\D/g, '')).refine(val => val.length === 11, "CPF inválido"),
-  mag_data_nascimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve ser YYYY-MM-DD"),
-  mag_sexo: z.enum(['masculino', 'feminino']),
-  mag_renda: z.string().min(1, "Renda é obrigatória"),
-  mag_estado: z.string().length(2, "Estado inválido (UF)"),
-  mag_profissao_cbo: z.string().min(1, "Profissão é obrigatória"),
+  mag_nome_completo: z.string().min(3),
+  mag_cpf: z.string().transform(val => val.replace(/\D/g, '')),
+  mag_data_nascimento: z.string(),
+  mag_sexo: z.string().optional(),
+  mag_renda: z.string(),
+  mag_estado: z.string().length(2),
+  mag_profissao_cbo: z.string(),
 });
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
-    // 2. Validação e Sanitização
     const validation = simulationSchema.safeParse(body);
 
     if (!validation.success) {
-      // --- CORREÇÃO: Usar .issues ao invés de .errors ---
-      const errorMessages = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
-      MAG_Logger.warn('Tentativa de simulação com dados inválidos', { errors: errorMessages });
-      return NextResponse.json({ error: `Dados inválidos: ${errorMessages}` }, { status: 400 });
+      return NextResponse.json({ error: "Dados inválidos." }, { status: 400 });
     }
 
     const cleanData = validation.data;
-
-    // 3. Lógica de Negócio
-    const offerId = process.env.MAG_OFFER_ID!;
-    const detailsData = await getProductDetailsByOffer(offerId);
-    
-    const coverageDetailsMap = new Map<string, any>();
-    if (detailsData && detailsData.Valor) {
-      detailsData.Valor.forEach((product: any) => {
-        const productId = product.id;
-        if (productId && product.coberturas) {
-          product.coberturas.forEach((coverage: any) => {
-            const compositeKey = `${productId}::${coverage.descricao}`;
-            coverageDetailsMap.set(compositeKey, coverage);
-          });
-        }
-      });
-    }
+    if (!cleanData.mag_sexo) cleanData.mag_sexo = 'masculino';
 
     const payload = prepareSimulationPayload(cleanData as any);
-    
+    console.log("[BFF] Enviando simulação:", JSON.stringify(payload));
+
     const simResponse = await postSimulation(payload);
     const simData = await simResponse.json();
 
     if (!simResponse.ok) {
-      throw new Error(simData?.Mensagens?.[0]?.Descricao || 'Falha na API de simulação');
+      const msg = simData?.Mensagens?.[0]?.Descricao || 'Erro na API MAG';
+      console.error("[BFF] Erro MAG:", msg);
+      throw new Error(msg);
     }
 
-    if (simData.Valor?.simulacoes?.[0]?.produtos && coverageDetailsMap.size > 0) {
-      simData.Valor.simulacoes[0].produtos.forEach((simProduct: any) => {
-        const simProductId = simProduct.idProduto;
-        if (simProductId && simProduct.coberturas) {
-          simProduct.coberturas.forEach((simCoverage: any) => {
-            const compositeKey = `${simProductId}::${simCoverage.descricao}`;
-            if (coverageDetailsMap.has(compositeKey)) {
-              const details = coverageDetailsMap.get(compositeKey);
-              simCoverage.numeroProcessoSusep = details.numeroProcessoSusep || '';
-              simCoverage.descricaoDigitalCurta = details.descricaoDigitalCurta || '';
-              simCoverage.descricaoDigitalLonga = details.descricaoDigitalLonga || '';
+    let produtosParaEnriquecer: any[] = [];
+    if (simData.Valor?.produtos) {
+        produtosParaEnriquecer = simData.Valor.produtos;
+    } else if (simData.Valor?.simulacoes?.[0]?.produtos) {
+        produtosParaEnriquecer = simData.Valor.simulacoes[0].produtos;
+    }
+
+    const offerId = process.env.MAG_OFFER_ID;
+    if (offerId && produtosParaEnriquecer.length > 0) {
+        try {
+            const detailsData = await getProductDetailsByOffer(offerId);
+            if (detailsData?.Valor) {
+                const detailsMap = new Map();
+                detailsData.Valor.forEach((p: any) => {
+                    if (p.coberturas) {
+                        p.coberturas.forEach((c: any) => {
+                             const key = `${p.id}::${c.descricao}`; 
+                             detailsMap.set(key, c);
+                        });
+                    }
+                });
+
+                produtosParaEnriquecer.forEach((prod: any) => {
+                    const pId = prod.id || prod.idProduto;
+                    if (prod.coberturas) {
+                        prod.coberturas.forEach((cov: any) => {
+                            const key = `${pId}::${cov.descricao}`;
+                            const detail = detailsMap.get(key);
+                            if (detail) {
+                                cov.descricaoDigitalCurta = detail.descricaoDigitalCurta;
+                                cov.descricaoDigitalLonga = detail.descricaoDigitalLonga;
+                            }
+                        });
+                    }
+                });
             }
-          });
+        } catch (err) {
+            console.warn("[BFF] Falha ao enriquecer produtos (não crítico):", err);
         }
-      });
     }
 
     return NextResponse.json(simData);
 
   } catch (error) {
     const err = error as Error;
+    // CORREÇÃO AQUI: Usar o MAG_Logger
     MAG_Logger.error('Erro em /api/simulation', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

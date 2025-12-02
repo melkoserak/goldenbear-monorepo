@@ -1,241 +1,166 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
-import { useCoverageStore, type ApiCoverage } from '@/stores/useCoverageStore';
-import { submitProposal, type ProposalPayload } from '@/services/apiService';
 import { track } from '@/lib/tracking';
-import { Loader2, AlertTriangle, PartyPopper, CheckCircle2 } from 'lucide-react';
+import { Loader2, PenTool, ShieldCheck, Mail, AlertTriangle } from 'lucide-react';
 import { Button } from '@goldenbear/ui/components/button';
-import { fillQuestionnaireTree } from '@/lib/mag-api/questionnaireUtils';
-
-// Tipos auxiliares para o mapeamento
-interface MappedCoverage extends ApiCoverage {
-    capitalContratado: number;
-    premioCalculado: number;
-}
-interface MappedProduct {
-    idProduto: number;
-    descricao: string;
-    coberturas: MappedCoverage[];
-}
+import { Input } from '@goldenbear/ui/components/input';
+import { StepLayout } from '../StepLayout';
 
 export const Step11 = () => {
-    const { 
-        formData, 
-        reservedProposalNumber,
-        paymentPreAuthCode 
-    } = useSimulatorStore();
+    const { formData, actions: { nextStep, setFormData } } = useSimulatorStore();
     
-    const coverageState = useCoverageStore();
-
-    const [status, setStatus] = useState<'processing' | 'sending_dps' | 'success' | 'error'>('processing');
+    // Estados locais
+    const [stepState, setStepState] = useState<'initial' | 'input_code'>('initial');
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [proposalNumber, setProposalNumber] = useState<string | null>(null);
+    const [tokenCode, setTokenCode] = useState('');
 
-    // Função auxiliar para enviar o questionário (BFF)
-    const submitQuestionnaire = async (propNumber: string, filledJson: string) => {
-        const res = await fetch('/simulador/api/questionnaire/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ proposalNumber: propNumber, filledJson })
-        });
-        
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error || 'Falha ao enviar respostas de saúde.');
+    // Mascarar email para privacidade (ex: jo***@gmail.com)
+    const maskedEmail = formData.email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+
+    const handleRequestToken = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await fetch('/simulador/api/signature/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+    username: formData.cpf.replace(/\D/g, ''),
+    channel: 'SMS' // <--- TENTE ISTO
+})
+            });
+            
+            if (!res.ok) throw new Error('Não foi possível enviar o código.');
+            
+            track('signature_token_requested', { channel: 'Email' });
+            setStepState('input_code');
+        } catch (e) {
+            setError("Erro ao solicitar código. Tente novamente.");
+        } finally {
+            setIsLoading(false);
         }
-        return res.json();
     };
 
-    useEffect(() => {
-        track('step_view', { step: 11, step_name: 'Processamento Final' });
+    const handleVerifyToken = async () => {
+        if (tokenCode.length < 6) return;
+        setIsLoading(true);
+        setError(null);
 
-        const handleFinalSubmit = async () => {
-            try {
-                // --- 1. PREPARAÇÃO DO PAYLOAD DA PROPOSTA ---
-                const productMap = new Map<string, MappedProduct>();
-                coverageState.coverages.forEach(coverage => {
-                    if (coverage.isActive) {
-                        const productId = coverage.originalData.productId;
-                        if (productId !== undefined) {
-                            const productIdStr = String(productId);
-                            if (!productMap.has(productIdStr)) {
-                                productMap.set(productIdStr, {
-                                    idProduto: productId,
-                                    descricao: `Produto ${productId}`,
-                                    coberturas: []
-                                });
-                            }
-                            const product = productMap.get(productIdStr);
-                            if (product) {
-                                 product.coberturas.push({
-                                    ...coverage.originalData,
-                                    capitalContratado: coverage.currentCapital,
-                                    premioCalculado: coverageState.getCalculatedPremium(coverage)
-                                });
-                            }
-                        }
-                    }
-                });
+        try {
+            const res = await fetch('/simulador/api/signature/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    username: formData.cpf.replace(/\D/g, ''),
+                    document: formData.cpf.replace(/\D/g, ''),
+                    email: formData.email,
+                    name: formData.fullName,
+                    phone: formData.phone,
+                    tokenCode: tokenCode
+                })
+            });
 
-                const finalSimulationConfig = {
-                    VL_TOTAL: coverageState.getTotalPremium(),
-                    produtos: Array.from(productMap.values())
-                };
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Código inválido.');
 
-                const payload: ProposalPayload = {
-                    mag_nome_completo: formData.fullName,
-                    mag_cpf: formData.cpf,
-                    mag_email: formData.email,
-                    mag_celular: formData.phone,
-                    mag_estado: formData.state,
-                    mag_data_nascimento: formData.birthDate,
-                    mag_sexo: formData.gender,
-                    mag_renda: formData.income,
-                    mag_profissao_cbo: formData.profession,
-                    mag_cep: formData.zipCode,
-                    mag_logradouro: formData.street,
-                    mag_numero: formData.number,
-                    mag_complemento: formData.complement,
-                    mag_bairro: formData.neighborhood,
-                    mag_cidade: formData.city,
-                    mag_estado_civil: formData.maritalStatus,
-                    mag_tel_residencial: formData.homePhone,
-                    mag_rg_num: formData.rgNumber,
-                    mag_rg_orgao: formData.rgIssuer,
-                    mag_rg_data: formData.rgDate,
-                    mag_num_filhos: formData.childrenCount,
-                    mag_profissao_empresa: formData.company,
-                    mag_ppe: formData.isPPE,
-                    
-                    // JSONs complexos como string
-                    final_simulation_config: JSON.stringify(finalSimulationConfig),
-                    widget_answers: JSON.stringify(formData.dpsAnswers || {}), // Fallback antigo, mantido por segurança
-                    
-                    payment_pre_auth_code: paymentPreAuthCode || '',
-                    reserved_proposal_number: reservedProposalNumber || '',
-                };
+            // Sucesso! Salva o token e avança
+            setFormData({ signatureToken: tokenCode });
+           track('signature_success', {});
+            nextStep(); // Vai para o Step 12 (Processamento)
+
+        } catch (e) {
+            setError("Código inválido ou expirado. Verifique e tente novamente.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <StepLayout 
+            title="Assinatura Digital" 
+            description="Para sua segurança, valide sua identidade para finalizar a contratação."
+        >
+            <div className="flex flex-col items-center justify-center py-6 max-w-md mx-auto w-full">
                 
-                // Adiciona beneficiários dinamicamente
-                formData.beneficiaries.forEach((ben, index) => {
-                    payload[`mag_ben[${index}][nome]`] = ben.fullName;
-                    payload[`mag_ben[${index}][nasc]`] = ben.birthDate;
-                    payload[`mag_ben[${index}][parentesco]`] = ben.relationship;
-                });
-                
-                // --- 2. ENVIO DA PROPOSTA ---
-                const result = await submitProposal(payload);
-                
-                if (!result.proposal_number) {
-                    throw new Error('A API não retornou um número de proposta.');
-                }
-
-                setProposalNumber(result.proposal_number);
-                track('proposal_success', { proposal_number: result.proposal_number });
-
-                // --- 3. ENVIO DO QUESTIONÁRIO (DPS) ---
-                // Verifica se temos respostas E o template original para preencher
-                if (formData.dpsAnswers && formData.questionnaireOriginalData) {
-                    setStatus('sending_dps');
-                    
-                    // Gera o JSON final preenchido mantendo a árvore original
-                    const filledJsonString = fillQuestionnaireTree(
-                        formData.questionnaireOriginalData,
-                        formData.dpsAnswers
-                    );
-
-                    // Envia para o novo endpoint
-                    await submitQuestionnaire(String(result.proposal_number), filledJsonString);
-                    
-                    track('dps_success', { proposal_number: result.proposal_number });
-                }
-
-                // Tudo certo!
-                setStatus('success');
-
-            } catch (err) {
-                const error = err as Error;
-                console.error(error);
-                setError(error.message || 'Ocorreu um erro desconhecido ao enviar a proposta.');
-                track('proposal_error', { error_message: error.message });
-                setStatus('error');
-            }
-        };
-
-        handleFinalSubmit();
-    }, []); // Executa apenas uma vez na montagem
-
-    // --- RENDERIZAÇÃO DOS ESTADOS ---
-
-    if (status === 'processing' || status === 'sending_dps') {
-        return (
-            <div className="animate-fade-in text-center py-16 px-6">
-                <Loader2 className="animate-spin h-16 w-16 text-primary mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-foreground mb-2">
-                    {status === 'processing' ? 'Gerando sua Apólice...' : 'Validando Declaração de Saúde...'}
-                </h3>
-                <p className="text-muted-foreground">
-                    Estamos conectando com a seguradora. Por favor, não feche esta janela.
-                </p>
-            </div>
-        );
-    }
-
-    if (status === 'error') {
-        return (
-            <div className="animate-fade-in text-center p-8 bg-destructive/5 border border-destructive/30 rounded-xl mx-auto max-w-lg mt-8">
-                <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-destructive mb-2">Não foi possível finalizar</h3>
-                <p className="text-muted-foreground mb-6">{error}</p>
-                <Button onClick={() => window.location.reload()} variant="outline">
-                    Tentar Novamente
-                </Button>
-            </div>
-        );
-    }
-
-    if (status === 'success' && proposalNumber) {
-        return (
-            <div className="animate-fade-in text-center py-12 px-6">
-                <div className="mb-8 inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full">
-                    <PartyPopper className="h-12 w-12 text-green-600" />
-                </div>
-                
-                <h3 className="text-3xl font-bold text-foreground mb-2">Parabéns!</h3>
-                <p className="text-xl text-muted-foreground mb-8">
-                    Sua proposta foi enviada com sucesso.
-                </p>
-
-                <div className="bg-card border border-border rounded-xl p-8 max-w-md mx-auto shadow-sm mb-8">
-                    <p className="text-sm text-muted-foreground uppercase tracking-wider font-bold mb-2">Número da Proposta</p>
-                    <p className="text-4xl font-mono font-bold text-primary tracking-tight select-all">
-                        {proposalNumber}
-                    </p>
+                <div className="mb-8 p-4 bg-primary/5 rounded-full">
+                    <PenTool className="h-10 w-10 text-primary" />
                 </div>
 
-                <div className="max-w-lg mx-auto text-sm text-muted-foreground space-y-4">
-                    <div className="flex items-center gap-3 justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span>Dados recebidos pela seguradora</span>
+                {stepState === 'initial' ? (
+                    <div className="w-full space-y-6 text-center animate-fade-in">
+                        <div className="bg-card border rounded-lg p-6 space-y-4 shadow-sm">
+                            <h4 className="font-semibold text-foreground">Como funciona?</h4>
+                            <p className="text-sm text-muted-foreground">
+                                Enviaremos um código de 6 dígitos para o seu e-mail cadastrado.
+                                Esse código servirá como sua assinatura digital legal para a apólice.
+                            </p>
+                            
+                            <div className="flex items-center gap-3 p-3 bg-muted rounded-md text-sm text-left">
+                                <Mail className="h-5 w-5 text-primary shrink-0" />
+                                <div>
+                                    <p className="font-medium">E-mail Cadastrado</p>
+                                    <p className="text-muted-foreground">{maskedEmail}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button 
+                            onClick={handleRequestToken} 
+                            size="lg" 
+                            className="w-full"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                            Enviar Código de Segurança
+                        </Button>
                     </div>
-                    <div className="flex items-center gap-3 justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span>Pagamento pré-autorizado</span>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span>Declaração de saúde registrada</span>
-                    </div>
-                </div>
+                ) : (
+                    <div className="w-full space-y-6 text-center animate-fade-in">
+                        <div>
+                            <h4 className="text-lg font-semibold">Digite o código recebido</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Enviado para {maskedEmail}
+                            </p>
+                        </div>
 
-                <div className="mt-10">
-                    <Button onClick={() => window.location.href = '/'} size="lg" className="px-8">
-                        Voltar ao Início
-                    </Button>
-                </div>
+                        <div className="flex justify-center">
+                            <Input 
+                                value={tokenCode}
+                                onChange={(e) => setTokenCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                placeholder="0 0 0 0 0 0"
+                                className="text-center text-3xl tracking-[0.5em] h-16 w-64 font-mono border-primary/50 focus:border-primary"
+                                maxLength={6}
+                                autoFocus
+                            />
+                        </div>
+
+                        <Button 
+                            onClick={handleVerifyToken} 
+                            size="lg" 
+                            className="w-full"
+                            disabled={tokenCode.length < 6 || isLoading}
+                        >
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Validar e Finalizar Contratação"}
+                        </Button>
+
+                        <button 
+                            onClick={() => { setStepState('initial'); setError(null); }}
+                            className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
+                        >
+                            Não recebi o código / Alterar método
+                        </button>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mt-6 p-3 w-full bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-md flex items-center gap-2 animate-in slide-in-from-top-2">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        {error}
+                    </div>
+                )}
             </div>
-        );
-    }
-
-    return null;
+        </StepLayout>
+    );
 };

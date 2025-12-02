@@ -188,7 +188,7 @@ export const getPaymentToken = async (): Promise<{ token: string }> => {
   }
 };
 
-export type ProposalPayload = Record<string, string | number | boolean | undefined>;
+export type ProposalPayload = Record<string, any>;
 
 export const submitProposal = async (payload: ProposalPayload) => {
   const url = getApiUrl('proposal');

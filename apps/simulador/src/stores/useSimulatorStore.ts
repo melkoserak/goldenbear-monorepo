@@ -1,74 +1,85 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createAuthSlice, AuthSlice } from './slices/createAuthSlice';
-import { createFormSlice, FormSlice, FormDataState, Beneficiary, UpdateBeneficiaryData } from './slices/createFormSlice';
-import { createUiSlice, UiSlice, ValidationStatus } from './slices/createUiSlice';
+import { createFormSlice, FormSlice, initialFormData } from './slices/createFormSlice';
+import { createUiSlice, UiSlice } from './slices/createUiSlice';
 
-// Re-exportar tipos para uso nos componentes
-export type { FormDataState, Beneficiary, UpdateBeneficiaryData, ValidationStatus };
-
-// O Estado Global é a união das interfaces
-export type SimulatorState = AuthSlice & FormSlice & UiSlice & {
-  actions: AuthSlice & Omit<FormSlice, 'formData'> & Omit<UiSlice, 'currentStep' | 'validationStatus'> & {
-    reset: () => void;
-    hydrateFromStorage: () => void;
+// Combinação de tipos: OMITIMOS 'actions' individuais para redefini-las no objeto combinado
+// Isso evita conflitos de tipo e o erro "Property actions does not exist"
+export type SimulatorState = 
+  Omit<AuthSlice, 'actions'> & 
+  Omit<FormSlice, 'actions'> & 
+  Omit<UiSlice, 'actions'> & {
+    actions: AuthSlice['actions'] & FormSlice['actions'] & UiSlice['actions'] & {
+      reset: () => void;
+      hydrateFromStorage: () => void;
+      initialize: () => void;
+    };
+    isInitialized: boolean;
+    // Garantir que aceitam null
+    paymentPreAuthCode: string | null;
+    reservedProposalNumber: string | null;
   };
-};
 
 export const useSimulatorStore = create<SimulatorState>()(
   persist(
-    (set, get, api) => {
-      // Inicializa os slices
-      const authSlice = createAuthSlice(set, get, api);
-      const formSlice = createFormSlice(set, get, api);
-      const uiSlice = createUiSlice(set, get, api);
+    (set, get, api) => ({
+      // Estado Inicial (Spread dos slices)
+      ...createAuthSlice(set, get, api),
+      ...createFormSlice(set, get, api),
+      ...createUiSlice(set, get, api),
+      
+      isInitialized: false,
+      // Redundância necessária para o TS entender o tipo inicial
+      paymentPreAuthCode: null, 
+      reservedProposalNumber: null,
 
-      return {
-        ...authSlice,
-        ...formSlice,
-        ...uiSlice,
-        
-        // Camada de compatibilidade
-        actions: {
-          ...authSlice,
-          ...formSlice,
-          ...uiSlice,
-          
-          reset: () => {
-             set({ 
-               currentStep: 1, 
-               // Usa o initial state dos slices se quiser resetar tudo
-               formData: {
-                  fullName: "", cpf: "", email: "", phone: "", state: "", consent: false,
-                  birthDate: "", gender: "", income: "", profession: "",
-                  zipCode: "", street: "", number: "", complement: "", neighborhood: "",
-                  city: "", maritalStatus: "", homePhone: "", rgNumber: "", rgIssuer: "",
-                  rgDate: "", childrenCount: "0", company: "", isPPE: "",
-                  paymentMethod: '', dpsAnswers: undefined,
-                  beneficiaries: [{
-                    id: 'initial-ben', 
-                    fullName: '', rg: '', cpf: '', birthDate: '', relationship: '',
-                    legalRepresentative: { fullName: '', rg: '', cpf: '', birthDate: '', relationship: '' }
-                  }],
-               },
-               questionnaireToken: undefined,
-               paymentToken: undefined,
-               reservedProposalNumber: undefined
-             });
-             if (typeof window !== 'undefined') {
-                localStorage.removeItem('simulator-form-data');
-             }
-          },
-          hydrateFromStorage: () => { }
+      // Actions Combinadas
+      actions: {
+        ...createAuthSlice(set, get, api).actions,
+        ...createFormSlice(set, get, api).actions,
+        ...createUiSlice(set, get, api).actions,
+
+        reset: () => {
+          set({
+            currentStep: 1,
+            formData: initialFormData,
+            paymentPreAuthCode: null,
+            reservedProposalNumber: null,
+          });
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('goldenbear-coverage-storage');
+          }
+        },
+
+        hydrateFromStorage: () => {
+          const stored = localStorage.getItem('simulator-storage');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              // Validar se o estado salvo tem a forma esperada
+              if (parsed && parsed.state) {
+                set(parsed.state);
+              }
+            } catch (e) {
+              console.error("Erro ao hidratar store:", e);
+            }
+          }
+        },
+
+        initialize: () => {
+          set({ isInitialized: true });
         }
-      };
-    },
+      },
+    }),
     {
-      name: 'simulator-form-data',
+      name: 'simulator-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        formData: state.formData,
         currentStep: state.currentStep,
-        formData: state.formData, 
+        paymentPreAuthCode: state.paymentPreAuthCode,
+        reservedProposalNumber: state.reservedProposalNumber,
       }),
     }
   )
