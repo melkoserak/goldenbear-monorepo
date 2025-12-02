@@ -177,7 +177,7 @@ export const Step2 = () => {
         </div>
         
         {/* Botão modificado para suportar estado de carregamento */}
-        <div className="flex justify-end mt-6">
+        <div className="w-full flex justify-end">
            <NavigationButtons 
               isNextDisabled={!isValid || isNavigating} 
               // Infelizmente NavigationButtons é um componente fechado, 

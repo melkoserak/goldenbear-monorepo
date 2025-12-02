@@ -5,11 +5,16 @@ import {
   MagProposalPayload
 } from './types';
 
-// Função auxiliar para converter MM/YY para YYYY-MM-DD (Mantida)
+// Função para converter MM/YY (do cartão) para YYYY-MM-DD
 function convertCardDate(mmAa: string | undefined): string {
-    if (!mmAa || !mmAa.includes('/')) return '2030-01-01';
-    const [mes, ano] = mmAa.split('/');
-    return `20${ano}-${mes}-01`;
+    if (!mmAa || !mmAa.includes('/')) {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() + 4);
+        return d.toISOString().split('T')[0];
+    }
+    const [mes, anoShort] = mmAa.split('/');
+    const anoFull = parseInt(`20${anoShort}`);
+    return `${anoFull}-${mes}-15`;
 }
 
 export function prepareSimulationPayload(
@@ -60,16 +65,17 @@ export function prepareProposalPayload(
   }
 
   const profissao_cbo = postData.mag_profissao_cbo;
-  const profissao_desc = 'Profissão Declarada'; 
+  const profissao_desc = 'Profissão Declarada';
+  const nome_empresa = postData.mag_profissao_empresa || 'NÃO INFORMADO';
 
   const documentos = buildDocumentsArray(postData);
   const telefones = buildPhonesArray(postData);
+  
+  // AQUI: A função de planos agora retorna a estrutura correta
   const planos = buildPlansArray(finalSimConfig);
   
   const primeiro_plano_id = planos.length > 0 ? planos[0].CODIGO : '0';
   const beneficiarios = buildBeneficiariesArray(postData, primeiro_plano_id);
-  
-  // CHAMADA DA FUNÇÃO CORRIGIDA
   const dados_cobranca = buildPaymentData(postData);
   
   const matricula = parseInt(process.env.NEXT_PUBLIC_MAG_MATRICULA || '0', 10);
@@ -85,7 +91,7 @@ export function prepareProposalPayload(
       DT_INDEXACAO: new Date().toISOString().split('T')[0],
       DADOS_PROPONENTE: {
         MATRICULA: matricula,
-        NOME: postData.mag_nome_completo,
+        NOME: postData.mag_nome_completo.toUpperCase(),
         DT_NASCIMENTO: postData.mag_data_nascimento,
         IDADE: age,
         SEXO: (postData.mag_sexo || '').toUpperCase(),
@@ -93,7 +99,7 @@ export function prepareProposalPayload(
         CPF: (postData.mag_cpf || '').replace(/\D/g, ''),
         TITULAR_CPF: true,
         RECEBE_INFO_EMAIL: !!postData.mag_email,
-        EMAIL: postData.mag_email,
+        EMAIL: postData.mag_email?.toUpperCase(),
         RESIDE_BRASIL: true,
         RENDA_MENSAL: rendaMensal,
         NUM_FILHOS: numFilhos,
@@ -104,11 +110,11 @@ export function prepareProposalPayload(
           ENDERECO: [
             {
               TIPO: 'RESIDENCIAL',
-              LOGRADOURO: postData.mag_logradouro || '',
+              LOGRADOURO: (postData.mag_logradouro || '').toUpperCase(),
               NUMERO: postData.mag_numero || '',
-              COMPLEMENTO: postData.mag_complemento || '',
-              BAIRRO: postData.mag_bairro || '',
-              CIDADE: postData.mag_cidade || '',
+              COMPLEMENTO: (postData.mag_complemento || '').toUpperCase(),
+              BAIRRO: (postData.mag_bairro || '').toUpperCase(),
+              CIDADE: (postData.mag_cidade || '').toUpperCase(),
               ESTADO: (postData.mag_estado || '').toUpperCase(),
               CEP: cep,
             },
@@ -119,7 +125,7 @@ export function prepareProposalPayload(
           CODIGO: profissao_cbo,
           DESCRICAO: profissao_desc.toUpperCase(),
           CATEGORIA: 'EMPREGADO',
-          EMPRESA: postData.mag_profissao_empresa ? { NOME: postData.mag_profissao_empresa } : null,
+          EMPRESA: { NOME: nome_empresa.toUpperCase() },
         },
       },
       PLANOS: {
@@ -131,20 +137,20 @@ export function prepareProposalPayload(
       },
       DADOS_COBRANCA: dados_cobranca,
       USO_MONGERAL: {
-        CONV_ADESAO: process.env.NEXT_PUBLIC_MAG_CONV_ADESAO || 'AD0000',
-        ACAO_MARKETING: process.env.NEXT_PUBLIC_MAG_ACAO_MARKETING || 'AM0000',
-        ALTERNATIVA: parseInt(process.env.NEXT_PUBLIC_MAG_ALTERNATIVA || '1', 10),
-        SUCURSAL: process.env.NEXT_PUBLIC_MAG_SUCURSAL || 'F24',
-        DIR_REGIONAL: 0,
-        GER_SUCURSAL: 0,
-        GER_COMERCIAL: 0,
-        AGENTE: 0,
-        CORRETOR1: parseInt(process.env.NEXT_PUBLIC_MAG_CORRETOR1 || '19020399', 10),
-        CORRETOR2: 0,
-        AGENTE_FIDELIZACAO: 0,
-        MODELO_PROPOSTA: process.env.MAG_MODELO_PROPOSTA || 'EIS',
-        MODELO_PROPOSTA_GED: process.env.MAG_MODELO_PROPOSTA || 'EIS',
-        TIPO_COMISSAO: parseInt(process.env.NEXT_PUBLIC_MAG_TIPO_COMISSAO || '1', 10),
+        CONV_ADESAO: process.env.MAG_USO_CONV_ADESAO || 'AD0000',
+        ACAO_MARKETING: process.env.MAG_USO_ACAO_MARKETING || 'AM0000',
+        ALTERNATIVA: parseInt(process.env.MAG_USO_ALTERNATIVA || '1', 10),
+        SUCURSAL: process.env.MAG_USO_SUCURSAL || 'F24',
+        DIR_REGIONAL: parseInt(process.env.MAG_USO_DIR_REGIONAL || '0', 10),
+        GER_SUCURSAL: parseInt(process.env.MAG_USO_GER_SUCURSAL || '0', 10),
+        GER_COMERCIAL: parseInt(process.env.MAG_USO_GER_COMERCIAL || '0', 10),
+        AGENTE: parseInt(process.env.MAG_USO_AGENTE || '0', 10),
+        CORRETOR1: parseInt(process.env.MAG_USO_CORRETOR1 || '19020399', 10),
+        CORRETOR2: parseInt(process.env.MAG_USO_CORRETOR2 || '0', 10),
+        AGENTE_FIDELIZACAO: parseInt(process.env.MAG_USO_AGENTE_FIDELIZACAO || '0', 10),
+        MODELO_PROPOSTA: process.env.MAG_USO_MODELO_PROPOSTA || 'EIS',
+        MODELO_PROPOSTA_GED: process.env.MAG_USO_MODELO_PROPOSTA_GED || 'EIS',
+        TIPO_COMISSAO: parseInt(process.env.MAG_USO_TIPO_COMISSAO || '1', 10),
       },
     },
   };
@@ -155,9 +161,9 @@ function buildDocumentsArray(data: FrontendFormData) {
   if (data.mag_rg_num) {
     docs.push({
       NATUREZA_DOC: 'RG',
-      DOCUMENTO: data.mag_rg_num,
-      ORGAO_EXPEDIDOR: data.mag_rg_orgao || 'SSP',
-      DATA_EXPEDICAO: data.mag_rg_data || '',
+      DOCUMENTO: data.mag_rg_num.toUpperCase(),
+      ORGAO_EXPEDIDOR: (data.mag_rg_orgao || 'SSP').toUpperCase(),
+      DATA_EXPEDICAO: data.mag_rg_data || new Date().toISOString().split('T')[0],
     });
   }
   return docs;
@@ -177,52 +183,42 @@ function buildPhonesArray(data: FrontendFormData) {
       });
     }
   }
-  
-  if (data.mag_tel_residencial) {
-    const cleanHome = data.mag_tel_residencial.replace(/\D/g, '');
-    if (cleanHome.length >= 10) {
-      phones.push({
-        TIPO: 'RESIDENCIAL',
-        DDI: 55,
-        DDD: parseInt(cleanHome.substring(0, 2), 10),
-        NUMERO: parseInt(cleanHome.substring(2), 10),
-      });
-    }
-  }
   return phones;
 }
 
+// --- CORREÇÃO CRÍTICA NA ESTRUTURA DE COBERTURAS ---
 function buildPlansArray(config: FinalSimConfig) {
   const plans: any[] = [];
   
   if (config.produtos && Array.isArray(config.produtos)) {
     config.produtos.forEach((produto) => {
-      const coberturas: any[] = [];
+      // 1. Criamos o array de objetos de cobertura 'limpos'
+      const listaCoberturas: any[] = [];
       
       produto.coberturas.forEach((cobertura) => {
-        coberturas.push({
-          CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
-          VL_CONTRIB: cobertura.premioCalculado || 0.0,
-          VL_COBERTURA: cobertura.capitalContratado || 0.0,
+        listaCoberturas.push({
+            CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
+            VL_CONTRIB: cobertura.premioCalculado || 0.0,
+            VL_COBERTURA: cobertura.capitalContratado || 0.0,
         });
       });
 
-      if (coberturas.length > 0) {
-        let nome_plano = produto.descricao || 'Plano';
-        if (nome_plano.length > 50) {
-          nome_plano = nome_plano.substring(0, 50);
-        }
-        
+      if (listaCoberturas.length > 0) {
         plans.push({
           CODIGO: String(produto.idProduto),
-          NOME: nome_plano,
+          NOME: (produto.descricao || 'Produto').toUpperCase(),
           VL_AP_INICIAL: 0.0,
           VL_PORTAB: 0.0,
           TP_TRIBUTACAO: 'NENHUM',
           DT_CONCESSAO: '1900-01-01',
           PRAZO_CERTO: 0,
           PRAZO_DECRESCIMO: 0,
-          COBERTURAS: { COBERTURA: coberturas },
+          
+          // 2. Envolvemos o array dentro de um objeto { COBERTURA: [...] }
+          // Isso resolve o erro "Este campo não suporta o formato 'array'"
+          COBERTURAS: {
+             COBERTURA: listaCoberturas 
+          }, 
         });
       }
     });
@@ -230,52 +226,48 @@ function buildPlansArray(config: FinalSimConfig) {
   return plans;
 }
 
-function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: string) {
+function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: string | number) {
   const beneficiaries: any[] = [];
-  
-  for (let i = 0; i < 5; i++) {
-    const nomeKey = `mag_ben[${i}][nome]`;
-    const nascKey = `mag_ben[${i}][nasc]`;
-    const parentKey = `mag_ben[${i}][parentesco]`;
-    
-    if (data[nomeKey]) {
-        const parentescoStr = String(data[parentKey] || 'OUTROS').toUpperCase();
+  const idPlanoStr = String(primeiro_plano_id);
 
-        beneficiaries.push({
-            CD_PLANO: primeiro_plano_id,
-            NOME: data[nomeKey],
-            NASCIMENTO: data[nascKey],
-            PARENTESCO: parentescoStr,
-            PARTICIPACAO: 0, 
-        });
-    }
-  }
+  const sourceList = (data.beneficiaries as any[]) || [];
 
-  if (beneficiaries.length > 0) {
-    const participation = parseFloat((100 / beneficiaries.length).toFixed(2));
-    beneficiaries.forEach((b, idx) => {
-        if (idx === beneficiaries.length - 1) {
-             b.PARTICIPACAO = parseFloat((100 - (participation * (beneficiaries.length - 1))).toFixed(2));
-        } else {
-             b.PARTICIPACAO = participation;
+  if (sourceList.length > 0) {
+      sourceList.forEach(ben => {
+          beneficiaries.push({
+            NOME: ben.fullName.toUpperCase(),
+            NASCIMENTO: ben.birthDate,
+            PARENTESCO: (ben.relationship || 'OUTROS').toUpperCase(),
+            PARTICIPACAO: Number(ben.percentage) || 0,
+            CD_PLANO: idPlanoStr 
+          });
+      });
+  } else {
+      for (let i = 0; i < 5; i++) {
+        const nomeKey = `mag_ben[${i}][nome]`;
+        if (data[nomeKey]) {
+            beneficiaries.push({
+                NOME: (data[nomeKey] as string).toUpperCase(),
+                NASCIMENTO: data[`mag_ben[${i}][nasc]`],
+                PARENTESCO: String(data[`mag_ben[${i}][parentesco]`]).toUpperCase(),
+                PARTICIPACAO: 0, 
+                CD_PLANO: idPlanoStr
+            });
         }
-    });
+      }
   }
   
   return beneficiaries;
 }
 
-// --- FUNÇÃO DE PAGAMENTO CORRIGIDA ---
 function buildPaymentData(data: FrontendFormData): any {
   const payment = data.payment as any;
-  
   if (!payment || !payment.method) return {};
 
-  // Geração da Competência (Mês/Ano atual) para passar no Regex
   const today = new Date();
   const mes = String(today.getMonth() + 1).padStart(2, '0');
   const ano = today.getFullYear();
-  const compDebito = `${mes}/${ano}`;
+  const compDebito = `${mes}/${ano}`; 
 
   const baseData = {
     PERIODICIDADE: 'MENSAL',
@@ -284,18 +276,16 @@ function buildPaymentData(data: FrontendFormData): any {
     NUM_CONVENIO: '0'
   };
 
-  // 1. Cartão de Crédito
   if (payment.method === 'CREDIT_CARD' && payment.creditCard) {
     return {
       ...baseData,
       TIPO_COBRANCA: 'CARTAO', 
       CARTAO: {
-        NUMERO: payment.creditCard.number.replace(/\s/g, ''),
+        NUMERO: payment.creditCard.number.replace(/\D/g, ''),
         VALIDADE: convertCardDate(payment.creditCard.expirationDate),
-        BANDEIRA: (payment.creditCard.brand || 'VISA').toUpperCase(),
+        BANDEIRA: (payment.creditCard.brand || 'MASTERCARD').toUpperCase(),
         PARCELA: 1,
-        // --- CORREÇÃO AQUI: Campo obrigatório pela API, mesmo sem widget ---
-        NUM_PRE_AUTORIZACAO: 0, 
+        NUM_PRE_AUTORIZACAO: 0,
         PORTADOR: {
           NOME: payment.creditCard.holderName.toUpperCase(),
           TIPO_PESSOA: "FISICA",
@@ -305,7 +295,6 @@ function buildPaymentData(data: FrontendFormData): any {
     };
   }
 
-  // 2. Débito em Conta
   if (payment.method === 'DEBIT_ACCOUNT' && payment.debitAccount) {
     return {
       ...baseData,
@@ -319,7 +308,6 @@ function buildPaymentData(data: FrontendFormData): any {
     };
   }
 
-  // 3. Desconto em Folha
   if (payment.method === 'PAYROLL_DEDUCTION' && payment.payroll) {
     return {
       ...baseData,

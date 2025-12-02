@@ -24,6 +24,7 @@ export * from "./components/section-header";
 export { Skeleton } from "./components/skeleton";
 export * from "./components/grid";
 export * from "./components/select";
+export * from "./components/calendar";
 
 // Utils e Hooks (Seguros)
 export * from "./lib/utils";

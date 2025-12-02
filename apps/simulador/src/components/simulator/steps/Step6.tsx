@@ -35,7 +35,7 @@ export const Step6 = () => {
       city: formData.city,
       state: formData.state,
     },
-    mode: 'onBlur'
+    mode: 'onChange'
   });
 
   const zipCodeValue = watch('zipCode');
@@ -63,6 +63,7 @@ export const Step6 = () => {
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <StepLayout title={`${firstName}, agora complete o seu endereço:`}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          
           {/* CEP */}
           <div className="md:col-span-1 relative space-y-1.5">
             <Label htmlFor="zipCode">CEP <span className="text-destructive">*</span></Label>
@@ -125,7 +126,23 @@ export const Step6 = () => {
             )}
             {errors.city && !isFetchingAddress && <p className="text-sm text-destructive mt-1">{errors.city.message}</p>}
           </div>
+
+          {/* Estado (UF) - Visível apenas para confirmação */}
+          <div className="md:col-span-1 space-y-1.5">
+            <Label htmlFor="state">Estado <span className="text-destructive">*</span></Label>
+            {isFetchingAddress ? <Skeleton className="h-12 w-full" /> : (
+              <Input 
+                id="state" 
+                {...register('state')} 
+                className={errors.state ? 'border-destructive' : ''} 
+                readOnly 
+              />
+            )}
+            {errors.state && <p className="text-sm text-destructive mt-1">{errors.state.message}</p>}
+          </div>
+
         </div>
+        
         <NavigationButtons isNextDisabled={!isValid || isFetchingAddress} />
       </StepLayout>
     </form>

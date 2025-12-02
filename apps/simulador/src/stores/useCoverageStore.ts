@@ -23,7 +23,7 @@ export interface ApiCoverage {
   itemProdutoId?: string;
   id?: string | number;
   descricao?: string;
-  descricaoComercial?: string; // <--- ADICIONADO AQUI
+  descricaoComercial?: string; 
   descricaoDigitalCurta?: string;
   descricaoDigitalLonga?: string;
   numeroProcessoSusep?: string;
@@ -62,7 +62,11 @@ type ApiData = {
 type CoverageState = {
   coverages: Coverage[];
   mainSusep: string | null;
-  setInitialCoverages: (apiData: ApiData) => void;
+  simulationHash: string | null; // <--- NOVO CAMPO: Identificador da simulação atual
+  
+  // Atualizado para aceitar o hash
+  setInitialCoverages: (apiData: ApiData, hash: string) => void;
+  
   toggleCoverage: (id: string) => void;
   updateCapital: (id: string, capital: number) => void;
   getCalculatedPremium: (coverage: Coverage) => number;
@@ -129,18 +133,24 @@ export const useCoverageStore = create<CoverageState>()(
     (set, get) => ({
       coverages: [],
       mainSusep: null,
-      setInitialCoverages: (apiData) => {
+      simulationHash: null, // Inicializa como null
+
+      // Agora salvamos o hash junto com os dados
+      setInitialCoverages: (apiData, hash) => {
         const { coverages, mainSusep } = normalizeApiData(apiData);
-        set({ coverages, mainSusep });
+        set({ coverages, mainSusep, simulationHash: hash });
       },
+
       toggleCoverage: (id) => set((state) => ({
         coverages: state.coverages.map((c) => 
           c.id === id && !c.isMandatory ? { ...c, isActive: !c.isActive } : c
         ) 
       })),
+      
       updateCapital: (id, capital) => set((state) => ({ 
         coverages: state.coverages.map((c) => c.id === id ? { ...c, currentCapital: capital } : c) 
       })),
+      
       getCalculatedPremium: (coverage) => {
         if (!coverage.isActive) return 0;
         if (coverage.basePremium > 0 && !coverage.isAdjustable) {
@@ -151,10 +161,12 @@ export const useCoverageStore = create<CoverageState>()(
         }
         return coverage.basePremium;
       },
+      
       getTotalPremium: () => {
         const { coverages, getCalculatedPremium } = get();
         return coverages.reduce((total, cov) => total + getCalculatedPremium(cov), 0);
       },
+      
       getTotalIndemnity: () => {
         const { coverages } = get();
         return coverages.reduce((total, cov) => {

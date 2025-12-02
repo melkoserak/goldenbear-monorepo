@@ -1,24 +1,24 @@
 import { StateCreator } from 'zustand';
 import { SimulatorState } from '../useSimulatorStore';
 
-// --- TIPO COMPLETO PARA BENEFICIÁRIO ---
 export interface Beneficiary {
   id: string;
   fullName: string;
   birthDate: string;
   relationship: string;
   percentage: number;
-  cpf: string;
-  rg: string;
+  cpf: string; 
+  rg: string;  
   
-  // --- CORREÇÃO: Adicionado Representante Legal (Opcional) ---
   legalRepresentative?: {
-    name: string;
+    fullName: string;
     cpf: string;
+    rg?: string;
+    birthDate?: string;
+    relationship?: string;
   };
 }
 
-// Definição dos tipos de pagamento
 export type PaymentType = 'CREDIT_CARD' | 'DEBIT_ACCOUNT' | 'PAYROLL_DEDUCTION';
 
 export interface PaymentData {
@@ -90,7 +90,6 @@ export interface FormSlice {
   };
 }
 
-// --- ESTADO INICIAL ---
 export const initialFormData: FormDataState = {
   fullName: "", cpf: "", email: "", phone: "", state: "", consent: false,
   birthDate: "", gender: "", income: "", profession: "",
@@ -111,7 +110,6 @@ export const initialFormData: FormDataState = {
   questionnaireOriginalData: null
 };
 
-// --- HELPER PARA GERAR ID ---
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const createFormSlice: StateCreator<SimulatorState, [], [], FormSlice> = (set) => ({
@@ -129,8 +127,6 @@ export const createFormSlice: StateCreator<SimulatorState, [], [], FormSlice> = 
       }
     })),
 
-    // --- ACTIONS DE BENEFICIÁRIOS ATUALIZADAS ---
-
     addBeneficiary: () => set((state) => ({
       formData: {
         ...state.formData,
@@ -144,7 +140,6 @@ export const createFormSlice: StateCreator<SimulatorState, [], [], FormSlice> = 
             percentage: 0,
             cpf: '',
             rg: '',
-            // Inicializa undefined, o formulário preenche se for menor de idade
             legalRepresentative: undefined 
           }
         ]

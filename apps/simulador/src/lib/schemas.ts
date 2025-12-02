@@ -1,146 +1,12 @@
 import { z } from 'zod';
 
-// Regex auxiliares
+// --- REGEX AUXILIARES ---
 const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/; // Celular com 9 dígitos e DDD
-const zipRegex = /^\d{5}-\d{3}$/; // CEP
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // Formato YYYY-MM-DD do input date
+const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/; 
+const zipRegex = /^\d{5}-\d{3}$/; 
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/; 
 
-// --- Passos 1 e 2 (Já implementados) ---
-export const step1Schema = z.object({
-  fullName: z.string()
-    .min(1, "O nome é obrigatório")
-    .refine((val) => val.trim().split(' ').length >= 2, "Por favor, digite seu nome e sobrenome."),
-});
-
-export const step2Schema = z.object({
-  cpf: z.string()
-    .min(1, "O CPF é obrigatório")
-    .regex(cpfRegex, "CPF inválido (use o formato 000.000.000-00)"),
-  email: z.string()
-    .min(1, "O e-mail é obrigatório")
-    .email("Digite um e-mail válido"),
-  phone: z.string()
-    .min(1, "O celular é obrigatório")
-    .regex(phoneRegex, "Celular inválido (use o formato (XX) XXXXX-XXXX)"),
-  state: z.string()
-    .min(1, "Selecione o seu estado"),
-  consent: z.boolean().refine((val) => val === true, {
-    message: "Você precisa aceitar os termos para continuar.",
-  }),
-});
-
-// --- Passo 3: Detalhes Pessoais ---
-export const step3Schema = z.object({
-  birthDate: z.string().regex(dateRegex, "Data de nascimento inválida."),
-  gender: z.string().min(1, "Selecione o sexo."),
-  income: z.string().min(1, "Selecione a faixa de renda."),
-  profession: z.string().min(1, "Selecione a profissão."),
-});
-
-// --- Passo 6: Endereço ---
-export const step6Schema = z.object({
-  zipCode: z.string()
-    .min(1, "O CEP é obrigatório")
-    .regex(zipRegex, "CEP inválido (formato 00000-000)."),
-  street: z.string().min(1, "Logradouro é obrigatório."),
-  number: z.string().min(1, "Número é obrigatório."),
-  complement: z.string().optional(),
-  neighborhood: z.string().min(1, "Bairro é obrigatório."),
-  city: z.string().min(1, "Cidade é obrigatória."),
-  state: z.string().min(2, "Estado é obrigatório."), // Geralmente vem preenchido pela API
-  maritalStatus: z.string().min(1, "Selecione o estado civil"),
-});
-
-// --- Passo 7: Perfil Detalhado ---
-export const step7Schema = z.object({
-  rgNumber: z.string().min(5, "RG inválido"),
-  rgIssuer: z.string().min(2, "Órgão emissor inválido"),
-  rgDate: z.string().refine((date) => {
-    if (!date) return false;
-    const d = new Date(date);
-    return !isNaN(d.getTime()) && d < new Date();
-  }, "Data de expedição inválida"),
-  
-  // --- CORREÇÃO: number e boolean ---
-  childrenCount: z.coerce.number().min(0, "Número inválido"), // aceita "0" string e converte para 0 number
-  isPPE: z.boolean(), // aceita true/false direto
-  
-  company: z.string().optional(),
-  homePhone: z.string().optional(),
-});
-
-// --- Passo 8: Beneficiários ---
-// Schema para um único beneficiário
-const beneficiarySchema = z.object({
-  id: z.string(),
-  fullName: z.string().min(3, "Nome completo é obrigatório."),
-  cpf: z.string().regex(cpfRegex, "CPF inválido."),
-  rg: z.string().min(1, "RG obrigatório."),
-  birthDate: z.string().regex(dateRegex, "Data de nascimento inválida."),
-  relationship: z.string().min(1, "Grau de parentesco obrigatório."),
-  // O representante legal é validado condicionalmente no superRefine abaixo, 
-  // mas definimos a estrutura aqui.
-  legalRepresentative: z.object({
-    fullName: z.string().optional(),
-    cpf: z.string().optional(),
-    rg: z.string().optional(),
-    birthDate: z.string().optional(),
-    relationship: z.string().optional(),
-  }).optional(),
-});
-
-export const step8Schema = z.object({
-  beneficiaries: z.array(beneficiarySchema)
-    .min(1, "Adicione pelo menos um beneficiário.")
-    // Validação customizada para verificar menores de idade e exigir Responsável Legal
-    .superRefine((items, ctx) => {
-      items.forEach((item, index) => {
-        if (!item.birthDate) return;
-        
-        const birthDateObj = new Date(`${item.birthDate}T00:00:00`);
-        // Se data inválida, o regex do campo birthDate já pegou, então ignoramos aqui
-        if (isNaN(birthDateObj.getTime())) return;
-
-        const today = new Date();
-        let age = today.getFullYear() - birthDateObj.getFullYear();
-        const m = today.getMonth() - birthDateObj.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
-          age--;
-        }
-
-        // Se for menor de 18 anos
-        if (age < 18) {
-          // Valida Nome do Responsável
-          if (!item.legalRepresentative?.fullName || item.legalRepresentative.fullName.trim().length < 3) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Responsável legal obrigatório para menor de idade.",
-              path: [index, "legalRepresentative", "fullName"],
-            });
-          }
-          // Valida CPF do Responsável
-          if (!item.legalRepresentative?.cpf || !cpfRegex.test(item.legalRepresentative.cpf)) {
-             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "CPF do responsável obrigatório/inválido.",
-              path: [index, "legalRepresentative", "cpf"],
-            });
-          }
-          // Valida RG do Responsável
-           if (!item.legalRepresentative?.rg || item.legalRepresentative.rg.trim().length < 1) {
-             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "RG do responsável obrigatório.",
-              path: [index, "legalRepresentative", "rg"],
-            });
-          }
-        }
-      });
-    }),
-});
-
-// Função auxiliar: Algoritmo de Luhn para validar cartão
+// --- FUNÇÃO AUXILIAR: ALGORITMO DE LUHN ---
 const isValidLuhn = (val: string) => {
   let checksum = 0;
   let j = 1;
@@ -157,28 +23,147 @@ const isValidLuhn = (val: string) => {
   return (checksum % 10) == 0;
 };
 
-// Schema Cartão de Crédito
+// --- SCHEMAS ---
+
+export const step1Schema = z.object({
+  fullName: z.string().min(1, "O nome é obrigatório").refine((val) => val.trim().split(' ').length >= 2, "Digite seu nome e sobrenome."),
+});
+
+export const step2Schema = z.object({
+  cpf: z.string().min(1, "O CPF é obrigatório").regex(cpfRegex, "CPF inválido"),
+  email: z.string().min(1, "O e-mail é obrigatório").email("Digite um e-mail válido"),
+  phone: z.string().min(1, "O celular é obrigatório").regex(phoneRegex, "Celular inválido"),
+  state: z.string().min(1, "Selecione o seu estado"),
+  consent: z.boolean().refine((val) => val === true, { message: "Você precisa aceitar os termos." }),
+});
+
+export const step3Schema = z.object({
+  birthDate: z.string().regex(dateRegex, "Data inválida.").refine((val) => {
+      const date = new Date(`${val}T00:00:00`);
+      const now = new Date();
+      const minDate = new Date("1900-01-01");
+      if (isNaN(date.getTime())) return false;
+      if (date < minDate) return false;
+      if (date > now) return false;
+      const age = now.getFullYear() - date.getFullYear();
+      if (age < 18) return false; 
+      return true;
+    }, "Data inválida ou menor de idade."),
+  gender: z.string().min(1, "Selecione o sexo."),
+  income: z.string().min(1, "Selecione a faixa de renda."),
+  profession: z.string().min(1, "Selecione a profissão."),
+});
+
+export const step6Schema = z.object({
+  zipCode: z.string().min(1, "O CEP é obrigatório").regex(zipRegex, "CEP inválido."),
+  street: z.string().min(1, "Logradouro é obrigatório."),
+  number: z.string().min(1, "Número é obrigatório."),
+  complement: z.string().optional(),
+  neighborhood: z.string().min(1, "Bairro é obrigatório."),
+  city: z.string().min(1, "Cidade é obrigatória."),
+  state: z.string().min(2, "Estado é obrigatório."),
+});
+
+// --- PASSO 7: PERFIL DETALHADO (ATUALIZADO) ---
+export const step7Schema = z.object({
+  maritalStatus: z.string().min(1, "Selecione o estado civil"),
+  company: z.string().min(2, "Informe o nome da instituição/empresa"), 
+  rgNumber: z.string().min(5, "RG inválido"),
+  rgIssuer: z.string().min(2, "Órgão emissor inválido"),
+  rgDate: z.string().refine((date) => {
+    if (!date) return false;
+    const d = new Date(date);
+    return !isNaN(d.getTime()) && d < new Date();
+  }, "Data de expedição inválida"),
+  
+  // CORREÇÃO AQUI: Removido o objeto de opções que causava erro
+  childrenCount: z.coerce.number().min(0, "Informe 0 se não tiver filhos"),
+  
+  isPPE: z.boolean(),
+  homePhone: z.string().optional(),
+});
+
+// --- BENEFICIÁRIOS E PAGAMENTO ---
+const beneficiarySchema = z.object({
+  id: z.string(),
+  fullName: z.string().min(3, "Nome completo é obrigatório."),
+  cpf: z.string().optional().or(z.literal('')), 
+  rg: z.string().optional().or(z.literal('')),
+  birthDate: z.string().regex(dateRegex, "Data inválida."),
+  relationship: z.string().min(1, "Parentesco obrigatório."),
+  percentage: z.coerce.number().min(1).max(100),
+  legalRepresentative: z.object({
+    fullName: z.string().optional(),
+    cpf: z.string().optional(),
+    rg: z.string().optional(),
+    birthDate: z.string().optional(),
+    relationship: z.string().optional(),
+  }).optional(),
+});
+
+export const step8Schema = z.object({
+  beneficiaries: z.array(beneficiarySchema).min(1, "Adicione pelo menos um beneficiário.")
+    .superRefine((items, ctx) => {
+      items.forEach((item, index) => {
+        if (!item.birthDate) return;
+        const birthDateObj = new Date(`${item.birthDate}T00:00:00`);
+        if (isNaN(birthDateObj.getTime())) return;
+        const today = new Date();
+        let age = today.getFullYear() - birthDateObj.getFullYear();
+        const m = today.getMonth() - birthDateObj.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) age--;
+        
+        // Regra: Maior de 18 exige CPF
+        if (age >= 18) {
+            if (!item.cpf || !cpfRegex.test(item.cpf)) {
+                ctx.addIssue({ 
+                    code: z.ZodIssueCode.custom, 
+                    message: "CPF obrigatório para maiores de 18 anos.", 
+                    path: [index, "cpf"] 
+                });
+            }
+        } else {
+            // Regra: Menor de 18 exige Responsável Legal
+            const repPath = [index, "legalRepresentative"];
+            
+            if (!item.legalRepresentative?.fullName || item.legalRepresentative.fullName.trim().length < 3) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do responsável obrigatório.", path: [...repPath, "fullName"] });
+            }
+            if (!item.legalRepresentative?.cpf || !cpfRegex.test(item.legalRepresentative.cpf || '')) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CPF do responsável inválido.", path: [...repPath, "cpf"] });
+            }
+            if (!item.legalRepresentative?.rg || (item.legalRepresentative.rg || '').trim().length < 2) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "RG do responsável obrigatório.", path: [...repPath, "rg"] });
+            }
+            if (!item.legalRepresentative?.birthDate) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Data de nascimento obrigatória.", path: [...repPath, "birthDate"] });
+            }
+        }
+      });
+      
+      // Validação de Porcentagem Total
+      const total = items.reduce((acc, b) => acc + (b.percentage || 0), 0);
+      if (Math.abs(total - 100) > 0.1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `A soma das porcentagens é ${total}%. Deve ser 100%.`,
+          path: [] 
+        });
+      }
+    }),
+});
+
 const creditCardSchema = z.object({
   method: z.literal('CREDIT_CARD'),
   creditCard: z.object({
-    number: z.string()
-      .transform(v => v.replace(/\D/g, ''))
-      .refine(v => v.length >= 13 && v.length <= 19, "Número de cartão inválido")
-      .refine(isValidLuhn, "Número de cartão inválido (Luhn)"),
-    holderName: z.string().min(3, "Nome impresso obrigatório").toUpperCase(),
-    expirationDate: z.string()
-      .refine(v => {
-        const [month, year] = v.split('/').map(Number);
-        if (!month || !year) return false;
-        const expiry = new Date(2000 + year, month - 1); // Assume ano 20xx
-        return expiry > new Date();
-      }, "Data inválida ou expirada"),
+    number: z.string().transform(v => v.replace(/\D/g, '')).refine(v => v.length >= 13, "Número inválido").refine(isValidLuhn, "Número inválido"),
+    holderName: z.string().min(3, "Nome obrigatório").toUpperCase(),
+    expirationDate: z.string().min(5, "Validade inválida"),
     cvv: z.string().min(3, "CVV inválido").max(4),
-    brand: z.string().optional(), // Pode ser inferido
+    brand: z.string().optional(),
   })
 });
 
-// Schema Débito em Conta
 const debitSchema = z.object({
   method: z.literal('DEBIT_ACCOUNT'),
   debitAccount: z.object({
@@ -189,7 +174,6 @@ const debitSchema = z.object({
   })
 });
 
-// Schema Desconto em Folha
 const payrollSchema = z.object({
   method: z.literal('PAYROLL_DEDUCTION'),
   payroll: z.object({
@@ -198,12 +182,7 @@ const payrollSchema = z.object({
   })
 });
 
-// Schema Unificado do Passo 10
-export const step10Schema = z.discriminatedUnion('method', [
-  creditCardSchema,
-  debitSchema,
-  payrollSchema
-]);
+export const step10Schema = z.discriminatedUnion('method', [creditCardSchema, debitSchema, payrollSchema]);
 
 export type Step1Data = z.infer<typeof step1Schema>;
 export type Step2Data = z.infer<typeof step2Schema>;

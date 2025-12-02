@@ -41,17 +41,39 @@ export const Step4 = () => {
   const setInitialCoverages = useCoverageStore((state) => state.setInitialCoverages);
   const mainSusep = useCoverageStore((state) => state.mainSusep);
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
+  
+  // Recupera o hash salvo da última vez que carregamos coberturas
+  const savedSimulationHash = useCoverageStore((state) => state.simulationHash);
 
   const { data: simulationData, isLoading, isError, error } = useSimulation();
+
+  // Gera um Hash Único baseado nos dados atuais do usuário que afetam a simulação
+  const currentSimulationHash = JSON.stringify({
+    nome: formData.fullName,
+    cpf: formData.cpf,
+    data: formData.birthDate,
+    sexo: formData.gender,
+    renda: formData.income,
+    estado: formData.state,
+    profissao: formData.profession
+  });
 
   useEffect(() => { track('step_view', { step: 4, step_name: 'Resultados da Simulação' }); }, []);
 
   useEffect(() => {
     if (simulationData) {
-      setInitialCoverages(simulationData);
-      track('simulation_success', { api_response_payload: simulationData });
+      // LÓGICA DE PROTEÇÃO:
+      // Só sobrescreve as coberturas se os dados de entrada mudaram (Hash diferente)
+      // Se for igual, significa que é a mesma simulação e o usuário está voltando, então mantemos as edições dele.
+      if (currentSimulationHash !== savedSimulationHash) {
+        console.log("Nova simulação detectada. Atualizando coberturas...");
+        setInitialCoverages(simulationData, currentSimulationHash);
+        track('simulation_success', { api_response_payload: simulationData });
+      } else {
+        console.log("Simulação existente detectada. Mantendo personalizações do usuário.");
+      }
     }
-  }, [simulationData, setInitialCoverages]);
+  }, [simulationData, setInitialCoverages, currentSimulationHash, savedSimulationHash]);
 
   useEffect(() => {
     if (isError) {
