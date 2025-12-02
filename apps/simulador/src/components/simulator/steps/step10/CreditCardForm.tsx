@@ -1,11 +1,12 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UseFormReturn, FieldErrors } from 'react-hook-form';
 import { IMaskInput } from 'react-imask';
 import { Label } from '@goldenbear/ui/components/label';
 import { Input } from '@goldenbear/ui/components/input';
 import { CreditCard, Lock } from 'lucide-react';
 import { Step10Data } from '@/lib/schemas';
+import { useSimulatorStore } from '@/stores/useSimulatorStore'; // Importar a store
 
 interface Props {
   form: UseFormReturn<Step10Data>;
@@ -24,6 +25,19 @@ type CreditCardErrors = FieldErrors<{
 
 export const CreditCardForm = ({ form: { register, formState, setValue } }: Props) => {
   const errors = formState.errors as CreditCardErrors;
+  
+  // --- CORREÇÃO: Sincronização com a Store ---
+  const paymentData = useSimulatorStore((state) => state.formData.payment);
+
+  useEffect(() => {
+    if (paymentData.method === 'CREDIT_CARD' && paymentData.creditCard) {
+      setValue('creditCard.number', paymentData.creditCard.number, { shouldValidate: true });
+      setValue('creditCard.holderName', paymentData.creditCard.holderName, { shouldValidate: true });
+      setValue('creditCard.expirationDate', paymentData.creditCard.expirationDate, { shouldValidate: true });
+      setValue('creditCard.cvv', paymentData.creditCard.cvv, { shouldValidate: true });
+    }
+  }, [paymentData, setValue]);
+  // -------------------------------------------
 
   return (
     <div className="space-y-4 animate-fade-in bg-card border rounded-lg p-6 shadow-sm">
@@ -38,9 +52,9 @@ export const CreditCardForm = ({ form: { register, formState, setValue } }: Prop
            <IMaskInput
               id="cc-number"
               mask="0000 0000 0000 0000"
+              // Adicione 'value' controlado pelo form se necessário, mas o setValue acima já deve resolver
               className={`flex h-12 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${errors.creditCard?.number ? 'border-destructive' : 'border-input'}`}
               placeholder="0000 0000 0000 0000"
-              // --- CORREÇÃO AQUI: shouldValidate: true ---
               onAccept={(value) => setValue('creditCard.number', value, { shouldValidate: true })}
            />
            <CreditCard className="absolute right-3 top-3 h-6 w-6 text-muted-foreground" />
@@ -56,7 +70,6 @@ export const CreditCardForm = ({ form: { register, formState, setValue } }: Prop
           {...register('creditCard.holderName')} 
           className={errors.creditCard?.holderName ? 'border-destructive' : ''}
           placeholder="NOME COMO NO CARTÃO"
-          // O register já lida com validação, mas force uppercase visualmente
           onInput={(e) => {
              e.currentTarget.value = e.currentTarget.value.toUpperCase();
           }}
@@ -73,7 +86,6 @@ export const CreditCardForm = ({ form: { register, formState, setValue } }: Prop
              mask="00/00"
              placeholder="MM/AA"
              className={`flex h-12 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${errors.creditCard?.expirationDate ? 'border-destructive' : 'border-input'}`}
-             // --- CORREÇÃO AQUI: shouldValidate: true ---
              onAccept={(value) => setValue('creditCard.expirationDate', value, { shouldValidate: true })}
           />
            {errors.creditCard?.expirationDate && 
@@ -88,7 +100,6 @@ export const CreditCardForm = ({ form: { register, formState, setValue } }: Prop
              type="password"
              placeholder="123"
              className={`flex h-12 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${errors.creditCard?.cvv ? 'border-destructive' : 'border-input'}`}
-             // --- CORREÇÃO AQUI: shouldValidate: true ---
              onAccept={(value) => setValue('creditCard.cvv', value, { shouldValidate: true })}
           />
            {errors.creditCard?.cvv && 

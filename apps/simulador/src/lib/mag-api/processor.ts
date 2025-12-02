@@ -5,16 +5,48 @@ import {
   MagProposalPayload
 } from './types';
 
-// Função para converter MM/YY (do cartão) para YYYY-MM-DD
+// --- CORREÇÃO: Calcular o Último Dia do Mês ---
 function convertCardDate(mmAa: string | undefined): string {
-    if (!mmAa || !mmAa.includes('/')) {
+    // 1. Se for nulo, vazio ou inválido, retorna uma data fixa segura no futuro
+    if (!mmAa || typeof mmAa !== 'string' || !mmAa.includes('/')) {
+        console.warn("[PROCESSOR] Validade do cartão inválida ou ausente. Usando fallback.");
         const d = new Date();
-        d.setFullYear(d.getFullYear() + 4);
+        d.setFullYear(d.getFullYear() + 5); // 5 anos no futuro
         return d.toISOString().split('T')[0];
     }
-    const [mes, anoShort] = mmAa.split('/');
-    const anoFull = parseInt(`20${anoShort}`);
-    return `${anoFull}-${mes}-15`;
+    
+    try {
+        const parts = mmAa.split('/');
+        // Garante que temos mês e ano
+        if (parts.length !== 2) throw new Error("Formato inválido");
+        
+        const mes = parseInt(parts[0], 10);
+        let ano = parseInt(parts[1], 10);
+        
+        // Validação básica
+        if (isNaN(mes) || isNaN(ano) || mes < 1 || mes > 12) throw new Error("Valores numéricos inválidos");
+
+        // Normaliza ano (2 dígitos -> 4 dígitos)
+        // Se o ano for menor que 100, assume 20xx
+        if (ano < 100) ano += 2000;
+
+        // Cria data para o último dia do mês
+        // Mês no JS é 0-indexado. new Date(ano, mes, 0) pega o dia 0 do mês seguinte = último dia do mês atual.
+        const dataUltimoDia = new Date(ano, mes, 0);
+        
+        const yyyy = dataUltimoDia.getFullYear();
+        const mm = String(dataUltimoDia.getMonth() + 1).padStart(2, '0');
+        const dd = String(dataUltimoDia.getDate()).padStart(2, '0');
+        
+        const result = `${yyyy}-${mm}-${dd}`;
+        console.log(`[PROCESSOR] Data cartão convertida: ${mmAa} -> ${result}`);
+        return result;
+
+    } catch (e) {
+        console.error("[PROCESSOR] Erro ao converter data cartão:", e);
+        // Fallback de emergência
+        return "2030-12-31";
+    }
 }
 
 export function prepareSimulationPayload(
@@ -42,7 +74,7 @@ export function prepareSimulationPayload(
           uf: estado,
           declaracaoIRId: 1,
         },
-        periodicidadeCobrancaId: 30,
+        periodicidadeCobrancaId: 30, // Mensal
         prazoCerto: 30,
         prazoPagamentoAntecipado: 10,
         prazoDecrescimo: 10,
@@ -65,17 +97,16 @@ export function prepareProposalPayload(
   }
 
   const profissao_cbo = postData.mag_profissao_cbo;
-  const profissao_desc = 'Profissão Declarada';
+  const profissao_desc = 'Profissão Declarada'; 
   const nome_empresa = postData.mag_profissao_empresa || 'NÃO INFORMADO';
 
   const documentos = buildDocumentsArray(postData);
   const telefones = buildPhonesArray(postData);
-  
-  // AQUI: A função de planos agora retorna a estrutura correta
   const planos = buildPlansArray(finalSimConfig);
   
   const primeiro_plano_id = planos.length > 0 ? planos[0].CODIGO : '0';
   const beneficiarios = buildBeneficiariesArray(postData, primeiro_plano_id);
+  
   const dados_cobranca = buildPaymentData(postData);
   
   const matricula = parseInt(process.env.NEXT_PUBLIC_MAG_MATRICULA || '0', 10);
@@ -186,24 +217,22 @@ function buildPhonesArray(data: FrontendFormData) {
   return phones;
 }
 
-// --- CORREÇÃO CRÍTICA NA ESTRUTURA DE COBERTURAS ---
 function buildPlansArray(config: FinalSimConfig) {
   const plans: any[] = [];
   
   if (config.produtos && Array.isArray(config.produtos)) {
     config.produtos.forEach((produto) => {
-      // 1. Criamos o array de objetos de cobertura 'limpos'
-      const listaCoberturas: any[] = [];
+      const coberturas: any[] = [];
       
       produto.coberturas.forEach((cobertura) => {
-        listaCoberturas.push({
-            CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
-            VL_CONTRIB: cobertura.premioCalculado || 0.0,
-            VL_COBERTURA: cobertura.capitalContratado || 0.0,
+        coberturas.push({
+          CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
+          VL_CONTRIB: cobertura.premioCalculado || 0.0,
+          VL_COBERTURA: cobertura.capitalContratado || 0.0,
         });
       });
 
-      if (listaCoberturas.length > 0) {
+      if (coberturas.length > 0) {
         plans.push({
           CODIGO: String(produto.idProduto),
           NOME: (produto.descricao || 'Produto').toUpperCase(),
@@ -213,12 +242,7 @@ function buildPlansArray(config: FinalSimConfig) {
           DT_CONCESSAO: '1900-01-01',
           PRAZO_CERTO: 0,
           PRAZO_DECRESCIMO: 0,
-          
-          // 2. Envolvemos o array dentro de um objeto { COBERTURA: [...] }
-          // Isso resolve o erro "Este campo não suporta o formato 'array'"
-          COBERTURAS: {
-             COBERTURA: listaCoberturas 
-          }, 
+          COBERTURAS: { COBERTURA: coberturas }, 
         });
       }
     });
@@ -282,7 +306,7 @@ function buildPaymentData(data: FrontendFormData): any {
       TIPO_COBRANCA: 'CARTAO', 
       CARTAO: {
         NUMERO: payment.creditCard.number.replace(/\D/g, ''),
-        VALIDADE: convertCardDate(payment.creditCard.expirationDate),
+        VALIDADE: convertCardDate(payment.creditCard.expirationDate), // Agora retorna o último dia do mês
         BANDEIRA: (payment.creditCard.brand || 'MASTERCARD').toUpperCase(),
         PARCELA: 1,
         NUM_PRE_AUTORIZACAO: 0,

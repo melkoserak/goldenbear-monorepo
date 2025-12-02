@@ -16,10 +16,8 @@ import { DebitForm } from './step10/DebitForm';
 import { PayrollForm } from './step10/PayrollForm';
 
 export const Step10 = () => {
-  // --- CORREÇÃO AQUI: Fallback de segurança para 'payment' ---
   const formData = useSimulatorStore((state) => state.formData);
-  // Se 'payment' for undefined (cache antiga), usa um objeto vazio seguro
-  const payment = formData.payment || { method: '' }; 
+  const payment = formData.payment || { method: '' };
   
   const { setPaymentData, nextStep } = useSimulatorStore((state) => state.actions);
   const totalPremium = useCoverageStore((state) => state.getTotalPremium());
@@ -27,7 +25,6 @@ export const Step10 = () => {
   const form = useForm<Step10Data>({
     resolver: zodResolver(step10Schema),
     defaultValues: {
-      // Agora 'payment' é garantido, não vai dar crash
       method: (payment.method as any) || undefined,
       creditCard: payment.creditCard,
       debitAccount: payment.debitAccount,
@@ -36,30 +33,39 @@ export const Step10 = () => {
     mode: 'onChange'
   });
 
-  const { watch, setValue, handleSubmit, formState: { isValid } } = form;
+  const { watch, setValue, handleSubmit, reset, formState: { isValid } } = form;
   const selectedMethod = watch('method');
+
+  // --- CORREÇÃO CRÍTICA: Sincronizar formulário com a Store ---
+  // Isso garante que quando o DevToolbar injetar dados, o formulário preencha visualmente
+  useEffect(() => {
+    if (payment.method) {
+      reset({
+        method: payment.method as any,
+        creditCard: payment.creditCard,
+        debitAccount: payment.debitAccount,
+        payroll: payment.payroll
+      });
+    }
+  }, [payment, reset]);
+  // ------------------------------------------------------------
 
   useEffect(() => { 
     track('step_view', { step: 10, step_name: 'Pagamento Nativo' }); 
   }, []);
 
   const onSubmit = (data: Step10Data) => {
-    console.log("✅ Formulário Válido:", data); // Debug
     setPaymentData(data);
-    
     track('step_complete', { 
       step: 10, 
       step_name: 'Dados de Pagamento Preenchidos',
       method: data.method
     });
-    
     nextStep();
   };
 
-  // --- FUNÇÃO DE DEBUG ---
   const onError = (errors: any) => {
-    console.error("❌ Erro de Validação:", errors);
-    // Isso vai te mostrar exatamente qual campo o Zod está rejeitando
+    console.error("❌ Erro de Validação Step 10:", errors);
   };
 
   return (
