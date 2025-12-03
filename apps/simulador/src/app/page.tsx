@@ -18,11 +18,11 @@ export default function SimulatorPage() {
       <header className="w-full max-w-5xl flex items-center justify-between">
         <div className="flex items-center">
           <Image 
-            src={"/simulador/logo-golden-bear.png"} // Corrigido para /simulador
+            src="/simulador/imagens/logo-golden-bear.svg" // Corrigido para /simulador
             alt="Logo Golden Bear" 
             width={56} 
             height={16} 
-            className="h-4 w-auto mr-3" 
+            className="h-6 w-auto mr-3" 
           />
           <span className="text-sm text-[#3D3D3D]">Simulador de seguro de vida</span>
         </div>

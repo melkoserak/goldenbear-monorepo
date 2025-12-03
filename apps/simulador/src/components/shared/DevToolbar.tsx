@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
-import { PERSONA_CREDIT_CARD, PERSONA_DEBIT, PERSONA_PAYROLL } from '@/lib/debug-personas';
+import { 
+  PERSONA_CREDIT_CARD, PERSONA_DEBIT, PERSONA_PAYROLL,
+  PERSONA_FAMILIA_PPE, PERSONA_SENIOR, PERSONA_JOVEM_MILITAR 
+} from '@/lib/debug-personas';
 import { Button } from '@goldenbear/ui/components/button';
-import { Settings, CreditCard, Landmark, FileText, X, Play } from 'lucide-react';
+import { Settings, CreditCard, Landmark, FileText, X, Play, Users, UserPlus, ShieldAlert } from 'lucide-react';
 
 export const DevToolbar = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -16,14 +19,11 @@ export const DevToolbar = () => {
 
   useEffect(() => {
     setIsMounted(true);
-    // Auto-abrir apenas em localhost para facilitar
     if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
       setIsVisible(true);
     }
   }, []);
 
-  // --- CORREÇÃO AQUI ---
-  // Permite renderizar se estiver em desenvolvimento OU se a variável estiver 'true'
   const shouldRender = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === 'true';
 
   if (!isMounted) return null;
@@ -33,7 +33,7 @@ export const DevToolbar = () => {
     setFormData(persona);
     setTimeout(() => {
         setStep(targetStep);
-    }, 50);
+    }, 100); // Timeout levemente maior para garantir renderização
   };
 
   if (!isVisible) {
@@ -47,7 +47,7 @@ export const DevToolbar = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900 text-white rounded-lg shadow-2xl border border-slate-700 w-72 animate-in slide-in-from-bottom-10">
+    <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900 text-white rounded-lg shadow-2xl border border-slate-700 w-80 animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-sm flex items-center gap-2">
           <Settings className="w-4 h-4" /> Testes Rápidos
@@ -57,55 +57,88 @@ export const DevToolbar = () => {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         
+        {/* CENÁRIOS BÁSICOS */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Escolha o Perfil:</p>
+          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Pagamento (Simples):</p>
           <div className="grid grid-cols-3 gap-2">
              <Button 
-              variant="secondary" size="sm" className="text-xs h-14 flex-col gap-1"
+              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
               onClick={() => handleAutoFill(PERSONA_CREDIT_CARD, 10)}
-              title="Cartão de Crédito"
+              title="Preenche tudo e vai para Pagamento Cartão"
             >
-              <CreditCard className="w-4 h-4" /> CC
+              <CreditCard className="w-4 h-4 mb-1" /> Cartão
             </Button>
              <Button 
-              variant="secondary" size="sm" className="text-xs h-14 flex-col gap-1"
+              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
               onClick={() => handleAutoFill(PERSONA_DEBIT, 10)}
-              title="Débito em Conta"
+              title="Preenche tudo e vai para Pagamento Débito"
             >
-              <Landmark className="w-4 h-4" /> Déb.
+              <Landmark className="w-4 h-4 mb-1" /> Débito
             </Button>
              <Button 
-              variant="secondary" size="sm" className="text-xs h-14 flex-col gap-1"
+              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
               onClick={() => handleAutoFill(PERSONA_PAYROLL, 10)}
-              title="Consignado"
+              title="Preenche tudo e vai para Consignado"
             >
-              <FileText className="w-4 h-4" /> Folha
+              <FileText className="w-4 h-4 mb-1" /> Folha
             </Button>
           </div>
         </div>
 
-        <div>
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Navegação:</p>
+        {/* CENÁRIOS COMPLEXOS */}
+        <div className="border-t border-slate-700 pt-3">
+          <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider mb-2">Cenários Complexos:</p>
+          <div className="grid grid-cols-1 gap-2">
+             <Button 
+              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
+              onClick={() => handleAutoFill(PERSONA_FAMILIA_PPE, 8)}
+             >
+              <ShieldAlert className="w-3 h-3 mr-2 text-red-400" /> Família + PPE + Menores
+            </Button>
+             <Button 
+              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
+              onClick={() => handleAutoFill(PERSONA_SENIOR, 8)}
+             >
+              <UserPlus className="w-3 h-3 mr-2 text-purple-400" /> Sênior (Viúvo + Filhos)
+            </Button>
+             <Button 
+              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
+              onClick={() => handleAutoFill(PERSONA_JOVEM_MILITAR, 10)}
+             >
+              <Users className="w-3 h-3 mr-2 text-green-400" /> Jovem Militar (Mãe)
+            </Button>
+          </div>
+        </div>
+
+        {/* NAVEGAÇÃO RÁPIDA */}
+        <div className="border-t border-slate-700 pt-3">
+          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Saltar Para:</p>
           <div className="flex gap-2">
             <Button 
-              variant="outline" size="sm" className="flex-1 text-xs h-8 bg-slate-800 border-slate-600"
+              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-slate-300 hover:bg-slate-800"
               onClick={() => setStep(4)}
             >
-              Ir p/ Ofertas
+              Ofertas
             </Button>
             <Button 
-              variant="outline" size="sm" className="flex-1 text-xs h-8 bg-slate-800 border-slate-600 text-green-400"
+              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-slate-300 hover:bg-slate-800"
+              onClick={() => setStep(8)}
+            >
+              Benefic.
+            </Button>
+            <Button 
+              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-green-400 hover:bg-green-900/20 font-bold"
               onClick={() => setStep(12)}
             >
-              Ir p/ Final
+              FINAL
             </Button>
           </div>
         </div>
         
-        <div className="pt-2 mt-2 border-t border-slate-700 text-center">
-           <p className="text-[10px] text-slate-400">Passo Atual: <span className="text-yellow-400 font-mono">{currentStep}</span></p>
+        <div className="pt-2 mt-1 border-t border-slate-700 text-center">
+           <p className="text-[10px] text-slate-500">Passo Atual: <span className="text-yellow-500 font-mono">{currentStep}</span></p>
         </div>
       </div>
     </div>

@@ -228,7 +228,7 @@ export const Step12 = () => {
                          </Button>
                     </div>
                 ) : (
-                    <Button onClick={() => window.location.reload()} variant="outline">
+                    <Button onClick={() => setRetryTrigger(prev => prev + 1)} variant="outline">
                         Tentar Novamente
                     </Button>
                 )}

@@ -8,7 +8,12 @@ import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 // Importe o DevToolbar
 import { DevToolbar } from "@/components/shared/DevToolbar";
 
-const noto = Noto_Sans({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const noto = Noto_Sans({ 
+  subsets: ["latin"], 
+  weight: ["400", "500", "700"],
+  display: "swap", 
+  variable: "--font-noto-sans", // Opcional: uniformizar variáveis CSS
+});
 
 export const metadata: Metadata = {
   title: "Simulador de Seguro de Vida | Golden Bear",
@@ -23,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode; })
       <head>
         {/* ... */}
       </head>
-      <body className={`${noto.className} bg-accent min-h-screen`}> 
+     <body className={`${noto.className} ${noto.variable} bg-accent min-h-screen`}>
         <noscript
           dangerouslySetInnerHTML={{
             __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
