@@ -123,6 +123,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const lastScrollTop = useRef(0);
+  const ticking = useRef(false); // Flag para rAF
   
   // Hook para fechar o menu mobile se a rota mudar (caso o SheetClose falhe ou navegação via código)
   const pathname = usePathname();
@@ -130,17 +131,28 @@ export const Header = () => {
     setIsMenuOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
+useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      if (Math.abs(lastScrollTop.current - scrollTop) <= 5) return;
-      if (scrollTop > lastScrollTop.current && scrollTop > 200) {
-        setIsHidden(true);
-      } else {
-        setIsHidden(false);
+      
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          // Lógica de UI dentro do frame de animação
+          if (Math.abs(lastScrollTop.current - scrollTop) > 5) {
+            if (scrollTop > lastScrollTop.current && scrollTop > 200) {
+              setIsHidden(true);
+            } else {
+              setIsHidden(false);
+            }
+            lastScrollTop.current = scrollTop <= 0 ? 0 : scrollTop;
+          }
+          ticking.current = false;
+        });
+        
+        ticking.current = true;
       }
-      lastScrollTop.current = scrollTop <= 0 ? 0 : scrollTop;
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

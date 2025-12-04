@@ -6,7 +6,25 @@ const phoneRegex = /^\(\d{2}\) \d{5}-\d{4}$/;
 const zipRegex = /^\d{5}-\d{3}$/; 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/; 
 
-// --- FUNÇÃO AUXILIAR: ALGORITMO DE LUHN ---
+// --- FUNÇÃO AUXILIAR: VALIDAÇÃO DE CPF (MÓDULO 11) ---
+const isValidCPF = (cpf: string) => {
+  if (typeof cpf !== "string") return false;
+  
+  // Remove caracteres não numéricos para validar apenas os dígitos
+  const cleanCpf = cpf.replace(/[^\d]+/g, "");
+  
+  // Bloqueia tamanho incorreto e CPFs com todos dígitos iguais (ex: 111.111.111-11)
+  if (cleanCpf.length !== 11 || !!cleanCpf.match(/(\d)\1{10}/)) return false;
+  
+  const cpfArr = cleanCpf.split("").map((el) => +el);
+  
+  const rest = (count: number) =>
+    ((cpfArr.slice(0, count - 12).reduce((syt, el, idx) => syt + el * (count - idx), 0) * 10) % 11) % 10;
+    
+  return rest(10) === cpfArr[9] && rest(11) === cpfArr[10];
+};
+
+// --- FUNÇÃO AUXILIAR: ALGORITMO DE LUHN (CARTÃO DE CRÉDITO) ---
 const isValidLuhn = (val: string) => {
   let checksum = 0;
   let j = 1;
@@ -27,15 +45,24 @@ const isValidLuhn = (val: string) => {
 
 export const step1Schema = z.object({
   fullName: z.string().min(1, "O nome é obrigatório").refine((val) => val.trim().split(' ').length >= 2, "Digite seu nome e sobrenome."),
-}).strip(); // <--- Blindagem Explícita
+}).strip();
 
 export const step2Schema = z.object({
-  cpf: z.string().min(1, "O CPF é obrigatório").regex(cpfRegex, "CPF inválido"),
+  // [CORREÇÃO] Usamos 'cpf' para bater com o Step2.tsx, mas aplicamos a lógica blindada
+  cpf: z.string()
+    .min(1, "O CPF é obrigatório")
+    .transform(val => val.replace(/\D/g, '')) // Limpa máscara para validar
+    .refine((val) => val.length === 11, "O CPF deve ter 11 dígitos")
+    .refine(isValidCPF, "CPF inválido. Verifique os números."),
+    
   email: z.string().min(1, "O e-mail é obrigatório").email("Digite um e-mail válido"),
-  phone: z.string().min(1, "O celular é obrigatório").regex(phoneRegex, "Celular inválido"),
+  
+  phone: z.string().min(1, "O celular é obrigatório").regex(phoneRegex, "Celular inválido (use o formato com DDD)"),
+  
   state: z.string().min(1, "Selecione o seu estado"),
+  
   consent: z.boolean().refine((val) => val === true, { message: "Você precisa aceitar os termos." }),
-}).strip(); // <--- Blindagem Explícita
+}).strip();
 
 export const step3Schema = z.object({
   birthDate: z.string().regex(dateRegex, "Data inválida.").refine((val) => {
@@ -52,7 +79,7 @@ export const step3Schema = z.object({
   gender: z.string().min(1, "Selecione o sexo."),
   income: z.string().min(1, "Selecione a faixa de renda."),
   profession: z.string().min(1, "Selecione a profissão."),
-}).strip(); // <--- Blindagem Explícita
+}).strip();
 
 export const step6Schema = z.object({
   zipCode: z.string().min(1, "O CEP é obrigatório").regex(zipRegex, "CEP inválido."),
@@ -62,7 +89,7 @@ export const step6Schema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório."),
   city: z.string().min(1, "Cidade é obrigatória."),
   state: z.string().min(2, "Estado é obrigatório."),
-}).strip(); // <--- Blindagem Explícita
+}).strip();
 
 // --- PASSO 7: PERFIL DETALHADO ---
 export const step7Schema = z.object({
@@ -78,7 +105,7 @@ export const step7Schema = z.object({
   childrenCount: z.coerce.number().min(0, "Informe 0 se não tiver filhos"),
   isPPE: z.boolean(),
   homePhone: z.string().optional(),
-}).strip(); // <--- Blindagem Explícita
+}).strip();
 
 // --- BENEFICIÁRIOS E PAGAMENTO ---
 const beneficiarySchema = z.object({
@@ -95,8 +122,8 @@ const beneficiarySchema = z.object({
     rg: z.string().optional(),
     birthDate: z.string().optional(),
     relationship: z.string().optional(),
-  }).strip().optional(), // <--- Blindagem Aninhada
-}).strip(); // <--- Blindagem Explícita
+  }).strip().optional(),
+}).strip();
 
 export const step8Schema = z.object({
   beneficiaries: z.array(beneficiarySchema).min(1, "Adicione pelo menos um beneficiário.")
@@ -154,7 +181,7 @@ const creditCardSchema = z.object({
     expirationDate: z.string().min(5, "Validade inválida"),
     cvv: z.string().min(3, "CVV inválido").max(4),
     brand: z.string().optional(),
-  }).strip() // <--- Blindagem Aninhada
+  }).strip()
 }).strip();
 
 const debitSchema = z.object({
@@ -164,7 +191,7 @@ const debitSchema = z.object({
     agency: z.string().min(1, "Agência obrigatória"),
     accountNumber: z.string().min(1, "Conta obrigatória"),
     accountDigit: z.string().min(1, "Dígito obrigatório"),
-  }).strip() // <--- Blindagem Aninhada
+  }).strip()
 }).strip();
 
 const payrollSchema = z.object({
@@ -172,7 +199,7 @@ const payrollSchema = z.object({
   payroll: z.object({
     registrationNumber: z.string().min(1, "Matrícula obrigatória"),
     orgCode: z.string().min(1, "Órgão obrigatório"),
-  }).strip() // <--- Blindagem Aninhada
+  }).strip()
 }).strip();
 
 export const step10Schema = z.discriminatedUnion('method', [creditCardSchema, debitSchema, payrollSchema]);

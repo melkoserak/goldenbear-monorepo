@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IMaskMixin } from 'react-imask';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react'; // Adicionei AlertCircle para reforçar o erro
 import Link from 'next/link';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { NavigationButtons } from '../NavigationButtons';
@@ -14,10 +14,12 @@ import { track } from '@/lib/tracking';
 import { step2Schema, type Step2Data } from '@/lib/schemas';
 import { StepLayout } from '../StepLayout';
 
+// Componente de Input com Máscara
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
   <Input {...props} ref={inputRef as React.Ref<HTMLInputElement>} />
 ));
 
+// Lista de Estados
 const brazilianStates = [
   { value: 'AC', label: 'Acre' }, { value: 'AL', label: 'Alagoas' },
   { value: 'AP', label: 'Amapá' }, { value: 'AM', label: 'Amazonas' },
@@ -40,23 +42,19 @@ export const Step2 = () => {
   const { setFormData, nextStep } = useSimulatorStore((state) => state.actions);
   const firstName = fullName.split(' ')[0] || "";
   
-  // Estado local para feedback visual imediato no botão
   const [isNavigating, setIsNavigating] = useState(false);
 
+  // [DEFESA] mode: 'onChange' garante validação a cada tecla
   const { control, register, handleSubmit, formState: { errors, isValid } } = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
     defaultValues: { cpf, email, phone, state, consent },
-    // MUDANÇA IMPORTANTE: 'onChange' valida em tempo real, sem delay de 'onBlur'
     mode: 'onChange', 
   });
 
   const onSubmit = async (data: Step2Data) => {
-    setIsNavigating(true); // Trava o botão e mostra loading
-    
-    // Pequeno delay artificial (opcional) se quiser garantir que o usuário veja o feedback,
-    // mas aqui serve para permitir que a UI atualize antes de mudar o passo.
+    setIsNavigating(true);
+    // Simula processamento breve para feedback de UI
     await new Promise(resolve => setTimeout(resolve, 100));
-    
     setFormData(data); 
     track('step_complete', { step: 2, step_name: 'Dados de Contato' });
     nextStep();
@@ -66,9 +64,12 @@ export const Step2 = () => {
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <StepLayout title={`Certo ${firstName}, agora precisamos destes dados de contato:`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* CPF */}
+          
+          {/* --- CAMPO CPF (BLINDADO) --- */}
           <div className="space-y-1.5">
-            <Label htmlFor="cpf">Seu CPF <span className="text-destructive">*</span></Label>
+            <Label htmlFor="cpf" className={errors.cpf ? "text-destructive font-medium" : ""}>
+              Seu CPF <span className="text-destructive">*</span>
+            </Label>
             <Controller
               name="cpf"
               control={control}
@@ -82,17 +83,33 @@ export const Step2 = () => {
                     onBlur={onBlur}
                     inputRef={ref}
                     placeholder="000.000.000-00"
-                    className={`h-12 px-4 py-3 pr-10 ${errors.cpf ? 'border-destructive' : ''}`}
+                    // Feedback visual imediato: Borda vermelha se inválido
+                    className={`h-12 px-4 py-3 pr-10 transition-colors ${
+                      errors.cpf 
+                        ? 'border-destructive ring-destructive/20 focus-visible:ring-destructive' 
+                        : value && !errors.cpf ? 'border-green-500/50' : ''
+                    }`}
                     aria-invalid={!!errors.cpf}
                   />
-                  {!errors.cpf && value && <Check className="absolute right-3 h-5 w-5 text-green-500 pointer-events-none" />}
+                  {/* Ícone de Sucesso ou Erro */}
+                  {!errors.cpf && value && (
+                    <Check className="absolute right-3 h-5 w-5 text-green-500 pointer-events-none animate-in fade-in zoom-in" />
+                  )}
+                  {errors.cpf && (
+                    <AlertCircle className="absolute right-3 h-5 w-5 text-destructive pointer-events-none animate-in fade-in zoom-in" />
+                  )}
                 </div>
               )}
             />
-            {errors.cpf && <p className="text-sm text-destructive mt-1">{errors.cpf.message}</p>}
+            {/* Mensagem de Erro Clara */}
+            {errors.cpf && (
+              <p className="text-sm text-destructive mt-1 font-medium flex items-center gap-1 animate-in slide-in-from-top-1">
+                {errors.cpf.message}
+              </p>
+            )}
           </div>
 
-          {/* Email */}
+          {/* --- E-MAIL --- */}
           <div className="space-y-1.5">
             <Label htmlFor="email">E-mail <span className="text-destructive">*</span></Label>
             <div className="relative flex items-center">
@@ -109,7 +126,7 @@ export const Step2 = () => {
             {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
           </div>
 
-          {/* Telefone */}
+          {/* --- TELEFONE --- */}
           <div className="space-y-1.5">
             <Label htmlFor="phone">Celular (DDD) <span className="text-destructive">*</span></Label>
             <Controller
@@ -135,7 +152,7 @@ export const Step2 = () => {
             {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
           </div>
           
-          {/* Estado */}
+          {/* --- ESTADO --- */}
           <div className="space-y-1.5">
             <Label>Estado <span className="text-destructive">*</span></Label>
             <Controller
@@ -157,7 +174,7 @@ export const Step2 = () => {
             {errors.state && <p className="text-sm text-destructive mt-1">{errors.state.message}</p>}
           </div>
 
-          {/* LGPD */}
+          {/* --- CHECKBOX DE CONSENTIMENTO --- */}
           <div className="md:col-span-2 pt-2">       
             <div className="flex items-start gap-3">
               <input
@@ -176,13 +193,14 @@ export const Step2 = () => {
           </div>
         </div>
         
-        {/* Botão modificado para suportar estado de carregamento */}
+        {/* --- BOTÕES DE NAVEGAÇÃO --- */}
         <div className="w-full flex justify-end">
-              <NavigationButtons 
-              isNextDisabled={!isValid} 
-              isLoading={isNavigating}
-              nextLabel="Continuar"
-            />
+          {/* O botão só habilita se 'isValid' for true (Zod aprovou tudo, incluindo a matemática do CPF) */}
+          <NavigationButtons 
+            isNextDisabled={!isValid} 
+            isLoading={isNavigating}
+            nextLabel="Continuar"
+          />
         </div>
       </StepLayout>
     </form>

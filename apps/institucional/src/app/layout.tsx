@@ -7,14 +7,13 @@ import { FontSizeManager } from "@/components/layout/FontSizeManager";
 import { TopBar } from "@/components/layout/TopBar";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import type { Metadata, Viewport } from "next";
-// Importação correta do headers para Next.js 15
 import { headers } from 'next/headers'; 
 
 const noto = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-noto-sans",
-  display: "swap",
+  display: "swap", // Considerar 'optional' para LCP se aceitável
 });
 
 export const viewport: Viewport = {
@@ -36,9 +35,6 @@ export const metadata: Metadata = {
     canonical: './',
   },
   description: "Especialistas em seguros de vida para militares das Forças Armadas. Simulação 100% digital e segura.",
-  verification: {
-    google: 'seu-codigo-verificacao-google', 
-  },
   robots: {
     index: true,
     follow: true,
@@ -57,22 +53,18 @@ export const metadata: Metadata = {
   },
 };
 
-// ATENÇÃO: O componente agora é async para suportar headers() do Next.js 15
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Await headers() antes de usar .get()
   const headersList = await headers();
   const nonce = headersList.get('x-nonce') || '';
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    // [FIX] Removido suppressHydrationWarning para expor problemas reais
+    <html lang="pt-BR">
       <head>
          <link rel="preconnect" href="https://fonts.googleapis.com" />
          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-         {/* Se tiver scripts manuais aqui que precisem executar, adicione nonce={nonce} neles */}
       </head>
       <body className={`${noto.variable} font-sans bg-background text-foreground antialiased`}>
-        {/* Passamos o nonce para o ThemeProvider se ele injetar scripts, 
-            ou o Next.js lida automaticamente com scripts de componentes */}
         <ThemeProvider nonce={nonce}>
           <FontSizeManager />
           <TopBar />

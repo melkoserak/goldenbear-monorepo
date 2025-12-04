@@ -8,7 +8,7 @@ import { Skeleton } from '@goldenbear/ui/components/skeleton';
 // 1. Passo 1 estático (LCP - deve ser instantâneo)
 import { Step1 } from './steps/Step1';
 
-// 2. Componente de Loading Leve
+// 2. Componente de Loading Leve (Skeleton)
 const StepLoading = () => (
   <div className="space-y-6 animate-pulse py-4">
     <div className="h-8 bg-muted rounded w-3/4 mb-8"></div>
@@ -28,21 +28,35 @@ const StepLoading = () => (
   </div>
 );
 
-// 3. Importações Dinâmicas (Code Splitting)
-const Step2 = dynamic(() => import('./steps/Step2').then(mod => mod.Step2), { loading: () => <StepLoading /> });
-const Step3 = dynamic(() => import('./steps/Step3').then(mod => mod.Step3), { loading: () => <StepLoading /> });
-const Step4 = dynamic(() => import('./steps/Step4').then(mod => mod.Step4), { loading: () => <StepLoading /> });
-const Step5 = dynamic(() => import('./steps/Step5').then(mod => mod.Step5), { loading: () => <StepLoading /> });
-const Step6 = dynamic(() => import('./steps/Step6').then(mod => mod.Step6), { loading: () => <StepLoading /> });
-const Step7 = dynamic(() => import('./steps/Step7').then(mod => mod.Step7), { loading: () => <StepLoading /> });
-const Step8 = dynamic(() => import('./steps/Step8').then(mod => mod.Step8), { loading: () => <StepLoading /> });
-const Step9 = dynamic(() => import('./steps/Step9').then(mod => mod.Step9), { loading: () => <StepLoading /> });
-const Step10 = dynamic(() => import('./steps/Step10').then(mod => mod.Step10), { loading: () => <StepLoading /> });
-const Step11 = dynamic(() => import('./steps/Step11').then(mod => mod.Step11), { loading: () => <StepLoading /> });
+// 3. Mapeamento de imports para Prefetch Manual
+// Definido fora do componente para estar acessível globalmente e evitar recriação
+const stepImports: Record<number, () => Promise<any>> = {
+  2: () => import('./steps/Step2'),
+  3: () => import('./steps/Step3'),
+  4: () => import('./steps/Step4'),
+  5: () => import('./steps/Step5'),
+  6: () => import('./steps/Step6'),
+  7: () => import('./steps/Step7'),
+  8: () => import('./steps/Step8'),
+  9: () => import('./steps/Step9'),
+  10: () => import('./steps/Step10'),
+  11: () => import('./steps/Step11'),
+  12: () => import('./steps/Step12'),
+};
 
-// --- CORREÇÃO AQUI: Importar do arquivo ./steps/Step12 ---
-const Step12 = dynamic(() => import('./steps/Step12').then(mod => mod.Step12), { loading: () => <StepLoading /> });
-
+// 4. Importações Dinâmicas (Code Splitting)
+// Usamos o objeto stepImports para garantir consistência
+const Step2 = dynamic(() => stepImports[2]().then(mod => mod.Step2), { loading: () => <StepLoading /> });
+const Step3 = dynamic(() => stepImports[3]().then(mod => mod.Step3), { loading: () => <StepLoading /> });
+const Step4 = dynamic(() => stepImports[4]().then(mod => mod.Step4), { loading: () => <StepLoading /> });
+const Step5 = dynamic(() => stepImports[5]().then(mod => mod.Step5), { loading: () => <StepLoading /> });
+const Step6 = dynamic(() => stepImports[6]().then(mod => mod.Step6), { loading: () => <StepLoading /> });
+const Step7 = dynamic(() => stepImports[7]().then(mod => mod.Step7), { loading: () => <StepLoading /> });
+const Step8 = dynamic(() => stepImports[8]().then(mod => mod.Step8), { loading: () => <StepLoading /> });
+const Step9 = dynamic(() => stepImports[9]().then(mod => mod.Step9), { loading: () => <StepLoading /> });
+const Step10 = dynamic(() => stepImports[10]().then(mod => mod.Step10), { loading: () => <StepLoading /> });
+const Step11 = dynamic(() => stepImports[11]().then(mod => mod.Step11), { loading: () => <StepLoading /> });
+const Step12 = dynamic(() => stepImports[12]().then(mod => mod.Step12), { loading: () => <StepLoading /> });
 
 // Configuração de títulos
 const stepTitles: { [key: number]: string } = {
@@ -77,6 +91,19 @@ export const SimulatorForm = () => {
     hydrateFromStorage();
   }, [hydrateFromStorage]);
 
+  // [PERF] Smart Prefetching: Pré-carrega o próximo passo
+  useEffect(() => {
+    const nextStep = currentStep + 1;
+    if (stepImports[nextStep]) {
+      // Pequeno delay para garantir que a UI atual já renderizou
+      const timer = setTimeout(() => {
+        stepImports[nextStep](); 
+        // console.log(`⚡ Prefetching Step ${nextStep}...`); // Descomente para debugar
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
+
   useEffect(() => {
     const title = stepTitles[currentStep] || 'Simulador';
     document.title = `${title} | Golden Bear Seguros`;
@@ -93,7 +120,8 @@ export const SimulatorForm = () => {
   }, [currentStep]);
 
    return (
-      <div ref={formRef} className="bg-background md:bg-card w-full max-w-5xl p-0 md:p-10 rounded-lg shadow-sm border-none md:border border-border/50">       <StepIndicator currentStep={getMainStep(currentStep)} />     
+      <div ref={formRef} className="bg-background md:bg-card w-full max-w-5xl p-0 md:p-10 rounded-lg shadow-sm border-none md:border border-border/50">       
+       <StepIndicator currentStep={getMainStep(currentStep)} />     
        <div className="mt-8">
         {/* Renderização Condicional */}
         {currentStep === 1 && <Step1 />}
