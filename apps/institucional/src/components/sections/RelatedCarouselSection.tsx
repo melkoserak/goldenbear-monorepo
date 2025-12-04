@@ -51,8 +51,10 @@ const ItemCard = ({ item }: { item: RelatedItem }) => {
     
     // A solução técnica: O card inteiro É o Link. Sem botões aninhados.
     return (
-        <Link 
+       <Link 
             href={item.href}
+            // --- CORREÇÃO APLICADA: ARIA-LABEL ---
+            aria-label={`Ver detalhes sobre a cobertura ${item.title}`}
             className="group flex flex-col justify-start h-full p-6 bg-card border border-border rounded-lg shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary select-none"
         >
             {/* Ícone com feedback visual no hover do grupo */}
@@ -60,7 +62,8 @@ const ItemCard = ({ item }: { item: RelatedItem }) => {
                 <Icon className="w-6 h-6 text-primary" />
             </div>
             
-            <Typography variant="h4" color="primary" className="mb-2 group-hover:text-primary/80 transition-colors">
+            {/* CORREÇÃO DE SEO: as="h3" */}
+            <Typography variant="h4" as="h3" color="primary" className="mb-2 group-hover:text-primary/80 transition-colors">
                 {item.title}
             </Typography>
             

@@ -54,7 +54,7 @@ const BenefitCard = ({ icon: Icon, title, description }: any) => (
     <div className="p-2 bg-muted rounded-lg inline-flex justify-start items-center gap-2.5">
       <Icon className="w-6 h-6 text-primary" />
     </div>
-    <Typography variant="h4" color="primary">
+    <Typography variant="h4" as="h3" color="primary">
       {title}
     </Typography>
     <Typography variant="body">

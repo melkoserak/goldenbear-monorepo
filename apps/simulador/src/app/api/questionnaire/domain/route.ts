@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server';
 import { getDomains } from '@/lib/mag-api/client';
 import { MAG_Logger } from '@/lib/mag-api/logger';
 
-export const dynamic = 'force-dynamic';
+// Cache de 12 horas
+export const revalidate = 43200;
 
 export async function GET() {
   try {
-    MAG_Logger.info(`Buscando lista de domínios na MAG`);
-    
     const data = await getDomains();
     
-    // Opcional: Se quiser retornar apenas o array 'Valor' limpo
-    // return NextResponse.json(data.Valor);
-    
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=43200, stale-while-revalidate=3600',
+      },
+    });
 
   } catch (error) {
     const err = error as Error;

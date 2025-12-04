@@ -69,8 +69,16 @@ export async function middleware(request: NextRequest) {
       return res;
 
     } catch (error) {
-      console.error('Falha na execução do Rate Limiting:', error);
-      // Se o Redis cair durante a execução, permite o acesso para não derrubar o site
+      // Log estruturado para ferramentas de monitoramento (Sentry/Datadog/Vercel Logs)
+      // O prefixo [CRITICAL_FAIL_OPEN] permite criar alertas automáticos
+      console.error(JSON.stringify({
+        level: 'error',
+        type: 'RATE_LIMIT_FAILURE',
+        message: 'Redis indisponível. Acesso liberado (Fail Open).',
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      }));
+      
       return NextResponse.next();
     }
   }

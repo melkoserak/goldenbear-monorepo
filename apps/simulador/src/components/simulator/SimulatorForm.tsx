@@ -93,8 +93,7 @@ export const SimulatorForm = () => {
   }, [currentStep]);
 
    return (
-    <div ref={formRef} className="bg-accent md:bg-white w-full max-w-5xl p-0 md:p-10 rounded-lg shadow-sm border-none md:border border-border/50">
-       <StepIndicator currentStep={getMainStep(currentStep)} />     
+      <div ref={formRef} className="bg-background md:bg-card w-full max-w-5xl p-0 md:p-10 rounded-lg shadow-sm border-none md:border border-border/50">       <StepIndicator currentStep={getMainStep(currentStep)} />     
        <div className="mt-8">
         {/* Renderização Condicional */}
         {currentStep === 1 && <Step1 />}

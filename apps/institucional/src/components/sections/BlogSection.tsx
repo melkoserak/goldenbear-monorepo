@@ -43,7 +43,7 @@ const BlogCard = ({ title, description, imageUrl, linkUrl }: any) => (
   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 />
       </div>
-      <Typography variant="h4">
+      <Typography variant="h4" as="h3">
         {title}
       </Typography>
     </div>
@@ -51,7 +51,7 @@ const BlogCard = ({ title, description, imageUrl, linkUrl }: any) => (
       {description}
     </Typography>
     <Button variant="link" asChild className="p-0 h-auto text-foreground font-medium justify-start">
-      <Link href={linkUrl}>
+      <Link href={linkUrl} aria-label={`Ler o artigo completo: ${title}`}>
         {/* 2. Span para esticar o link */}
         <span className="absolute inset-0 z-10" aria-hidden="true" />
         Leia mais <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />

@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img "Logo Golden Bear" [ref=e5]
+      - generic [ref=e6]: Simulador de seguro de vida
+    - button "Opções de acessibilidade" [ref=e7] [cursor=pointer]:
+      - img
+  - heading "Descubra o plano ideal para você e envie sua proposta em poucos passos." [level=1] [ref=e9]
+  - generic [ref=e10]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e15]: "1"
+        - generic [ref=e16]: Dados iniciais
+      - generic [ref=e18]:
+        - generic [ref=e20]: "2"
+        - generic [ref=e21]: Proposta
+      - generic [ref=e23]:
+        - generic [ref=e25]: "3"
+        - generic [ref=e26]: Complemento
+      - generic [ref=e28]:
+        - generic [ref=e30]: "4"
+        - generic [ref=e31]: Pagamento
+    - generic [ref=e34]:
+      - heading "Primeiramente, nos diga seu nome completo" [level=3] [ref=e36]
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: Nome completo *
+          - textbox "Nome completo *" [active] [ref=e41]:
+            - /placeholder: Seu nome completo
+            - text: João Teste Automatizado
+        - generic [ref=e42]:
+          - button "Próximo" [disabled]:
+            - text: Próximo
+            - img
+  - generic [ref=e43]:
+    - paragraph [ref=e44]:
+      - text: Esta com duvidas?
+      - link "Leia nosso FAQ" [ref=e45] [cursor=pointer]:
+        - /url: /faq
+    - paragraph [ref=e46]:
+      - text: Esta precisando de suporte?
+      - link "Fale com a gente pelo WhatsApp" [ref=e47] [cursor=pointer]:
+        - /url: "#"
+```

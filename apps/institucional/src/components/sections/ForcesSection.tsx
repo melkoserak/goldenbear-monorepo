@@ -54,6 +54,8 @@ const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
     // Isso torna toda a área clicável e acessível, sem conflitos de z-index.
     <Link 
       href={linkUrl}
+      // --- CORREÇÃO APLICADA: ARIA-LABEL ---
+      aria-label={`Saiba mais sobre o seguro para ${title}`}
       className="flex-1 bg-card rounded-lg border border-border shadow-sm hover:shadow-lg overflow-hidden flex flex-col justify-start h-full relative group transition-all duration-300 hover:-translate-y-1 outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className="self-stretch h-60 relative flex flex-col justify-start items-start gap-2.5 overflow-hidden bg-muted">
@@ -70,7 +72,7 @@ const ForceCard = ({ title, description, imageUrl, linkUrl }: any) => {
       
       <div className="self-stretch p-6 flex flex-col justify-start items-start gap-6 flex-1">
         {/* Título reage ao hover do pai (group) */}
-        <Typography variant="h4" className="self-stretch group-hover:text-primary transition-colors">
+       <Typography variant="h4" as="h3" className="self-stretch group-hover:text-primary transition-colors">
           {title}
         </Typography>
         

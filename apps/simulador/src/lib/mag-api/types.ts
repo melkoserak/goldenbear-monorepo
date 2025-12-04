@@ -27,6 +27,10 @@ export interface FrontendFormData {
   mag_renda: string;
   mag_estado: string;
   mag_profissao_cbo: string;
+
+  // --- ADICIONADO: Campos obrigatórios para o processamento ---
+  final_simulation_config: string; // Resolvido o erro do JSON.parse
+  payment?: Record<string, any>;   // Tipagem para o objeto de pagamento
   
   // Campos opcionais
   mag_email?: string;

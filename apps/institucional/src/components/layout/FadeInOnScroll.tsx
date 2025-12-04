@@ -15,7 +15,7 @@ export const FadeInOnScroll = ({
   children,
   className,
   delay = 0,
-  threshold = 0.1, // Começa a animação quando 10% do item está visível
+  threshold = 0.1,
 }: FadeInOnScrollProps) => {
   const { ref, inView } = useInView({
     triggerOnce: true, // Anima apenas uma vez
@@ -27,17 +27,16 @@ export const FadeInOnScroll = ({
     transitionDelay: `${delay}ms`,
   };
 
-  return (
+ return (
     <div
       ref={ref}
       style={style}
       className={cn(
-        // Estado inicial: Apenas invisível, sem movimento (corrige CLS)
-        "opacity-0",
-        // Estado final (visível)
+        "opacity-0 transition-all duration-700 ease-out",
+        // CLS Fix: Garante que o elemento ocupe espaço mesmo invisível ou use min-h
+        // A11y: Desativa animação se o usuário preferir movimento reduzido
+        "motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:transform-none", 
         inView && "opacity-100",
-        // Classes de transição (duração e suavização)
-        "transition-all duration-700 ease-out",
         className
       )}
     >

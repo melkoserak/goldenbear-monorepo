@@ -27,7 +27,7 @@ const isValidLuhn = (val: string) => {
 
 export const step1Schema = z.object({
   fullName: z.string().min(1, "O nome é obrigatório").refine((val) => val.trim().split(' ').length >= 2, "Digite seu nome e sobrenome."),
-});
+}).strip(); // <--- Blindagem Explícita
 
 export const step2Schema = z.object({
   cpf: z.string().min(1, "O CPF é obrigatório").regex(cpfRegex, "CPF inválido"),
@@ -35,7 +35,7 @@ export const step2Schema = z.object({
   phone: z.string().min(1, "O celular é obrigatório").regex(phoneRegex, "Celular inválido"),
   state: z.string().min(1, "Selecione o seu estado"),
   consent: z.boolean().refine((val) => val === true, { message: "Você precisa aceitar os termos." }),
-});
+}).strip(); // <--- Blindagem Explícita
 
 export const step3Schema = z.object({
   birthDate: z.string().regex(dateRegex, "Data inválida.").refine((val) => {
@@ -52,7 +52,7 @@ export const step3Schema = z.object({
   gender: z.string().min(1, "Selecione o sexo."),
   income: z.string().min(1, "Selecione a faixa de renda."),
   profession: z.string().min(1, "Selecione a profissão."),
-});
+}).strip(); // <--- Blindagem Explícita
 
 export const step6Schema = z.object({
   zipCode: z.string().min(1, "O CEP é obrigatório").regex(zipRegex, "CEP inválido."),
@@ -62,9 +62,9 @@ export const step6Schema = z.object({
   neighborhood: z.string().min(1, "Bairro é obrigatório."),
   city: z.string().min(1, "Cidade é obrigatória."),
   state: z.string().min(2, "Estado é obrigatório."),
-});
+}).strip(); // <--- Blindagem Explícita
 
-// --- PASSO 7: PERFIL DETALHADO (ATUALIZADO) ---
+// --- PASSO 7: PERFIL DETALHADO ---
 export const step7Schema = z.object({
   maritalStatus: z.string().min(1, "Selecione o estado civil"),
   company: z.string().min(2, "Informe o nome da instituição/empresa"), 
@@ -75,13 +75,10 @@ export const step7Schema = z.object({
     const d = new Date(date);
     return !isNaN(d.getTime()) && d < new Date();
   }, "Data de expedição inválida"),
-  
-  // CORREÇÃO AQUI: Removido o objeto de opções que causava erro
   childrenCount: z.coerce.number().min(0, "Informe 0 se não tiver filhos"),
-  
   isPPE: z.boolean(),
   homePhone: z.string().optional(),
-});
+}).strip(); // <--- Blindagem Explícita
 
 // --- BENEFICIÁRIOS E PAGAMENTO ---
 const beneficiarySchema = z.object({
@@ -98,8 +95,8 @@ const beneficiarySchema = z.object({
     rg: z.string().optional(),
     birthDate: z.string().optional(),
     relationship: z.string().optional(),
-  }).optional(),
-});
+  }).strip().optional(), // <--- Blindagem Aninhada
+}).strip(); // <--- Blindagem Explícita
 
 export const step8Schema = z.object({
   beneficiaries: z.array(beneficiarySchema).min(1, "Adicione pelo menos um beneficiário.")
@@ -113,7 +110,6 @@ export const step8Schema = z.object({
         const m = today.getMonth() - birthDateObj.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) age--;
         
-        // Regra: Maior de 18 exige CPF
         if (age >= 18) {
             if (!item.cpf || !cpfRegex.test(item.cpf)) {
                 ctx.addIssue({ 
@@ -123,9 +119,7 @@ export const step8Schema = z.object({
                 });
             }
         } else {
-            // Regra: Menor de 18 exige Responsável Legal
             const repPath = [index, "legalRepresentative"];
-            
             if (!item.legalRepresentative?.fullName || item.legalRepresentative.fullName.trim().length < 3) {
                 ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Nome do responsável obrigatório.", path: [...repPath, "fullName"] });
             }
@@ -141,7 +135,6 @@ export const step8Schema = z.object({
         }
       });
       
-      // Validação de Porcentagem Total
       const total = items.reduce((acc, b) => acc + (b.percentage || 0), 0);
       if (Math.abs(total - 100) > 0.1) {
         ctx.addIssue({
@@ -151,7 +144,7 @@ export const step8Schema = z.object({
         });
       }
     }),
-});
+}).strip();
 
 const creditCardSchema = z.object({
   method: z.literal('CREDIT_CARD'),
@@ -161,8 +154,8 @@ const creditCardSchema = z.object({
     expirationDate: z.string().min(5, "Validade inválida"),
     cvv: z.string().min(3, "CVV inválido").max(4),
     brand: z.string().optional(),
-  })
-});
+  }).strip() // <--- Blindagem Aninhada
+}).strip();
 
 const debitSchema = z.object({
   method: z.literal('DEBIT_ACCOUNT'),
@@ -171,16 +164,16 @@ const debitSchema = z.object({
     agency: z.string().min(1, "Agência obrigatória"),
     accountNumber: z.string().min(1, "Conta obrigatória"),
     accountDigit: z.string().min(1, "Dígito obrigatório"),
-  })
-});
+  }).strip() // <--- Blindagem Aninhada
+}).strip();
 
 const payrollSchema = z.object({
   method: z.literal('PAYROLL_DEDUCTION'),
   payroll: z.object({
     registrationNumber: z.string().min(1, "Matrícula obrigatória"),
     orgCode: z.string().min(1, "Órgão obrigatório"),
-  })
-});
+  }).strip() // <--- Blindagem Aninhada
+}).strip();
 
 export const step10Schema = z.discriminatedUnion('method', [creditCardSchema, debitSchema, payrollSchema]);
 

@@ -77,7 +77,7 @@ export const BenefitsSection = () => {
                 </Typography>
                 
                 <div className="p-0 h-auto text-accent-foreground font-medium mt-auto inline-flex items-center group-hover:text-foreground transition-colors">
-                  <Link href={benefit.linkUrl} className="outline-none">
+                  <Link href={benefit.linkUrl} className="outline-none" aria-label={`Saiba mais sobre ${benefit.title}`}>
                     <span className="absolute inset-0 z-10" aria-hidden="true" />
                     <span className="underline underline-offset-4 decoration-transparent text-sm group-hover:decoration-foreground transition-all duration-300">
                       Saiba mais

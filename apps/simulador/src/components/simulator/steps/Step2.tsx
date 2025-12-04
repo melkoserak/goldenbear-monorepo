@@ -178,14 +178,11 @@ export const Step2 = () => {
         
         {/* Botão modificado para suportar estado de carregamento */}
         <div className="w-full flex justify-end">
-           <NavigationButtons 
-              isNextDisabled={!isValid || isNavigating} 
-              // Infelizmente NavigationButtons é um componente fechado, 
-              // mas o 'disabled' já previne cliques múltiplos.
-              // Se você quiser customizar o texto ou ícone, teria que passar props extras para NavigationButtons 
-              // ou usar um Button direto aqui.
-              // Por hora, o disable + modo 'onChange' deve resolver a sensação de lentidão.
-           />
+              <NavigationButtons 
+              isNextDisabled={!isValid} 
+              isLoading={isNavigating}
+              nextLabel="Continuar"
+            />
         </div>
       </StepLayout>
     </form>

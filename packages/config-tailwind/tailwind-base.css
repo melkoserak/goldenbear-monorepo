@@ -84,40 +84,46 @@
 /* O modo escuro apenas remapeia os tokens semânticos */
 /* --- 3. Theming (Modo Escuro) Ajustado --- */
 html.dark {
-  --background: #09090b; /* Zinco 950 (Mais profundo que cinza puro) */
-  --foreground: #fafafa; /* Zinco 50 */
+  /* Fundo da página: Um cinza muito escuro, quase preto */
+  --background: #09090b; 
+  --foreground: #fafafa;
 
-  --card: #18181b; /* Zinco 900 */
+  /* Cartões: Um pouco mais claro que o fundo para criar profundidade ("Elevação 1") */
+  --card: #141417; 
   --card-foreground: #fafafa;
 
-  --popover: #18181b;
+  /* Popovers/Modais: Um pouco mais claro que os cartões ("Elevação 2") */
+  --popover: #1c1c1f;
   --popover-foreground: #fafafa;
 
-  --primary: #3b82f6; /* Azul um pouco mais claro para contraste em fundo escuro */
+  /* Cores primárias ajustadas para brilho em fundo escuro */
+  --primary: #3b82f6; 
   --primary-foreground: #ffffff;
 
-  --secondary: #fbbf24; /* Amarelo ajustado */
+  --secondary: #fbbf24;
   --secondary-foreground: #18181b;
 
-  --muted: #27272a; /* Zinco 800 */
-  --muted-foreground: #d4d4d8; /* Zinco 400 (Melhor contraste que o anterior) */
+  /* Muted: Elementos de fundo secundário (ex: steps inativos) */
+  --muted: #27272a; 
+  --muted-foreground: #a1a1aa; /* Aumentei o contraste para leitura */
   
   --accent: #27272a;
   --accent-foreground: #fafafa;
 
-  --destructive: #7f1d1d; /* Vermelho escuro para fundo */
-  --destructive-foreground: #fecaca; /* Texto claro */
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fecaca;
 
-  /* Bordas mais visíveis no dark mode */
-  --border: #3f3f46; /* Zinco 700 */
-  --input: #3f3f46;
+  /* Bordas: Precisam ser sutis, mas visíveis para delimitar inputs */
+  --border: #27272a; 
+  --input: #27272a;  /* Cor de fundo do input ou borda */
   --ring: #2563eb;
   
+  /* Mantemos as cores de status */
   --success: #22c55e; 
   --success-foreground: #ffffff;
-  --success-light: #14532d;     /* green-900 ajustado para dark mode */
+  --success-light: #052e16; /* Fundo verde muito escuro para alertas */
   
   --warning: #fbbf24;
   --warning-foreground: #000000;
-  --warning-light: #451a03;     /* amber-950 ajustado */
+  --warning-light: #451a03; /* Fundo âmbar muito escuro */
 }

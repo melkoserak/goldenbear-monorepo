@@ -71,12 +71,14 @@ export const Step3 = () => {
               {/* Este estilo garante que o ícone do calendário fique alinhado e bonito */}
               <style jsx>{`
                 input[type="date"] {
-                  display: block;
-                  -webkit-appearance: none;
-                  -moz-appearance: none;
-                  appearance: none;
-                  min-height: 48px; /* Garante altura de toque no mobile */
-                }
+                      display: block;
+                      /* Reseta estilos nativos do iOS */
+                      -webkit-appearance: none;
+                      -moz-appearance: none;
+                      appearance: none;
+                      min-height: 48px;
+                      background-color: transparent; /* Usa a cor do tema */
+                    }
                 /* Posiciona o ícone nativo do calendário para a direita (opcional) */
                 input[type="date"]::-webkit-calendar-picker-indicator {
                   position: absolute;

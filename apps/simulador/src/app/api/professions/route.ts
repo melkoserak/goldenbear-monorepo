@@ -2,29 +2,21 @@ import { NextResponse } from 'next/server';
 import { getProfessions } from '@/lib/mag-api/client';
 import { MAG_Logger } from '@/lib/mag-api/logger';
 
-export const dynamic = 'force-dynamic';
+// Cache de 24 horas (86400 segundos)
+export const revalidate = 86400; 
 
 export async function GET(request: Request) {
-  console.log(`
-  ===============================================
-  [BFF-BACKEND]: /api/professions/route.ts foi ATINGIDA!
-  Data: ${new Date().toISOString()}
-  ===============================================
-  `);
-
   try {
-    const data = await getProfessions(); // Isso retorna o OBJETO COMPLETO da MAG
+    const data = await getProfessions();
     
-    // O erro está aqui:
-    // Nós já estamos retornando `data.Valor` do client.ts
-    // O client.ts deve retornar a resposta completa.
-    
-    // CORREÇÃO:
     if (data && data.Valor) {
-      return NextResponse.json(data.Valor); // Retorna apenas o array
+      return NextResponse.json(data.Valor, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600',
+        },
+      });
     } else {
-      // Se 'data.Valor' não existir, é um erro
-      throw new Error(data?.Mensagens?.[0]?.Descricao || "Resposta inválida da API da MAG: 'Valor' não encontrado.");
+      throw new Error(data?.Mensagens?.[0]?.Descricao || "Resposta inválida da API da MAG");
     }
 
   } catch (error) {

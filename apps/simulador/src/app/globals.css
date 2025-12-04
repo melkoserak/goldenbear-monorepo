@@ -1,16 +1,10 @@
-/* 1. Importa as diretivas do Tailwind PRIMEIRO */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 2. Aplica suas variáveis de cor e estilos base */
 @layer base {
-  /* Importa as variáveis de cor compartilhadas */
   @import "@goldenbear/tailwind-config/tailwind-base.css";
 
-  /* * Adiciona o resto dos seus estilos base
-   * (Isso foi copiado do seu arquivo globals.css original) 
-   */
   * {
     border-color: var(--border);
   }
@@ -19,12 +13,24 @@
     color: var(--foreground);
   }
 
+  /* --- CORREÇÃO DO AUTOFILL --- */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px white inset !important;
-    box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    /* 1. Usa a variável do tema em vez de 'white'. 
+          No Dark Mode, var(--background) será escuro (#09090b). */
+    -webkit-box-shadow: 0 0 0 30px var(--background) inset !important;
+    box-shadow: 0 0 0 30px var(--background) inset !important;
+
+    /* 2. Remove o 'hsl()' pois suas variáveis são HEX (#fafafa). 
+          Isso garante que o texto fique claro no escuro. */
+    -webkit-text-fill-color: var(--foreground) !important;
+    
+    /* 3. Força a cor do caret (cursor que pisca) para ser visível */
+    caret-color: var(--foreground) !important;
+    
+    /* Opcional: Mantém a borda consistente */
+    border-color: var(--input) !important;
   }
 }

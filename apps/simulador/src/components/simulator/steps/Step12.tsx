@@ -5,14 +5,22 @@ import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { useCoverageStore, type ApiCoverage } from '@/stores/useCoverageStore';
 import { submitProposal, type ProposalPayload } from '@/services/apiService';
 import { track } from '@/lib/tracking';
-// --- CORREÇÃO: CheckCircle2 ADICIONADO ---
-import { Loader2, AlertTriangle, PartyPopper, CheckCircle2, UserCog } from 'lucide-react';
+import { 
+  Loader2, 
+  AlertTriangle, 
+  PartyPopper, 
+  CheckCircle2, 
+  UserCog, 
+  ArrowLeft, 
+  FileText,
+  Stethoscope,
+  CreditCard // CORREÇÃO 1: Adicionado o import que faltava
+} from 'lucide-react';
 import { Button } from '@goldenbear/ui/components/button';
 import { Input } from '@goldenbear/ui/components/input';
 import { Label } from '@goldenbear/ui/components/label';
 import { fillQuestionnaireTree } from '@/lib/mag-api/questionnaireUtils';
 
-// ... (o restante do código permanece EXATAMENTE igual ao que você já tinha)
 const MaskedInput = IMaskMixin(({ inputRef, ...props }) => (
   <Input {...props} ref={inputRef as React.Ref<HTMLInputElement>} />
 ));
@@ -28,12 +36,11 @@ interface MappedProduct {
 }
 
 export const Step12 = () => {
-    // ... (Mantenha todo o código do componente Step12 igual à versão completa anterior)
     const { 
         formData, 
         reservedProposalNumber,
         paymentPreAuthCode,
-        actions: { setFormData } 
+        actions: { setFormData, setStep } 
     } = useSimulatorStore();
     
     const coverageState = useCoverageStore();
@@ -42,8 +49,9 @@ export const Step12 = () => {
     const [error, setError] = useState<string | null>(null);
     const [proposalNumber, setProposalNumber] = useState<string | null>(null);
     
-    // Self-Healing States
-    const [isCpfError, setIsCpfError] = useState(false);
+    const [errorType, setErrorType] = useState<'API_ERROR' | 'MISSING_DATA' | 'CPF_ERROR'>('API_ERROR');
+    const [missingStep, setMissingStep] = useState<number | null>(null);
+
     const [tempCpf, setTempCpf] = useState(formData.cpf);
     const [retryTrigger, setRetryTrigger] = useState(0);
 
@@ -63,10 +71,48 @@ export const Step12 = () => {
     const handleFinalSubmit = useCallback(async () => {
         setStatus('processing');
         setError(null);
-        setIsCpfError(false);
+        setErrorType('API_ERROR');
+        setMissingStep(null);
+
+        // --- 1. VALIDAÇÕES DE FLUXO (Pre-Flight) ---
+
+        // A. Simulação Vazia?
+        if (coverageState.coverages.length === 0) {
+             setError("Não encontramos os dados da sua simulação (planos).");
+             setErrorType('MISSING_DATA');
+             setMissingStep(4); // Cotação
+             setStatus('error');
+             return;
+        }
+
+        // B. Questionário de Saúde (DPS) Pendente?
+        const requiresDPS = coverageState.coverages.some(c => 
+            c.isActive && c.originalData?.questionariosPorFaixa && c.originalData.questionariosPorFaixa.length > 0
+        );
+        
+        const hasAnswers = formData.dpsAnswers && Object.keys(formData.dpsAnswers).length > 0;
+        
+        if (requiresDPS && !hasAnswers) {
+             setError("A Declaração Pessoal de Saúde é obrigatória para este plano e não foi preenchida.");
+             setErrorType('MISSING_DATA');
+             setMissingStep(9); // DPS
+             setStatus('error');
+             return;
+        }
+
+        // C. Pagamento Pendente?
+        if (!formData.payment || !formData.payment.method) {
+             setError("A forma de pagamento não foi selecionada.");
+             setErrorType('MISSING_DATA');
+             setMissingStep(10); // Pagamento
+             setStatus('error');
+             return;
+        }
 
         try {
-            // 1. Montar Produtos
+            // --- 2. PROCESSAMENTO ---
+
+            // Montar Produtos
             const productMap = new Map<string, MappedProduct>();
             coverageState.coverages.forEach(coverage => {
                 if (coverage.isActive) {
@@ -94,7 +140,7 @@ export const Step12 = () => {
                 produtos: Array.from(productMap.values())
             };
 
-            // 2. Montar Payload da Proposta
+            // Montar Payload
             const payload: ProposalPayload = {
                 mag_nome_completo: formData.fullName,
                 mag_cpf: formData.cpf,
@@ -133,7 +179,7 @@ export const Step12 = () => {
                 payload[`mag_ben[${index}][parentesco]`] = ben.relationship;
             });
             
-            // 3. Enviar Proposta
+            // Enviar Proposta
             const result = await submitProposal(payload);
             
             if (!result.proposal_number) {
@@ -143,12 +189,13 @@ export const Step12 = () => {
             setProposalNumber(result.proposal_number);
             track('proposal_success', { proposal_number: result.proposal_number });
 
-            // 4. Enviar DPS (se houver)
-            if (formData.dpsAnswers && formData.questionnaireOriginalData) {
+            // Enviar DPS (se houver e for necessário)
+            if (requiresDPS && hasAnswers && formData.questionnaireOriginalData) {
                 setStatus('sending_dps');
                 const filledJsonObject = fillQuestionnaireTree(
                     formData.questionnaireOriginalData,
-                    formData.dpsAnswers
+                    // CORREÇÃO 2: Fallback seguro para evitar erro de tipagem
+                    formData.dpsAnswers || {} 
                 );
                 await submitQuestionnaire(String(result.proposal_number), filledJsonObject);
                 track('dps_success', { proposal_number: result.proposal_number });
@@ -158,13 +205,25 @@ export const Step12 = () => {
 
         } catch (err) {
             const error = err as Error;
-            console.error("Erro no Step 12:", error);
-            
             const errorMsg = error.message || '';
+            
+            // --- 3. DIAGNÓSTICO DE ERRO ---
+            
             if (errorMsg.toLowerCase().includes('cpf') || errorMsg.toLowerCase().includes('inválido')) {
-                setIsCpfError(true);
-                setError("O CPF informado foi rejeitado. Por favor, corrija abaixo.");
-            } else {
+                setErrorType('CPF_ERROR');
+                setError("O CPF informado foi rejeitado pela seguradora.");
+            } 
+            else if (
+                errorMsg.includes('perguntas obrigatórias') || 
+                errorMsg.includes('Pré-Condição') || 
+                errorMsg.includes('DPS')
+            ) {
+                setErrorType('MISSING_DATA');
+                setMissingStep(9); 
+                setError("A seguradora identificou pendências no Questionário de Saúde.");
+            }
+            else {
+                setErrorType('API_ERROR');
                 setError(errorMsg || 'Erro no processamento da proposta.');
             }
             
@@ -194,40 +253,70 @@ export const Step12 = () => {
                     {status === 'processing' ? 'Gerando Apólice...' : 'Registrando Declaração de Saúde...'}
                 </h3>
                 <p className="text-muted-foreground">
-                    Sua assinatura foi validada. Estamos finalizando a contratação.
+                    Estamos finalizando a contratação do seu seguro.
                 </p>
             </div>
         );
     }
 
     if (status === 'error') {
+        let actionButtonText = "Corrigir";
+        let ActionIcon = ArrowLeft;
+        
+        if (missingStep === 4) actionButtonText = "Ir para Simulação";
+        if (missingStep === 9) { actionButtonText = "Preencher Questionário"; ActionIcon = Stethoscope; }
+        if (missingStep === 10) { actionButtonText = "Dados de Pagamento"; ActionIcon = CreditCard; }
+
         return (
             <div className="animate-fade-in text-center p-8 bg-destructive/5 border border-destructive/30 rounded-xl mx-auto max-w-lg mt-8">
-                <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-destructive mb-2">Falha no Processamento</h3>
-                <p className="text-muted-foreground mb-6">{error}</p>
-                {isCpfError ? (
-                    <div className="bg-background p-4 rounded-lg border border-border shadow-sm text-left space-y-4">
-                         <div className="flex items-center gap-2 text-primary font-semibold">
-                            <UserCog className="w-5 h-5" />
-                            <span>Correção de Dados</span>
-                         </div>
+                
+                <div className="p-4 bg-white rounded-full shadow-sm inline-flex mb-6">
+                   {errorType === 'MISSING_DATA' ? (
+                      <FileText className="h-10 w-10 text-primary" />
+                   ) : (
+                      <AlertTriangle className="h-10 w-10 text-destructive" />
+                   )}
+                </div>
+
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                    {errorType === 'MISSING_DATA' ? 'Ação Necessária' : 'Falha no Processamento'}
+                </h3>
+                
+                <p className="text-muted-foreground mb-8">{error}</p>
+                
+                {/* CENÁRIO 1: ERRO DE CPF */}
+                {errorType === 'CPF_ERROR' && (
+                    <div className="bg-background p-4 rounded-lg border border-border shadow-sm text-left space-y-4 mb-4">
                          <div className="space-y-1.5">
-                            <Label htmlFor="fix-cpf">Novo CPF</Label>
+                            <Label htmlFor="fix-cpf">Corrigir CPF</Label>
                             <MaskedInput
                                 id="fix-cpf"
                                 mask="000.000.000-00"
                                 value={tempCpf}
                                 onAccept={(v: string) => setTempCpf(v)}
                                 className="border-primary ring-primary"
-                                autoFocus
                             />
                          </div>
                          <Button onClick={handleFixCpfAndRetry} className="w-full">
-                            Atualizar e Tentar Novamente
+                            Salvar e Tentar Novamente
                          </Button>
                     </div>
-                ) : (
+                )}
+
+                {/* CENÁRIO 2: DADOS FALTANDO (Redirect Inteligente) */}
+                {errorType === 'MISSING_DATA' && missingStep && (
+                    <Button 
+                        onClick={() => setStep(missingStep)} 
+                        size="lg"
+                        className="gap-2 w-full sm:w-auto"
+                    >
+                        <ActionIcon className="w-4 h-4" />
+                        {actionButtonText}
+                    </Button>
+                )}
+
+                {/* CENÁRIO 3: ERRO GENÉRICO */}
+                {errorType === 'API_ERROR' && (
                     <Button onClick={() => setRetryTrigger(prev => prev + 1)} variant="outline">
                         Tentar Novamente
                     </Button>
@@ -248,16 +337,6 @@ export const Step12 = () => {
                     <p className="text-4xl font-mono font-bold text-primary tracking-tight select-all">
                         {proposalNumber}
                     </p>
-                </div>
-                <div className="max-w-lg mx-auto text-sm text-muted-foreground space-y-4">
-                    <div className="flex items-center gap-3 justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span>Dados recebidos pela seguradora</span>
-                    </div>
-                    <div className="flex items-center gap-3 justify-center">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span>Forma de pagamento registrada</span>
-                    </div>
                 </div>
                 <div className="mt-10">
                     <Button onClick={() => window.location.href = '/'} size="lg" className="px-8">

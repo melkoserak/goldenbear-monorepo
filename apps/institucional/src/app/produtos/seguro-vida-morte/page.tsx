@@ -1,83 +1,106 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import dynamic from 'next/dynamic';
 import { 
-  Section, 
-  Container, 
-  Typography, 
-  Button,
-  FeatureCard,
-  SectionHeader 
+  Section, Container, Typography, Button,
+  FeatureCard, SectionHeader 
 } from "@goldenbear/ui";
 import { 
-  DollarSign, 
-  HeartHandshake, 
-  ShieldCheck,
-  CheckCircle, // <-- Ícone para listas
-  XCircle,      // <-- Ícone para listas
-  Zap,          // <-- Ícone para "Aprovação Rápida"
-  Briefcase,    // <-- Ícone para "Sem restrição"
-  Wallet        // <-- Ícone para "Cabe no bolso"
+  DollarSign, HeartHandshake, ShieldCheck,
+  CheckCircle, Zap, Briefcase, Wallet 
 } from "lucide-react";
 
-// Componentes reutilizados
+// Componentes críticos (Mantidos)
 import { PartnerSection } from "@/components/sections/PartnerSection";
-import { FaqSection } from "@/components/sections/FaqSection";
-import { DigitalCtaSection } from "@/components/sections/DigitalCtaSection";
 import { PageHero } from "@/components/layout/PageHero";
-import { RelatedCarouselSection } from "@/components/sections/RelatedCarouselSection"; // <-- NOVO IMPORT
 import { ComparisonSection } from '@/components/sections/ComparisonSection';
 
 
-// Metadata (sem alterações)
+const RelatedCarouselSection = dynamic(
+  () => import('@/components/sections/RelatedCarouselSection').then(mod => mod.RelatedCarouselSection)
+);
+
+const FaqSection = dynamic(
+  () => import('@/components/sections/FaqSection').then(mod => mod.FaqSection)
+);
+
+const DigitalCtaSection = dynamic(
+  () => import('@/components/sections/DigitalCtaSection').then(mod => mod.DigitalCtaSection)
+);
+
 export const metadata: Metadata = {
   title: "Seguro de Vida por Morte | Golden Bear Seguros",
   description: "Proteja o futuro da sua família. O Seguro de Vida (Morte) garante a tranquilidade financeira para quem você ama. Especialistas em militares. Simule agora.",
+  alternates: {
+    canonical: "https://www.goldenbearseguros.com.br/produtos/seguro-vida-morte"
+  },
   openGraph: {
     title: "Seguro de Vida por Morte | Golden Bear Seguros",
-    description: "Garanta a tranquilidade financeira da sua família com a cobertura essencial."
+    description: "Garanta a tranquilidade financeira da sua família com a cobertura essencial.",
+    url: "https://www.goldenbearseguros.com.br/produtos/seguro-vida-morte",
+    type: "website"
   }
 };
 
-// Componente local para listas com ícones
+const jsonLdString = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FinancialProduct",
+  "name": "Seguro de Vida (Morte)",
+  "description": "Proteção financeira fundamental para garantir o padrão de vida da sua família na sua ausência. Cobertura de até R$ 1 Milhão.",
+  "provider": {
+    "@type": "Organization",
+    "name": "Golden Bear Seguros",
+    "url": "https://www.goldenbearseguros.com.br"
+  },
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "Militares das Forças Armadas"
+  },
+  "areaServed": "BR",
+  "url": "https://www.goldenbearseguros.com.br/produtos/seguro-vida-morte",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "BRL",
+    "price": "0",
+    "availability": "https://schema.org/InStock"
+  }
+});
+
 const CheckItem = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-start gap-3">
-    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+    <CheckCircle 
+      className="w-5 h-5 text-primary flex-shrink-0 mt-1" 
+      aria-hidden="true"
+    />
     <Typography variant="body" color="muted">{children}</Typography>
   </div>
 );
 
-// Componente local para o comparativo
-const ComparisonItem = ({ isGoldenBear, children }: { isGoldenBear: boolean; children: React.ReactNode }) => (
-  <div className="flex items-start gap-3">
-    {isGoldenBear ? (
-      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
-    ) : (
-      <XCircle className="w-5 h-5 text-muted flex-shrink-0 mt-1" />
-    )}
-    <Typography variant="body" color={isGoldenBear ? "default" : "muted"}>
-      {children}
-    </Typography>
-  </div>
-);
-
-
 export default function SeguroVidaMortePage() {
-  const CtaButton = (
-    <Button asChild variant="secondary" size="hero">
-      <Link href="/simulador">Simulação Rápida e Gratuita</Link>
-    </Button>
-  );
-
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdString }}
+      />
+
       <PageHero
         tag="Cobertura Essencial"
         title="Seguro de Vida (Morte)"
         subtitle="A proteção fundamental que garante o futuro e a tranquilidade financeira da sua família, permitindo que mantenham o padrão de vida."
-        ctaNode={CtaButton}
+        ctaNode={
+          <Button asChild variant="secondary" size="hero">
+            <Link 
+              href="/simulador"
+              aria-label="Iniciar simulação de Seguro de Vida (Morte)"
+            >
+              Simulação Rápida e Gratuita
+            </Link>
+          </Button>
+        }
       />
 
-      {/* Seção de Benefícios Chave (Existente) */}
+      {/* AJUSTE 2: Removido role="main" pois já existe no layout.tsx */}
       <Section variant="default">
         <Container>
           <SectionHeader
@@ -85,6 +108,7 @@ export default function SeguroVidaMortePage() {
             subtitle="Esta é a base de todo seguro de vida. Ela garante que, na sua ausência, seus beneficiários recebam o capital contratado para se reestruturarem financeiramente."
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* FeatureCard já corrigimos internamente para as="h3" no passo anterior */}
             <FeatureCard icon={DollarSign} title="Tranquilidade Financeira">
               Garante os recursos para despesas imediatas, inventário, educação dos filhos e quitação de dívidas.
             </FeatureCard>
@@ -98,11 +122,9 @@ export default function SeguroVidaMortePage() {
         </Container>
       </Section>
 
-      {/* --- NOVA SEÇÃO 1: O QUE COBRE --- */}
       <Section variant="accent">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            {/* Coluna Esquerda: Título e CTA */}
             <div className="max-w-xl">
               <SectionHeader
                 title="O que o nosso Seguro de Vida cobre?"
@@ -110,14 +132,19 @@ export default function SeguroVidaMortePage() {
                 className="mb-8"
               />
               <Button asChild size="lg">
-                <Link href="/simulador">Simule agora</Link>
+                <Link 
+                  href="/simulador"
+                  aria-label="Simular Seguro de Vida agora"
+                >
+                  Simule agora
+                </Link>
               </Button>
             </div>
             
-            {/* Coluna Direita: Listas */}
             <div className="space-y-6">
               <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
-                <Typography variant="h4" className="mb-4">O seguro de vida cobre:</Typography>
+                {/* AJUSTE 3: as="h3" para semântica correta */}
+                <Typography variant="h4" as="h3" className="mb-4">O seguro de vida cobre:</Typography>
                 <div className="space-y-3">
                   <CheckItem>Morte decorrente de causa natural ou doenças (incluindo COVID-19).</CheckItem>
                   <CheckItem>Morte decorrente de acidente pessoal.</CheckItem>
@@ -126,7 +153,8 @@ export default function SeguroVidaMortePage() {
               </div>
               
               <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
-                <Typography variant="h4" className="mb-4">Carência</Typography>
+                {/* AJUSTE 3 */}
+                <Typography variant="h4" as="h3" className="mb-4">Carência</Typography>
                 <div className="space-y-3">
                   <CheckItem>120 dias para morte natural e por doenças.</CheckItem>
                   <CheckItem>2 anos para suicídio.</CheckItem>
@@ -135,7 +163,8 @@ export default function SeguroVidaMortePage() {
               </div>
 
               <div className="p-6 bg-card border border-border rounded-lg shadow-sm">
-                <Typography variant="h4" className="mb-4">Valor da cobertura</Typography>
+                {/* AJUSTE 3 */}
+                <Typography variant="h4" as="h3" className="mb-4">Valor da cobertura</Typography>
                 <CheckItem>Até R$ 1 Milhão na contratação 100% digital.</CheckItem>
               </div>
             </div>
@@ -143,7 +172,7 @@ export default function SeguroVidaMortePage() {
         </Container>
       </Section>
 
-      {/* --- NOVA SEÇÃO 2: BENEFÍCIOS DO PROCESSO --- */}
+      {/* Seção "Benefits" reutilizada - Manter estrutura */}
       <Section variant="default">
         <Container>
           <SectionHeader
@@ -164,20 +193,11 @@ export default function SeguroVidaMortePage() {
         </Container>
       </Section>
 
-      {/* --- NOVA SEÇÃO 3: DIFERENCIAIS (COMPARATIVO) --- */}
       <ComparisonSection />
 
-      {/* 💥 SEÇÃO DE PRODUTOS RELACIONADOS 💥 */}
       <RelatedCarouselSection type="products" />
-
-
-      {/* Seção de Prova Social (Reutilizada) */}
       <PartnerSection />
-
-      {/* Seção de Perguntas Frequentes (Reutilizada) */}
       <FaqSection />
-
-      {/* Seção de CTA Final (Reutilizada) */}
       <DigitalCtaSection />
     </>
   );
