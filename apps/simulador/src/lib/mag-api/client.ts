@@ -100,6 +100,76 @@ export async function getQuestionnaireStructure(id: string | number) {
   }
 }
 
+export async function getUser(username: string) {
+  try {
+    const token = await getAccessControlToken();
+    const cleanUser = username.replace(/\D/g, '');
+    const url = `${BASE_URL}/gestao-acesso/v1/user/${cleanUser}`;
+
+    MAG_Logger.info(`[MAG Client] Consultando Usuário`, { cleanUser });
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (response.status === 404) return null;
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      MAG_Logger.warn(`[MAG Client] Erro ao consultar usuário (${response.status}): ${errorText}`);
+      return null;
+    }
+    return response.json();
+  } catch (error) {
+    MAG_Logger.error("[MAG Client] Falha em getUser:", error as Error);
+    return null;
+  }
+}
+
+export async function createUser(payload: { username: string; name: string; email: string; cellphone: string; }) {
+  try {
+    const token = await getAccessControlToken();
+    const url = `${BASE_URL}/gestao-acesso/v1/user`;
+    const cleanDoc = payload.username.replace(/\D/g, '');
+    const cleanPhone = payload.cellphone.replace(/\D/g, '');
+
+    const body = {
+      username: cleanDoc,
+      document: cleanDoc,
+      email: payload.email,
+      name: payload.name,
+      cellphone: cleanPhone,
+      active: true
+    };
+
+    MAG_Logger.info(`[MAG Client] Criando Usuário na MAG`, { username: cleanDoc });
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store'
+    });
+
+    if (!response.ok && response.status !== 409) {
+      const errorText = await response.text();
+      throw new Error(`Falha ao criar usuário: ${errorText}`);
+    }
+    return true;
+  } catch (error) {
+    MAG_Logger.error("[MAG Client] Falha em createUser:", error as Error);
+    throw error;
+  }
+}
+
 export async function getDomains() {
   try {
     const token = await getQuestionnaireToken();

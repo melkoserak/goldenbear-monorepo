@@ -14,7 +14,7 @@ import {
   ArrowLeft, 
   FileText,
   Stethoscope,
-  CreditCard // CORREÇÃO 1: Adicionado o import que faltava
+  CreditCard 
 } from 'lucide-react';
 import { Button } from '@goldenbear/ui/components/button';
 import { Input } from '@goldenbear/ui/components/input';
@@ -74,18 +74,15 @@ export const Step12 = () => {
         setErrorType('API_ERROR');
         setMissingStep(null);
 
-        // --- 1. VALIDAÇÕES DE FLUXO (Pre-Flight) ---
-
-        // A. Simulação Vazia?
+        // --- 1. VALIDAÇÕES DE FLUXO ---
         if (coverageState.coverages.length === 0) {
              setError("Não encontramos os dados da sua simulação (planos).");
              setErrorType('MISSING_DATA');
-             setMissingStep(4); // Cotação
+             setMissingStep(4); 
              setStatus('error');
              return;
         }
 
-        // B. Questionário de Saúde (DPS) Pendente?
         const requiresDPS = coverageState.coverages.some(c => 
             c.isActive && c.originalData?.questionariosPorFaixa && c.originalData.questionariosPorFaixa.length > 0
         );
@@ -95,24 +92,21 @@ export const Step12 = () => {
         if (requiresDPS && !hasAnswers) {
              setError("A Declaração Pessoal de Saúde é obrigatória para este plano e não foi preenchida.");
              setErrorType('MISSING_DATA');
-             setMissingStep(9); // DPS
+             setMissingStep(9); 
              setStatus('error');
              return;
         }
 
-        // C. Pagamento Pendente?
         if (!formData.payment || !formData.payment.method) {
              setError("A forma de pagamento não foi selecionada.");
              setErrorType('MISSING_DATA');
-             setMissingStep(10); // Pagamento
+             setMissingStep(10); 
              setStatus('error');
              return;
         }
 
         try {
             // --- 2. PROCESSAMENTO ---
-
-            // Montar Produtos
             const productMap = new Map<string, MappedProduct>();
             coverageState.coverages.forEach(coverage => {
                 if (coverage.isActive) {
@@ -166,6 +160,12 @@ export const Step12 = () => {
                 mag_profissao_empresa: formData.company,
                 mag_ppe: formData.isPPE,
                 
+                // --- CORREÇÃO IMPORTANTE AQUI ---
+                // Adicionamos os campos novos que o Backend espera
+                useLegalHeirs: formData.useLegalHeirs,
+                beneficiaries: formData.beneficiaries, // Envia o array completo
+                // -------------------------------
+
                 final_simulation_config: JSON.stringify(finalSimulationConfig),
                 widget_answers: JSON.stringify(formData.dpsAnswers || {}),
                 payment_pre_auth_code: paymentPreAuthCode || '',
@@ -173,13 +173,14 @@ export const Step12 = () => {
                 payment: formData.payment,
             };
             
+            // Mantemos o legado apenas por segurança/retrocompatibilidade,
+            // mas o processador vai ignorar se o array acima estiver preenchido.
             formData.beneficiaries.forEach((ben, index) => {
                 payload[`mag_ben[${index}][nome]`] = ben.fullName;
                 payload[`mag_ben[${index}][nasc]`] = ben.birthDate;
                 payload[`mag_ben[${index}][parentesco]`] = ben.relationship;
             });
             
-            // Enviar Proposta
             const result = await submitProposal(payload);
             
             if (!result.proposal_number) {
@@ -189,12 +190,10 @@ export const Step12 = () => {
             setProposalNumber(result.proposal_number);
             track('proposal_success', { proposal_number: result.proposal_number });
 
-            // Enviar DPS (se houver e for necessário)
             if (requiresDPS && hasAnswers && formData.questionnaireOriginalData) {
                 setStatus('sending_dps');
                 const filledJsonObject = fillQuestionnaireTree(
                     formData.questionnaireOriginalData,
-                    // CORREÇÃO 2: Fallback seguro para evitar erro de tipagem
                     formData.dpsAnswers || {} 
                 );
                 await submitQuestionnaire(String(result.proposal_number), filledJsonObject);
@@ -206,8 +205,6 @@ export const Step12 = () => {
         } catch (err) {
             const error = err as Error;
             const errorMsg = error.message || '';
-            
-            // --- 3. DIAGNÓSTICO DE ERRO ---
             
             if (errorMsg.toLowerCase().includes('cpf') || errorMsg.toLowerCase().includes('inválido')) {
                 setErrorType('CPF_ERROR');
@@ -284,7 +281,6 @@ export const Step12 = () => {
                 
                 <p className="text-muted-foreground mb-8">{error}</p>
                 
-                {/* CENÁRIO 1: ERRO DE CPF */}
                 {errorType === 'CPF_ERROR' && (
                     <div className="bg-background p-4 rounded-lg border border-border shadow-sm text-left space-y-4 mb-4">
                          <div className="space-y-1.5">
@@ -303,7 +299,6 @@ export const Step12 = () => {
                     </div>
                 )}
 
-                {/* CENÁRIO 2: DADOS FALTANDO (Redirect Inteligente) */}
                 {errorType === 'MISSING_DATA' && missingStep && (
                     <Button 
                         onClick={() => setStep(missingStep)} 
@@ -315,7 +310,6 @@ export const Step12 = () => {
                     </Button>
                 )}
 
-                {/* CENÁRIO 3: ERRO GENÉRICO */}
                 {errorType === 'API_ERROR' && (
                     <Button onClick={() => setRetryTrigger(prev => prev + 1)} variant="outline">
                         Tentar Novamente

@@ -3,20 +3,33 @@ import { postProposal } from '@/lib/mag-api/client';
 import { prepareProposalPayload } from '@/lib/mag-api/processor';
 import { MAG_Logger } from '@/lib/mag-api/logger';
 import { z } from 'zod';
-import { FrontendFormData } from '@/lib/mag-api/types'; // Certifique-se de importar
+import { FrontendFormData } from '@/lib/mag-api/types'; 
 
 export const dynamic = 'force-dynamic';
+
+// 1. Defina o Schema do Beneficiário separado para ficar limpo
+const beneficiarySchema = z.object({
+  fullName: z.string().min(3, "Nome do beneficiário inválido"),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (AAAA-MM-DD)"),
+  relationship: z.string().min(2),
+  percentage: z.union([z.string(), z.number()]), // Aceita "50" ou 50
+  // Campos opcionais do representante legal se houver
+  legalRepresentative: z.object({
+      fullName: z.string().optional(),
+      cpf: z.string().optional()
+  }).optional()
+});
 
 const proposalBaseSchema = z.object({
   mag_nome_completo: z.string().min(3),
   mag_cpf: z.string().min(11),
   mag_email: z.string().email(),
   mag_celular: z.string(),
-  // Adicione todos os campos que você realmente espera receber
+  // Campos opcionais
   mag_estado: z.string().optional(),
   mag_data_nascimento: z.string().optional(),
   mag_sexo: z.string().optional(),
-  mag_renda: z.any().optional(), // ou z.string() / z.number()
+  mag_renda: z.any().optional(), 
   mag_profissao_cbo: z.string().optional(),
   mag_cep: z.string().optional(),
   mag_logradouro: z.string().optional(),
@@ -39,13 +52,9 @@ const proposalBaseSchema = z.object({
   payment: z.record(z.string(), z.any()).optional(),
   reserved_proposal_number: z.string().optional(),
   widget_answers: z.string().optional(),
-  
-  // Padrão para campos de beneficiários dinâmicos (mag_ben[0][nome], etc)
-  // Como são chaves dinâmicas, aqui o .passthrough() seria útil, 
-  // MAS a melhor prática é usar .catchall() ou estruturar melhor o payload no frontend.
-  // Para agora, manteremos o .strip() e usaremos .catchall(z.any()) apenas se necessário,
-  // mas idealmente seu payload deveria enviar beneficiarios como um array JSON, não campos flat.
-}).strip();
+  useLegalHeirs: z.boolean().optional(),
+  beneficiaries: z.array(beneficiarySchema).optional(),
+}).strip(); // .catchall(z.any()) se precisar passar campos extras de beneficiários dinâmicos sem validar
 
 export async function POST(request: Request) {
   try {
@@ -69,11 +78,8 @@ export async function POST(request: Request) {
     // 1. Preparar Payload
     const payload = prepareProposalPayload(validData, finalSimConfig);
     
-    // --- DEBUG: Ver o que estamos enviando ---
-    console.log("==========================================");
-    console.log("[PROPOSAL] Payload Enviado MAG (DADOS_COBRANCA):");
-    console.log(JSON.stringify(payload.PROPOSTA.DADOS_COBRANCA, null, 2));
-    console.log("==========================================");
+    // --- DEBUG: Log preliminar (opcional, já que vamos logar tudo no final) ---
+    // console.log("[PROPOSAL] Iniciando envio...");
 
     // 2. Enviar
     const propResponse = await postProposal(payload);
@@ -82,14 +88,12 @@ export async function POST(request: Request) {
     // 3. Tratar Erro com Visibilidade
     if (!propResponse.ok || !propData.numeroProposta) {
       
-      // Loga o erro COMPLETO no terminal para você ler
       MAG_Logger.error('Erro MAG Completo (Sanitizado)', new Error('Falha na API'), { 
-    responseBody: propData 
-}); 
+        responseBody: propData 
+      }); 
 
       const msgErro = propData?.Mensagens?.[0]?.Descricao || 'Falha ao registrar proposta.';
       
-      // Passa o erro como string no 2º argumento para o Logger não gerar [object Object]
       MAG_Logger.error('Falha na API de Proposta', new Error(msgErro), { 
           status: propResponse.status, 
           body: propData 
@@ -98,8 +102,22 @@ export async function POST(request: Request) {
       throw new Error(msgErro);
     }
 
-    MAG_Logger.info('Proposta submetida com sucesso', { num: propData.numeroProposta });
-    return NextResponse.json({ proposal_number: propData.numeroProposta });
+    const numeroProposta = propData.numeroProposta;
+
+    MAG_Logger.info('Proposta submetida com sucesso', { num: numeroProposta });
+
+    // --- LOG COMPLETO PARA SUPORTE ---
+    // Imprime o JSON formatado no terminal do servidor
+    console.log("\n==========================================");
+    console.log(`[SUPORTE MAG] Payload JSON da Proposta ${numeroProposta}:`);
+    console.log(JSON.stringify(payload, null, 2));
+    console.log("==========================================\n");
+
+    // Retorna o payload na resposta também, para facilitar a cópia via Network tab do navegador
+    return NextResponse.json({ 
+        proposal_number: numeroProposta,
+        debug_payload: payload 
+    });
 
   } catch (error) {
     const err = error as Error;

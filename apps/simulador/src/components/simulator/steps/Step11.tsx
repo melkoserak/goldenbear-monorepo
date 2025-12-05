@@ -10,13 +10,11 @@ import { StepLayout } from '../StepLayout';
 export const Step11 = () => {
     const { formData, actions: { nextStep, setFormData } } = useSimulatorStore();
     
-    // Estados locais
     const [stepState, setStepState] = useState<'initial' | 'input_code'>('initial');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tokenCode, setTokenCode] = useState('');
 
-    // Mascarar email para privacidade (ex: jo***@gmail.com)
     const maskedEmail = formData.email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
 
     const handleRequestToken = async () => {
@@ -27,17 +25,23 @@ export const Step11 = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-    username: formData.cpf.replace(/\D/g, ''),
-    channel: 'SMS' // <--- TENTE ISTO
-})
+                    // CORREÇÃO: Enviando payload completo para criar usuário se necessário
+                    username: formData.cpf.replace(/\D/g, ''),
+                    name: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    channel: 'Email' // Suporte pediu Email em HMG para gerar logs
+                })
             });
             
-            if (!res.ok) throw new Error('Não foi possível enviar o código.');
+            const data = await res.json();
+            
+            if (!res.ok) throw new Error(data.error || 'Não foi possível enviar o código.');
             
             track('signature_token_requested', { channel: 'Email' });
             setStepState('input_code');
-        } catch (e) {
-            setError("Erro ao solicitar código. Tente novamente.");
+        } catch (e: any) {
+            setError(e.message || "Erro ao solicitar código. Tente novamente.");
         } finally {
             setIsLoading(false);
         }
@@ -65,13 +69,12 @@ export const Step11 = () => {
             const data = await res.json();
             if (!res.ok || !data.success) throw new Error(data.error || 'Código inválido.');
 
-            // Sucesso! Salva o token e avança
             setFormData({ signatureToken: tokenCode });
-           track('signature_success', {});
-            nextStep(); // Vai para o Step 12 (Processamento)
+            track('signature_success', {});
+            nextStep(); 
 
-        } catch (e) {
-            setError("Código inválido ou expirado. Verifique e tente novamente.");
+        } catch (e: any) {
+            setError(e.message || "Código inválido ou expirado.");
         } finally {
             setIsLoading(false);
         }

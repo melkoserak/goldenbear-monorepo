@@ -1,3 +1,4 @@
+// apps/simulador/src/lib/mag-api/processor.ts
 import {
   FrontendFormData,
   FinalSimConfig,
@@ -5,53 +6,30 @@ import {
   MagProposalPayload
 } from './types';
 
-// --- CORREÇÃO: Calcular o Último Dia do Mês ---
 function convertCardDate(mmAa: string | undefined): string {
-    // 1. Se for nulo, vazio ou inválido, retorna uma data fixa segura no futuro
     if (!mmAa || typeof mmAa !== 'string' || !mmAa.includes('/')) {
-        console.warn("[PROCESSOR] Validade do cartão inválida ou ausente. Usando fallback.");
         const d = new Date();
-        d.setFullYear(d.getFullYear() + 5); // 5 anos no futuro
+        d.setFullYear(d.getFullYear() + 5); 
         return d.toISOString().split('T')[0];
     }
-    
     try {
         const parts = mmAa.split('/');
-        // Garante que temos mês e ano
         if (parts.length !== 2) throw new Error("Formato inválido");
-        
         const mes = parseInt(parts[0], 10);
         let ano = parseInt(parts[1], 10);
-        
-        // Validação básica
         if (isNaN(mes) || isNaN(ano) || mes < 1 || mes > 12) throw new Error("Valores numéricos inválidos");
-
-        // Normaliza ano (2 dígitos -> 4 dígitos)
-        // Se o ano for menor que 100, assume 20xx
         if (ano < 100) ano += 2000;
-
-        // Cria data para o último dia do mês
-        // Mês no JS é 0-indexado. new Date(ano, mes, 0) pega o dia 0 do mês seguinte = último dia do mês atual.
         const dataUltimoDia = new Date(ano, mes, 0);
-        
         const yyyy = dataUltimoDia.getFullYear();
         const mm = String(dataUltimoDia.getMonth() + 1).padStart(2, '0');
         const dd = String(dataUltimoDia.getDate()).padStart(2, '0');
-        
-        const result = `${yyyy}-${mm}-${dd}`;
-        console.log(`[PROCESSOR] Data cartão convertida: ${mmAa} -> ${result}`);
-        return result;
-
+        return `${yyyy}-${mm}-${dd}`;
     } catch (e) {
-        console.error("[PROCESSOR] Erro ao converter data cartão:", e);
-        // Fallback de emergência
         return "2030-12-31";
     }
 }
 
-export function prepareSimulationPayload(
-  data: FrontendFormData
-): MagSimulationPayload {
+export function prepareSimulationPayload(data: FrontendFormData): MagSimulationPayload {
   const nome = data.mag_nome_completo;
   const cpf = (data.mag_cpf || '').replace(/\D/g, '');
   const data_nasc = data.mag_data_nascimento;
@@ -74,7 +52,7 @@ export function prepareSimulationPayload(
           uf: estado,
           declaracaoIRId: 1,
         },
-        periodicidadeCobrancaId: 30, // Mensal
+        periodicidadeCobrancaId: 30,
         prazoCerto: 30,
         prazoPagamentoAntecipado: 10,
         prazoDecrescimo: 10,
@@ -83,11 +61,7 @@ export function prepareSimulationPayload(
   };
 }
 
-export function prepareProposalPayload(
-  postData: FrontendFormData,
-  finalSimConfig: FinalSimConfig
-): MagProposalPayload {
-  
+export function prepareProposalPayload(postData: FrontendFormData, finalSimConfig: FinalSimConfig): MagProposalPayload {
   const birthDate = new Date(`${postData.mag_data_nascimento}T00:00:00`);
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -202,7 +176,6 @@ function buildDocumentsArray(data: FrontendFormData) {
 
 function buildPhonesArray(data: FrontendFormData) {
   const phones = [];
-  
   if (data.mag_celular) {
     const cleanPhone = data.mag_celular.replace(/\D/g, '');
     if (cleanPhone.length >= 10) {
@@ -219,11 +192,9 @@ function buildPhonesArray(data: FrontendFormData) {
 
 function buildPlansArray(config: FinalSimConfig) {
   const plans: any[] = [];
-  
   if (config.produtos && Array.isArray(config.produtos)) {
     config.produtos.forEach((produto) => {
       const coberturas: any[] = [];
-      
       produto.coberturas.forEach((cobertura) => {
         coberturas.push({
           CODIGO: parseInt(cobertura.itemProdutoId || (cobertura.id as string) || '0', 10),
@@ -231,7 +202,6 @@ function buildPlansArray(config: FinalSimConfig) {
           VL_COBERTURA: cobertura.capitalContratado || 0.0,
         });
       });
-
       if (coberturas.length > 0) {
         plans.push({
           CODIGO: String(produto.idProduto),
@@ -250,23 +220,52 @@ function buildPlansArray(config: FinalSimConfig) {
   return plans;
 }
 
+// --- CORREÇÃO: Mapeamento da Porcentagem ---
 function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: string | number) {
   const beneficiaries: any[] = [];
   const idPlanoStr = String(primeiro_plano_id);
 
+  // 1. Se o usuário marcou "Herdeiros Legais", enviamos lista vazia [].
+  // Isso instrui a seguradora a usar a ordem de vocação hereditária (Código Civil).
+  if (data.useLegalHeirs) {
+      console.log("[PROCESSOR] Cliente optou por Herdeiros Legais. Enviando lista de beneficiários vazia.");
+      
+      // OBS: Mantenha este bloco comentado. Se o suporte reclamar que a lista vazia 
+      // não funcionou, descomente para enviar um beneficiário explícito.
+      /*
+      beneficiaries.push({
+          NOME: "HERDEIROS LEGAIS",
+          NASCIMENTO: "1900-01-01",
+          PARENTESCO: "OUTROS",
+          PARTICIPACAO: 100,
+          CD_PLANO: idPlanoStr
+      });
+      */
+     
+      return beneficiaries; 
+  }
+
+  // 2. Processamento normal de beneficiários nomeados (Novo Formato Array)
   const sourceList = (data.beneficiaries as any[]) || [];
 
   if (sourceList.length > 0) {
       sourceList.forEach(ben => {
+          // Sanitização de segurança para evitar crash em .toUpperCase()
+          const nome = ben.fullName ? String(ben.fullName).toUpperCase() : 'BENEFICIÁRIO';
+          const parentesco = ben.relationship ? String(ben.relationship).toUpperCase() : 'OUTROS';
+          const rawPercentage = ben.percentage ? String(ben.percentage).replace('%', '') : '0';
+
           beneficiaries.push({
-            NOME: ben.fullName.toUpperCase(),
-            NASCIMENTO: ben.birthDate,
-            PARENTESCO: (ben.relationship || 'OUTROS').toUpperCase(),
-            PARTICIPACAO: Number(ben.percentage) || 0,
+            NOME: nome,
+            NASCIMENTO: ben.birthDate, // Formato YYYY-MM-DD
+            PARENTESCO: parentesco,
+            PARTICIPACAO: parseFloat(rawPercentage) || 0,
             CD_PLANO: idPlanoStr 
           });
       });
   } else {
+      // 3. Fallback Legado (Suporte a campos antigos mag_ben[0]...)
+      // Mantemos isso para garantir retrocompatibilidade se algo falhar no frontend novo
       for (let i = 0; i < 5; i++) {
         const nomeKey = `mag_ben[${i}][nome]`;
         if (data[nomeKey]) {
@@ -274,7 +273,7 @@ function buildBeneficiariesArray(data: FrontendFormData, primeiro_plano_id: stri
                 NOME: (data[nomeKey] as string).toUpperCase(),
                 NASCIMENTO: data[`mag_ben[${i}][nasc]`],
                 PARENTESCO: String(data[`mag_ben[${i}][parentesco]`]).toUpperCase(),
-                PARTICIPACAO: 0, 
+                PARTICIPACAO: 0, // No legado a porcentagem não era capturada granularmente
                 CD_PLANO: idPlanoStr
             });
         }
@@ -306,7 +305,7 @@ function buildPaymentData(data: FrontendFormData): any {
       TIPO_COBRANCA: 'CARTAO', 
       CARTAO: {
         NUMERO: payment.creditCard.number.replace(/\D/g, ''),
-        VALIDADE: convertCardDate(payment.creditCard.expirationDate), // Agora retorna o último dia do mês
+        VALIDADE: convertCardDate(payment.creditCard.expirationDate), 
         BANDEIRA: (payment.creditCard.brand || 'MASTERCARD').toUpperCase(),
         PARCELA: 1,
         NUM_PRE_AUTORIZACAO: 0,

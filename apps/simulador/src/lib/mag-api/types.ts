@@ -1,7 +1,5 @@
 // apps/simulador/src/lib/mag-api/types.ts
 
-// --- Tipos do Frontend (Nossos dados) ---
-
 export interface FrontendBeneficiary {
   id: string;
   fullName: string;
@@ -9,6 +7,7 @@ export interface FrontendBeneficiary {
   cpf: string;
   birthDate: string;
   relationship: string;
+  percentage: number | string; // <--- CAMPO ADICIONADO
   legalRepresentative?: {
     fullName?: string;
     cpf?: string;
@@ -18,7 +17,8 @@ export interface FrontendBeneficiary {
   };
 }
 
-// O payload que vem do Zod (já validado)
+// ... (mantenha o restante do arquivo igual) ...
+// Pode manter o restante das interfaces como FrontendFormData, etc.
 export interface FrontendFormData {
   mag_nome_completo: string;
   mag_cpf: string;
@@ -27,12 +27,9 @@ export interface FrontendFormData {
   mag_renda: string;
   mag_estado: string;
   mag_profissao_cbo: string;
-
-  // --- ADICIONADO: Campos obrigatórios para o processamento ---
-  final_simulation_config: string; // Resolvido o erro do JSON.parse
-  payment?: Record<string, any>;   // Tipagem para o objeto de pagamento
+  final_simulation_config: string;
+  payment?: Record<string, any>;
   
-  // Campos opcionais
   mag_email?: string;
   mag_celular?: string;
   mag_cep?: string;
@@ -49,13 +46,12 @@ export interface FrontendFormData {
   mag_num_filhos?: string;
   mag_profissao_empresa?: string;
   mag_ppe?: string;
+  useLegalHeirs?: boolean;
   
-  // Campos que agora vêm de slices separados, mas a API espera neste formato flat
   payment_pre_auth_code?: string;
   reserved_proposal_number?: string;
   widget_answers?: string; 
 
-  // Index Signature para permitir campos dinâmicos (ex: beneficiários) de forma segura
   [key: string]: string | number | boolean | undefined | Record<string, unknown> | unknown[];
 }
 
@@ -77,8 +73,6 @@ export interface FinalSimConfig {
   VL_TOTAL: number;
   produtos: FrontendProduct[];
 }
-
-// --- Tipos da API MAG (O que enviamos) ---
 
 export interface MagProponente {
   tipoRelacaoSeguradoId: number;
@@ -160,8 +154,6 @@ export interface MagProposalPayload {
   };
 }
 
-// --- ENUMS DE TIPAGEM DO QUESTIONÁRIO ---
-
 export enum MagTipoItem {
   PERGUNTA = 1,
   AGRUPADOR = 2,
@@ -178,26 +170,16 @@ export enum MagTipoResposta {
 }
 
 export enum MagTipoVariacao {
-  // Para Domínio (Id 4)
   SELECAO_UNICA = 1,
   MULTI_SELECAO = 2,
-  
-  // Para Informativo/Geral
   NAO_INFORMADO = 3,
-  
-  // Para Perguntas/Texto
   DIGITACAO_COMUM = 4,
-  
-  // Para Data
   DATA_PADRAO = 6,
-  
-  // Para Valor (Id 3)
-  DIGITACAO_NUMERO_TEXTO = 4, // Ex: "1" ou "um"
-  DIGITACAO_PESO = 10,        // Ex: "80" (Inteiro)
-  DIGITACAO_ALTURA = 11       // Ex: "1,80" (Decimal com vírgula)
+  DIGITACAO_NUMERO_TEXTO = 4,
+  DIGITACAO_PESO = 10,
+  DIGITACAO_ALTURA = 11
 }
 
-// Interface atualizada da Pergunta
 export interface MagQuestion {
   Id: number;
   Descricao: string;
@@ -205,7 +187,7 @@ export interface MagQuestion {
   TipoResposta: { Id: number; Sigla: string };
   TipoVariacaoResposta?: { Id: number; Sigla: string };
   Opcoes?: MagOption[];
-  Perguntas?: MagQuestion[]; // Filhos de Agrupadores
+  Perguntas?: MagQuestion[];
   Obrigatorio: boolean;
   CodigoInterno?: string;
   Observacao?: string;
@@ -217,7 +199,6 @@ export interface MagOption {
   SubItens?: MagQuestion[];
 }
 
-// Adicione esta interface para a resposta detalhada da Pergunta
 export interface MagQuestionDetailResponse {
   Valor: {
     Id: number;
@@ -226,7 +207,7 @@ export interface MagQuestionDetailResponse {
     TipoItem: { Id: number; Sigla: string; Descricao: string };
     TipoVariacaoResposta?: { Id: number; Sigla: string; Descricao: string };
     OrdemApresentacao: number;
-    Opcoes: any[]; // Pode refinar se tiver a estrutura de opções
+    Opcoes: any[];
     CodigoItem?: number;
     Status: { Id: number; Sigla: string; Descricao: string };
     DataCriacao: string;

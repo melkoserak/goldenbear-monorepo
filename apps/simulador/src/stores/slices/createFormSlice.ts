@@ -72,6 +72,9 @@ export interface FormDataState {
   payment: PaymentData;
   signatureToken?: string;
   
+  // --- NOVO CAMPO ---
+  useLegalHeirs: boolean; 
+  
   beneficiaries: Beneficiary[];
   
   dpsAnswers?: Record<string, { value: string; optionId?: number }>;
@@ -103,6 +106,9 @@ export const initialFormData: FormDataState = {
   
   payment: { method: '' },
   signatureToken: '',
+  
+  // Inicializa como falso (padrão é pedir beneficiários)
+  useLegalHeirs: false, 
   
   beneficiaries: [],
   
