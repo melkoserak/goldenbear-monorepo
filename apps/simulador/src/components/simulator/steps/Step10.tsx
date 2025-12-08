@@ -28,6 +28,9 @@ export const Step10 = () => {
       method: (payment.method as any) || undefined,
       creditCard: payment.creditCard,
       debitAccount: payment.debitAccount,
+      // [!code change] Injeção de valores padrão para o Débito e Payer
+      payer: payment.payer || { isInsuredPayer: true }, 
+      consentDebit: payment.consentDebit,
       payroll: payment.payroll
     },
     mode: 'onChange'
@@ -36,19 +39,20 @@ export const Step10 = () => {
   const { watch, setValue, handleSubmit, reset, formState: { isValid } } = form;
   const selectedMethod = watch('method');
 
-  // --- CORREÇÃO CRÍTICA: Sincronizar formulário com a Store ---
-  // Isso garante que quando o DevToolbar injetar dados, o formulário preencha visualmente
+  // Sincronizar com Store (DevTools e Navegação)
   useEffect(() => {
     if (payment.method) {
       reset({
         method: payment.method as any,
         creditCard: payment.creditCard,
         debitAccount: payment.debitAccount,
+        // [!code change] Reset também deve incluir os novos campos
+        payer: payment.payer || { isInsuredPayer: true },
+        consentDebit: payment.consentDebit,
         payroll: payment.payroll
       });
     }
   }, [payment, reset]);
-  // ------------------------------------------------------------
 
   useEffect(() => { 
     track('step_view', { step: 10, step_name: 'Pagamento Nativo' }); 

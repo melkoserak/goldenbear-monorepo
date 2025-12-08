@@ -141,8 +141,9 @@ const creditCardSchema = z.object({
 }).strip();
 
 // --- ATUALIZAÇÃO: SCHEMA DE DÉBITO COM PAGADOR ---
+// CORREÇÃO: Payer Schema rigoroso (sem .default) para evitar erro de assignability
 const payerSchema = z.object({
-  isInsuredPayer: z.boolean().default(true),
+  isInsuredPayer: z.boolean(), // [!code change] Removido .default(true)
   payerName: z.string().optional(),
   payerCpf: z.string().optional(),
   payerRelationship: z.string().optional(),
