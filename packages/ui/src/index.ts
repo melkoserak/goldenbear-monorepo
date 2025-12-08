@@ -29,6 +29,7 @@ export * from "./components/theme-provider";
 export * from "./components/font-size-manager";
 export * from "./components/accessibility-controller";
 export * from "./stores/accessibility-store";
+export * from "./components/checkbox";
 
 // Utils e Hooks (Seguros)
 export * from "./lib/utils";

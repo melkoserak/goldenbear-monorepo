@@ -17,20 +17,6 @@ const isValidCPF = (cpf: string) => {
   return rest(10) === cpfArr[9] && rest(11) === cpfArr[10];
 };
 
-// --- FUNÇÃO AUXILIAR: ALGORITMO DE LUHN ---
-const isValidLuhn = (val: string) => {
-  let checksum = 0;
-  let j = 1;
-  for (let i = val.length - 1; i >= 0; i--) {
-    let calc = 0;
-    calc = Number(val.charAt(i)) * j;
-    if (calc > 9) { checksum = checksum + 1; calc = calc - 10; }
-    checksum = checksum + calc;
-    if (j == 1) { j = 2 } else { j = 1 };
-  }
-  return (checksum % 10) == 0;
-};
-
 // --- SCHEMAS ---
 
 export const step1Schema = z.object({
@@ -83,7 +69,7 @@ export const step7Schema = z.object({
   homePhone: z.string().optional(),
 }).strip();
 
-// --- BENEFICIÁRIOS E PAGAMENTO ---
+// --- BENEFICIÁRIOS ---
 const beneficiarySchema = z.object({
   id: z.string(),
   fullName: z.string().min(3, "Nome completo é obrigatório."),
@@ -91,10 +77,7 @@ const beneficiarySchema = z.object({
   rg: z.string().optional().or(z.literal('')),
   birthDate: z.string().regex(dateRegex, "Data inválida."),
   relationship: z.string().min(1, "Parentesco obrigatório."),
-  
-  // CORREÇÃO: "percentage" estava escrito errado anteriormente como "ppercentage"
   percentage: z.number({ message: "Informe um número válido" }).min(1).max(100),
-  
   legalRepresentative: z.object({
     fullName: z.string().optional(),
     cpf: z.string().optional(),
@@ -117,11 +100,9 @@ export const step8Schema = z.object({
           });
           return;
       }
-
       data.beneficiaries.forEach((item, index) => {
         if (!item.birthDate) return;
         const birthDateObj = new Date(`${item.birthDate}T00:00:00`);
-        if (isNaN(birthDateObj.getTime())) return;
         const today = new Date();
         let age = today.getFullYear() - birthDateObj.getFullYear();
         if (today < new Date(today.getFullYear(), birthDateObj.getMonth(), birthDateObj.getDate())) age--;
@@ -135,7 +116,6 @@ export const step8Schema = z.object({
             if (!item.legalRepresentative?.fullName) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Responsável obrigatório.", path: [...repPath, "fullName"] });
         }
       });
-      
       const total = data.beneficiaries.reduce((acc, b) => acc + (b.percentage || 0), 0);
       if (Math.abs(total - 100) > 0.1) {
         ctx.addIssue({
@@ -146,6 +126,8 @@ export const step8Schema = z.object({
       }
   }
 });
+
+// --- PAGAMENTO ---
 
 const creditCardSchema = z.object({
   method: z.literal('CREDIT_CARD'),
@@ -158,15 +140,54 @@ const creditCardSchema = z.object({
   }).strip()
 }).strip();
 
+// --- ATUALIZAÇÃO: SCHEMA DE DÉBITO COM PAGADOR ---
+const payerSchema = z.object({
+  isInsuredPayer: z.boolean().default(true),
+  payerName: z.string().optional(),
+  payerCpf: z.string().optional(),
+  payerRelationship: z.string().optional(),
+});
+
 const debitSchema = z.object({
   method: z.literal('DEBIT_ACCOUNT'),
   debitAccount: z.object({
-    bankCode: z.string().min(1),
-    agency: z.string().min(1),
-    accountNumber: z.string().min(1),
-    accountDigit: z.string().min(1),
-  }).strip()
-}).strip();
+    bankCode: z.string().min(1, "Selecione o banco"),
+    agency: z.string().min(1, "Agência obrigatória"),
+    accountNumber: z.string().min(1, "Conta obrigatória"),
+    accountDigit: z.string().min(1, "Dígito obrigatório"),
+  }).strip(),
+  // Adiciona suporte ao pagador e consentimento
+  payer: payerSchema,
+  consentDebit: z.boolean().refine(val => val === true, {
+    message: "É necessário autorizar o débito em conta."
+  }),
+})
+.superRefine((data, ctx) => {
+  // Se não for o titular, exige dados do pagador
+  if (!data.payer.isInsuredPayer) {
+    if (!data.payer.payerName || data.payer.payerName.trim().length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['payer', 'payerName'],
+        message: 'Nome do responsável é obrigatório',
+      });
+    }
+    if (!data.payer.payerCpf || !isValidCPF(data.payer.payerCpf)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['payer', 'payerCpf'],
+        message: 'CPF válido do responsável é obrigatório',
+      });
+    }
+    if (!data.payer.payerRelationship) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['payer', 'payerRelationship'],
+          message: 'Informe o vínculo.',
+        });
+    }
+  }
+});
 
 const payrollSchema = z.object({
   method: z.literal('PAYROLL_DEDUCTION'),

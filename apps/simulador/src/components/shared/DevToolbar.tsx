@@ -2,12 +2,28 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
+import { Button } from '@goldenbear/ui/components/button'; // Padrão correto
 import { 
-  PERSONA_CREDIT_CARD, PERSONA_DEBIT, PERSONA_PAYROLL,
-  PERSONA_FAMILIA_PPE, PERSONA_SENIOR, PERSONA_JOVEM_MILITAR 
+  Settings, 
+  CreditCard, 
+  Landmark, 
+  FileText, 
+  X, 
+  Users, 
+  UserPlus, 
+  ShieldAlert, 
+  Briefcase 
+} from 'lucide-react';
+
+import { 
+  PERSONA_CREDIT_CARD, 
+  PERSONA_DEBIT, 
+  PERSONA_PAYROLL,
+  PERSONA_FAMILIA_PPE, 
+  PERSONA_SENIOR, 
+  PERSONA_JOVEM_MILITAR,
+  PERSONA_DEBIT_THIRD_PARTY
 } from '@/lib/debug-personas';
-import { Button } from '@goldenbear/ui/components/button';
-import { Settings, CreditCard, Landmark, FileText, X, Play, Users, UserPlus, ShieldAlert } from 'lucide-react';
 
 export const DevToolbar = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -26,20 +42,23 @@ export const DevToolbar = () => {
 
   const shouldRender = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS === 'true';
 
-  if (!isMounted) return null;
-  if (!shouldRender) return null;
+  if (!isMounted || !shouldRender) return null;
 
-  const handleAutoFill = (persona: any, targetStep: number) => {
+  const handleAutoFill = (persona: any, targetStep: number = 10) => {
     setFormData(persona);
     setTimeout(() => {
         setStep(targetStep);
-    }, 100); // Timeout levemente maior para garantir renderização
+    }, 150);
   };
 
   if (!isVisible) {
     return (
       <div className="fixed bottom-4 right-4 z-[9999]">
-        <Button size="icon" variant="outline" onClick={() => setIsVisible(true)} className="rounded-full shadow-lg bg-yellow-400 text-black hover:bg-yellow-500">
+        <Button 
+          variant="outline" 
+          onClick={() => setIsVisible(true)} 
+          className="rounded-full h-12 w-12 shadow-xl bg-yellow-400 text-black hover:bg-yellow-500 border-2 border-yellow-600 p-0"
+        >
           <Settings className="w-6 h-6" />
         </Button>
       </div>
@@ -47,99 +66,116 @@ export const DevToolbar = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-900 text-white rounded-lg shadow-2xl border border-slate-700 w-80 animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-sm flex items-center gap-2">
-          <Settings className="w-4 h-4" /> Testes Rápidos
+    <div className="fixed bottom-4 right-4 z-[9999] p-4 bg-slate-950 text-white rounded-xl shadow-2xl border border-slate-800 w-80 animate-in slide-in-from-bottom-10 max-h-[90vh] overflow-y-auto">
+      
+      <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+        <h3 className="font-bold text-sm flex items-center gap-2 text-yellow-400">
+          <Settings className="w-4 h-4" /> 
+          GoldenBear DevTools
         </h3>
         <button onClick={() => setIsVisible(false)} className="text-slate-400 hover:text-white">
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         
-        {/* CENÁRIOS BÁSICOS */}
+        {/* FLUXO PADRÃO */}
         <div>
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Pagamento (Simples):</p>
+          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">
+            Fluxos de Pagamento
+          </p>
           <div className="grid grid-cols-3 gap-2">
              <Button 
-              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
-              onClick={() => handleAutoFill(PERSONA_CREDIT_CARD, 10)}
-              title="Preenche tudo e vai para Pagamento Cartão"
+              variant="secondary" 
+              className="text-[10px] h-14 flex flex-col gap-1 p-1 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+              onClick={() => handleAutoFill(PERSONA_CREDIT_CARD)}
             >
-              <CreditCard className="w-4 h-4 mb-1" /> Cartão
+              <CreditCard className="w-4 h-4 mb-0.5 text-blue-400" /> 
+              Cartão
             </Button>
              <Button 
-              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
-              onClick={() => handleAutoFill(PERSONA_DEBIT, 10)}
-              title="Preenche tudo e vai para Pagamento Débito"
+              variant="secondary" 
+              className="text-[10px] h-14 flex flex-col gap-1 p-1 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+              onClick={() => handleAutoFill(PERSONA_DEBIT)}
             >
-              <Landmark className="w-4 h-4 mb-1" /> Débito
+              <Landmark className="w-4 h-4 mb-0.5 text-purple-400" /> 
+              Débito
             </Button>
              <Button 
-              variant="secondary" size="sm" className="text-xs h-16 flex-col gap-1 p-1"
-              onClick={() => handleAutoFill(PERSONA_PAYROLL, 10)}
-              title="Preenche tudo e vai para Consignado"
+              variant="secondary" 
+              className="text-[10px] h-14 flex flex-col gap-1 p-1 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+              onClick={() => handleAutoFill(PERSONA_PAYROLL)}
             >
-              <FileText className="w-4 h-4 mb-1" /> Folha
+              <FileText className="w-4 h-4 mb-0.5 text-green-400" /> 
+              Folha
+            </Button>
+          </div>
+        </div>
+
+        {/* SUPORTE / CORREÇÕES */}
+        <div className="bg-red-950/30 p-3 rounded-lg border border-red-900/50">
+          <p className="text-[10px] text-red-400 uppercase font-bold tracking-wider mb-2 flex items-center gap-1">
+             🚨 Testes de Suporte
+          </p>
+          <div className="grid grid-cols-1 gap-2">
+             <Button 
+              variant="outline" 
+              className="text-xs h-10 justify-start bg-red-900/10 border-red-800 text-red-100 hover:bg-red-900/30 w-full"
+              onClick={() => handleAutoFill(PERSONA_DEBIT_THIRD_PARTY, 10)}
+            >
+              <Users className="w-4 h-4 mr-2 text-red-500" /> 
+              Débito: Terceiro (Esposa)
             </Button>
           </div>
         </div>
 
         {/* CENÁRIOS COMPLEXOS */}
-        <div className="border-t border-slate-700 pt-3">
-          <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider mb-2">Cenários Complexos:</p>
-          <div className="grid grid-cols-1 gap-2">
+        <div>
+          <p className="text-[10px] text-blue-400 uppercase font-bold tracking-wider mb-2">
+            Cenários Complexos
+          </p>
+          <div className="space-y-2">
              <Button 
-              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
-              onClick={() => handleAutoFill(PERSONA_FAMILIA_PPE, 8)}
+              variant="ghost" 
+              className="w-full justify-start text-xs h-9 text-slate-300 hover:bg-slate-800 border border-transparent hover:border-slate-700"
+              onClick={() => handleAutoFill(PERSONA_FAMILIA_PPE, 10)}
              >
-              <ShieldAlert className="w-3 h-3 mr-2 text-red-400" /> Família + PPE + Menores
+              <ShieldAlert className="w-3.5 h-3.5 mr-2 text-amber-500" /> 
+              Família + PPE + Menores
             </Button>
              <Button 
-              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
-              onClick={() => handleAutoFill(PERSONA_SENIOR, 8)}
+              variant="ghost" 
+              className="w-full justify-start text-xs h-9 text-slate-300 hover:bg-slate-800 border border-transparent hover:border-slate-700"
+              onClick={() => handleAutoFill(PERSONA_SENIOR, 10)}
              >
-              <UserPlus className="w-3 h-3 mr-2 text-purple-400" /> Sênior (Viúvo + Filhos)
+              <UserPlus className="w-3.5 h-3.5 mr-2 text-indigo-400" /> 
+              Sênior (65+) + Filhos
             </Button>
              <Button 
-              variant="outline" size="sm" className="text-xs h-9 justify-start bg-slate-800 border-slate-600 hover:bg-slate-700"
+              variant="ghost" 
+              className="w-full justify-start text-xs h-9 text-slate-300 hover:bg-slate-800 border border-transparent hover:border-slate-700"
               onClick={() => handleAutoFill(PERSONA_JOVEM_MILITAR, 10)}
              >
-              <Users className="w-3 h-3 mr-2 text-green-400" /> Jovem Militar (Mãe)
+              <Briefcase className="w-3.5 h-3.5 mr-2 text-emerald-500" /> 
+              Militar Jovem + Mãe
             </Button>
           </div>
         </div>
 
-        {/* NAVEGAÇÃO RÁPIDA */}
-        <div className="border-t border-slate-700 pt-3">
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Saltar Para:</p>
+        <div className="border-t border-slate-800 pt-3">
           <div className="flex gap-2">
-            <Button 
-              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-slate-300 hover:bg-slate-800"
-              onClick={() => setStep(4)}
-            >
-              Ofertas
-            </Button>
-            <Button 
-              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-slate-300 hover:bg-slate-800"
-              onClick={() => setStep(8)}
-            >
-              Benefic.
-            </Button>
-            <Button 
-              variant="ghost" size="sm" className="flex-1 text-xs h-8 text-green-400 hover:bg-green-900/20 font-bold"
-              onClick={() => setStep(12)}
-            >
-              FINAL
-            </Button>
+            <Button variant="outline" className="flex-1 text-[10px] h-7 bg-slate-900 border-slate-700 text-slate-400 hover:text-white" onClick={() => setStep(4)}>Ofertas</Button>
+            <Button variant="outline" className="flex-1 text-[10px] h-7 bg-slate-900 border-slate-700 text-slate-400 hover:text-white" onClick={() => setStep(8)}>Benefic.</Button>
+            <Button variant="outline" className="flex-1 text-[10px] h-7 bg-slate-900 border-slate-700 text-green-400 hover:text-green-300 font-bold" onClick={() => setStep(12)}>FIM</Button>
+          </div>
+          <div className="mt-2 text-center">
+             <span className="text-[10px] text-slate-600 font-mono">
+               Passo: {currentStep}
+             </span>
           </div>
         </div>
-        
-        <div className="pt-2 mt-1 border-t border-slate-700 text-center">
-           <p className="text-[10px] text-slate-500">Passo Atual: <span className="text-yellow-500 font-mono">{currentStep}</span></p>
-        </div>
+
       </div>
     </div>
   );

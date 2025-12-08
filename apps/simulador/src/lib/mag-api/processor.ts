@@ -299,6 +299,7 @@ function buildPaymentData(data: FrontendFormData): any {
     NUM_CONVENIO: '0'
   };
 
+  // --- CARTÃO DE CRÉDITO ---
   if (payment.method === 'CREDIT_CARD' && payment.creditCard) {
     return {
       ...baseData,
@@ -312,13 +313,25 @@ function buildPaymentData(data: FrontendFormData): any {
         PORTADOR: {
           NOME: payment.creditCard.holderName.toUpperCase(),
           TIPO_PESSOA: "FISICA",
+          // Se for cartão de terceiro, idealmente o form de cartão também deveria capturar o CPF do titular.
+          // Aqui mantivemos o CPF do segurado como fallback (comportamento original)
           DOCUMENTO: (data.mag_cpf || '').replace(/\D/g, '')
         }
       }
     };
   }
 
+  // --- DÉBITO EM CONTA (Ajustado) ---
   if (payment.method === 'DEBIT_ACCOUNT' && payment.debitAccount) {
+    // Verifica se existe um pagador terceiro definido no formulário
+    const payer = payment.payer;
+    const isThirdParty = payer && payer.isInsuredPayer === false;
+
+    // Dados do Titular da Conta
+    const nomeTitular = isThirdParty ? payer.payerName : data.mag_nome_completo;
+    const cpfTitular = isThirdParty ? payer.payerCpf : data.mag_cpf;
+    const parentesco = isThirdParty ? payer.payerRelationship : 'PROPRIO';
+
     return {
       ...baseData,
       TIPO_COBRANCA: 'DEBITO', 
@@ -326,11 +339,21 @@ function buildPaymentData(data: FrontendFormData): any {
         BANCO: payment.debitAccount.bankCode,
         AGENCIA: payment.debitAccount.agency,
         CONTA: payment.debitAccount.accountNumber,
-        DIGITO_CONTA: payment.debitAccount.accountDigit
+        DIGITO_CONTA: payment.debitAccount.accountDigit,
+        
+        // ESTRUTURA CORRETA PARA A MAG (TITULAR DA CONTA):
+        TITULAR: {
+            NOME: (nomeTitular || '').toUpperCase().substring(0, 50),
+            CPF: (cpfTitular || '').replace(/\D/g, ''),
+            PARENTESCO: (parentesco || 'OUTROS').toUpperCase(),
+            // A flag de aceite vem do checkbox 'consentDebit'
+            AUTORIZA_DEBITO: payment.consentDebit === true
+        }
       }
     };
   }
 
+  // --- DESCONTO EM FOLHA ---
   if (payment.method === 'PAYROLL_DEDUCTION' && payment.payroll) {
     return {
       ...baseData,

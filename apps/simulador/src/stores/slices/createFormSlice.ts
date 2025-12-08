@@ -36,6 +36,15 @@ export interface PaymentData {
     accountNumber: string;
     accountDigit: string;
   };
+  // Adicionados para o fluxo de Débito com Terceiros
+  payer?: {
+    isInsuredPayer: boolean;
+    payerName?: string;
+    payerCpf?: string;
+    payerRelationship?: string;
+  };
+  consentDebit?: boolean;
+  
   payroll?: {
     registrationNumber: string;
     orgCode: string;
@@ -72,7 +81,6 @@ export interface FormDataState {
   payment: PaymentData;
   signatureToken?: string;
   
-  // --- NOVO CAMPO ---
   useLegalHeirs: boolean; 
   
   beneficiaries: Beneficiary[];
@@ -107,7 +115,6 @@ export const initialFormData: FormDataState = {
   payment: { method: '' },
   signatureToken: '',
   
-  // Inicializa como falso (padrão é pedir beneficiários)
   useLegalHeirs: false, 
   
   beneficiaries: [],
